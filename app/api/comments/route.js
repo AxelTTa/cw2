@@ -30,8 +30,15 @@ export async function GET(request) {
       .range(offset, offset + limit - 1)
 
     if (matchId) {
-      // Convert to string to handle both integers and UUIDs
-      query = query.eq('match_id', matchId.toString())
+      // Convert to integer for proper match_id comparison
+      const matchIdInt = parseInt(matchId)
+      if (isNaN(matchIdInt)) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Invalid match_id format' 
+        }, { status: 400 })
+      }
+      query = query.eq('match_id', matchIdInt)
     }
 
     const { data: comments, error } = await query
@@ -85,12 +92,29 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Convert match_id to string to handle both integers and UUIDs
-    const matchIdString = match_id ? match_id.toString() : null
+    // Validate user_id is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(user_id)) {
+      console.error('Invalid user_id format:', user_id)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid user ID format. Expected UUID.' 
+      }, { status: 400 })
+    }
+
+    // Convert match_id to integer for proper database storage
+    const matchIdInt = match_id ? parseInt(match_id) : null
+    
+    if (match_id && isNaN(matchIdInt)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid match_id format' 
+      }, { status: 400 })
+    }
 
     console.log('Creating comment with data:', {
       content,
-      match_id: matchIdString,
+      match_id: matchIdInt,
       user_id,
       parent_id,
       is_meme,
@@ -101,7 +125,7 @@ export async function POST(request) {
       .from('comments')
       .insert([{
         content,
-        match_id: matchIdString,
+        match_id: matchIdInt,
         user_id,
         parent_id,
         is_meme,
@@ -155,6 +179,16 @@ export async function PATCH(request) {
       return NextResponse.json({ 
         success: false, 
         error: 'Comment ID and action are required' 
+      }, { status: 400 })
+    }
+
+    // Validate comment_id is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(comment_id)) {
+      console.error('Invalid comment_id format:', comment_id)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid comment ID format. Expected UUID.' 
       }, { status: 400 })
     }
 
