@@ -97,9 +97,8 @@ export default function CommunityPage() {
   }
 
   const handleMatchSelect = async (match) => {
-    setSelectedMatch(match)
-    setComments([])
-    setReplyTo(null)
+    // Redirect to individual match page
+    window.location.href = `/matches/${match.id}`
   }
 
   const handleSubmitComment = async (e) => {

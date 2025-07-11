@@ -1,9 +1,46 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { supabase } from '../utils/supabase'
 
 export default function Header() {
   const pathname = usePathname()
+  const [user, setUser] = useState(null)
+  const [userProfile, setUserProfile] = useState(null)
+
+  useEffect(() => {
+    getCurrentUser()
+  }, [])
+
+  const getCurrentUser = async () => {
+    // Check localStorage for user data
+    const userData = localStorage.getItem('user_profile')
+    if (userData) {
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      setUserProfile(parsedUser)
+      return
+    }
+    
+    // Fallback to Supabase auth (for existing users)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      setUser(user)
+      setUserProfile(user)
+    }
+  }
+
+  const signOut = async () => {
+    // Clear localStorage
+    localStorage.removeItem('user_profile')
+    
+    // Also clear Supabase auth if applicable
+    await supabase.auth.signOut()
+    
+    setUser(null)
+    setUserProfile(null)
+  }
 
   const navItems = [
     { href: '/', label: 'Home', paths: ['/'] },
@@ -122,29 +159,90 @@ export default function Header() {
         alignItems: 'center',
         gap: '15px'
       }}>
-        <a
-          href="/login"
-          style={{
-            backgroundColor: '#00ff88',
-            color: '#000',
-            padding: '8px 16px',
-            borderRadius: '6px',
-            textDecoration: 'none',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.backgroundColor = '#00cc6a'
-            e.target.style.transform = 'translateY(-2px)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.backgroundColor = '#00ff88'
-            e.target.style.transform = 'translateY(0)'
-          }}
-        >
-          Login
-        </a>
+        {userProfile ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: '#00ff88',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              color: '#000'
+            }}>
+              {userProfile.username?.[0]?.toUpperCase() || userProfile.email?.[0]?.toUpperCase() || '?'}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#ffffff'
+              }}>
+                {userProfile.display_name || userProfile.username || userProfile.email?.split('@')[0]}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: '#888'
+              }}>
+                Level {userProfile.level || 1} • {userProfile.xp || 0} XP
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              style={{
+                backgroundColor: 'transparent',
+                border: '1px solid #444',
+                color: '#888',
+                padding: '6px 12px',
+                borderRadius: '6px',
+                fontSize: '12px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#ff4444'
+                e.target.style.color = '#ff4444'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#444'
+                e.target.style.color = '#888'
+              }}
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <a
+            href="/login"
+            style={{
+              backgroundColor: '#00ff88',
+              color: '#000',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.backgroundColor = '#00cc6a'
+              e.target.style.transform = 'translateY(-2px)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.backgroundColor = '#00ff88'
+              e.target.style.transform = 'translateY(0)'
+            }}
+          >
+            Login
+          </a>
+        )}
       </div>
 
       <style jsx>{`
