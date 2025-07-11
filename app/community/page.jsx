@@ -114,12 +114,23 @@ export default function CommunityPage() {
   }
 
   const signIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+    // Quick test sign in - creates anonymous user
+    const { data, error } = await supabase.auth.signInAnonymously()
+    if (!error) {
+      setUser(data.user)
+      // Create a basic profile for the anonymous user
+      const profileData = {
+        id: data.user.id,
+        username: `User${data.user.id.slice(0, 8)}`,
+        display_name: `Anonymous User`,
+        xp: 0,
+        level: 1,
+        fan_tokens: 0,
+        streak_count: 0
       }
-    })
+      await ProfileService.createProfile(profileData)
+      setUserProfile(profileData)
+    }
   }
 
   const signOut = async () => {
