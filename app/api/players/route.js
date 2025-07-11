@@ -142,20 +142,53 @@ async function fetchPlayersForTeam(teamId, season = 2025) {
   }
 }
 
-async function fetchPlayerStatistics(playerId, season = 2025) {
+async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   try {
-    const response = await fetch(`${BASE_URL}/players?id=${playerId}&season=${season}`, {
-      method: 'GET',
-      headers: {
-        'X-RapidAPI-Key': API_KEY,
-        'X-RapidAPI-Host': 'v3.football.api-sports.io'
-      }
-    })
-
-    const data = await response.json()
+    // Try multiple season/league combinations for better stats
+    const attempts = [
+      { season: 2025, league: leagueId },
+      { season: 2024, league: leagueId },
+      { season: 2024, league: null }, // Latest season stats overall
+      { season: 2023, league: null }
+    ]
     
-    if (response.ok && data.response && data.response.length > 0) {
-      return data.response[0].statistics || []
+    for (const attempt of attempts) {
+      let url = `${BASE_URL}/players?id=${playerId}&season=${attempt.season}`
+      if (attempt.league) {
+        url += `&league=${attempt.league}`
+      }
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': API_KEY,
+          'X-RapidAPI-Host': 'v3.football.api-sports.io'
+        }
+      })
+
+      const data = await response.json()
+      
+      if (response.ok && data.response && data.response.length > 0) {
+        const playerStats = data.response[0].statistics || []
+        
+        // Find stats with actual data (goals > 0 or games > 0)
+        const meaningfulStats = playerStats.find(stat => 
+          (stat.goals?.total > 0) || 
+          (stat.games?.appearences > 0) ||
+          (stat.goals?.assists > 0)
+        )
+        
+        if (meaningfulStats) {
+          console.log(`📊 Found meaningful stats for player ${playerId}:`, {
+            goals: meaningfulStats.goals?.total,
+            assists: meaningfulStats.goals?.assists,
+            games: meaningfulStats.games?.appearences,
+            season: attempt.season,
+            league: meaningfulStats.league?.name
+          })
+          return playerStats
+        }
+      }
     }
     
     return []
@@ -175,24 +208,38 @@ async function fetchClubWorldCupPlayers() {
   const allPlayers = []
   const playerPromises = []
   
+  // Get the working league ID (15 from logs)
+  const workingLeagueId = 15
+  
   // Fetch players for each team
   for (const teamData of teams) {
     const teamId = teamData.team.id
     const teamName = teamData.team.name
     const teamLogo = teamData.team.logo
     
+    console.log(`🔍 Processing team: ${teamName} (ID: ${teamId})`)
+    
     playerPromises.push(
       fetchPlayersForTeam(teamId).then(async (players) => {
         const teamPlayers = []
         
-        for (const player of players) {
-          // Fetch detailed stats for each player
-          const stats = await fetchPlayerStatistics(player.id, 2025)
+        // Process only first 25 players per team to avoid API overload
+        const playersToProcess = players.slice(0, 25)
+        
+        for (const player of playersToProcess) {
+          // Fetch detailed stats for each player with multiple fallbacks
+          const stats = await fetchPlayerStatistics(player.id, workingLeagueId, 2025)
           
-          // Find the most relevant stat (usually the league/competition stat)
-          const relevantStat = stats.find(s => s.league?.name?.toLowerCase().includes('world')) || 
-                              stats.find(s => s.league?.name?.toLowerCase().includes('cup')) || 
-                              stats[0] // fallback to first stat
+          // Find the best available stat
+          let relevantStat = null
+          
+          if (stats.length > 0) {
+            // Priority: Stats with goals > 0, then games > 0, then any stat
+            relevantStat = stats.find(s => s.goals?.total > 0) ||
+                         stats.find(s => s.games?.appearences > 0) ||
+                         stats.find(s => s.goals?.assists > 0) ||
+                         stats[0] // fallback to first stat
+          }
           
           teamPlayers.push({
             player: {
@@ -217,7 +264,9 @@ async function fetchClubWorldCupPlayers() {
               minutes: relevantStat.games?.minutes || 0,
               rating: relevantStat.games?.rating || null,
               yellow_cards: relevantStat.cards?.yellow || 0,
-              red_cards: relevantStat.cards?.red || 0
+              red_cards: relevantStat.cards?.red || 0,
+              league: relevantStat.league?.name || 'Unknown',
+              season: relevantStat.league?.season || 'Unknown'
             } : {
               games: 0,
               goals: 0,
@@ -225,11 +274,14 @@ async function fetchClubWorldCupPlayers() {
               minutes: 0,
               rating: null,
               yellow_cards: 0,
-              red_cards: 0
+              red_cards: 0,
+              league: 'No data',
+              season: 'No data'
             }
           })
         }
         
+        console.log(`✅ Processed ${teamPlayers.length} players for ${teamName}`)
         return teamPlayers
       })
     )

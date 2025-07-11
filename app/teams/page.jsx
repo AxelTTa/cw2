@@ -205,6 +205,7 @@ export default function Teams() {
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#ffffff', textDecoration: 'none' }}>Teams</a>
+          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
         </nav>
       </header>
