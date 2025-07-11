@@ -219,9 +219,9 @@ export default function CompetitionBracket({ competition, onClose }) {
         </p>
       </div>
 
-        {/* Groups (if applicable) */}
-        {bracketData.groups && (
-          <div style={{ marginBottom: '40px' }}>
+      {/* Groups (if applicable) */}
+      {bracketData.groups && (
+        <div style={{ marginBottom: '40px' }}>
             <h3 style={{
               color: '#00ff88',
               fontSize: '22px',
@@ -268,12 +268,12 @@ export default function CompetitionBracket({ competition, onClose }) {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+        </div>
+      )}
 
-        {/* League Phase (if applicable) */}
-        {bracketData.leaguePhase && (
-          <div style={{ marginBottom: '40px' }}>
+      {/* League Phase (if applicable) */}
+      {bracketData.leaguePhase && (
+        <div style={{ marginBottom: '40px' }}>
             <h3 style={{
               color: '#00ff88',
               fontSize: '22px',
@@ -311,12 +311,12 @@ export default function CompetitionBracket({ competition, onClose }) {
               }}>
                 {bracketData.leaguePhase.matches} matches total
               </div>
-            </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Knockout Rounds */}
-        <div>
+      {/* Knockout Rounds */}
+      <div>
           <h3 style={{
             color: '#ff6b35',
             fontSize: '22px',
@@ -429,10 +429,10 @@ export default function CompetitionBracket({ competition, onClose }) {
               </div>
             ))}
           </div>
-        </div>
+      </div>
 
-        {/* Legend */}
-        <div style={{
+      {/* Legend */}
+      <div style={{
           marginTop: '30px',
           paddingTop: '20px',
           borderTop: '2px solid #333',
@@ -452,7 +452,6 @@ export default function CompetitionBracket({ competition, onClose }) {
           </div>
           <div style={{ color: '#888' }}>
             TBD = To Be Determined
-          </div>
         </div>
       </div>
     </div>
