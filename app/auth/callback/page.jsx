@@ -59,8 +59,6 @@ function AuthCallbackContent() {
         setStatus('success')
 
         // Store user data in localStorage for quick access
-        console.log('Storing user profile:', data.user)
-        console.log('User ID type:', typeof data.user.id, 'Value:', data.user.id)
         localStorage.setItem('user_profile', JSON.stringify(data.user))
         localStorage.setItem('access_token', data.tokens.access_token)
         localStorage.setItem('session_token', data.session_token)
