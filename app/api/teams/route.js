@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 
-const API_KEY = '5988d0cb597f14f527539f90330aee32'
+const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
 const POTENTIAL_LEAGUE_IDS = [
