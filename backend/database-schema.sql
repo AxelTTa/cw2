@@ -186,3 +186,76 @@ CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW
     EXECUTE FUNCTION handle_new_user();
+
+-- Players table for Club World Cup participants
+CREATE TABLE players (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    player_id INTEGER UNIQUE NOT NULL, -- External API player ID
+    name VARCHAR(255) NOT NULL,
+    nationality VARCHAR(100),
+    position VARCHAR(50),
+    age INTEGER,
+    height VARCHAR(20),
+    weight VARCHAR(20),
+    photo_url TEXT,
+    team_name VARCHAR(255),
+    team_id INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Player statistics table for tracking performance
+CREATE TABLE player_statistics (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    season INTEGER NOT NULL,
+    league VARCHAR(100),
+    goals INTEGER DEFAULT 0,
+    assists INTEGER DEFAULT 0,
+    appearances INTEGER DEFAULT 0,
+    minutes_played INTEGER DEFAULT 0,
+    yellow_cards INTEGER DEFAULT 0,
+    red_cards INTEGER DEFAULT 0,
+    rating DECIMAL(3,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(player_id, season, league)
+);
+
+-- Player predictions table for user predictions about players
+CREATE TABLE player_predictions (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+    player_id UUID REFERENCES players(id) ON DELETE CASCADE,
+    prediction_type VARCHAR(50) NOT NULL, -- top_scorer, mvp, most_assists, etc.
+    tournament VARCHAR(100) DEFAULT 'FIFA Club World Cup 2025',
+    is_correct BOOLEAN,
+    xp_reward INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(user_id, player_id, prediction_type, tournament)
+);
+
+-- Indexes for performance
+CREATE INDEX idx_players_team_id ON players(team_id);
+CREATE INDEX idx_players_position ON players(position);
+CREATE INDEX idx_players_nationality ON players(nationality);
+CREATE INDEX idx_player_statistics_player_id ON player_statistics(player_id);
+CREATE INDEX idx_player_statistics_season ON player_statistics(season);
+CREATE INDEX idx_player_predictions_player_id ON player_predictions(player_id);
+CREATE INDEX idx_player_predictions_user_id ON player_predictions(user_id);
+
+-- Row Level Security for new tables
+ALTER TABLE players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_statistics ENABLE ROW LEVEL SECURITY;
+ALTER TABLE player_predictions ENABLE ROW LEVEL SECURITY;
+
+-- Players policies (read-only for users)
+CREATE POLICY "Anyone can view players" ON players FOR SELECT USING (true);
+
+-- Player statistics policies (read-only for users)
+CREATE POLICY "Anyone can view player statistics" ON player_statistics FOR SELECT USING (true);
+
+-- Player predictions policies
+CREATE POLICY "Anyone can view player predictions" ON player_predictions FOR SELECT USING (true);
+CREATE POLICY "Authenticated users can create player predictions" ON player_predictions FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own player predictions" ON player_predictions FOR UPDATE USING (auth.uid() = user_id);
