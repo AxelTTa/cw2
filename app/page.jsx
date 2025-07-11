@@ -403,8 +403,10 @@ export default function Home() {
                     borderRadius: '16px',
                     padding: '25px',
                     animation: `slideInUp 0.8s ease-out ${index * 0.15}s both`,
-                    position: 'relative'
+                    position: 'relative',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => window.location.href = `/matches/${match.id}`}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#00ff88'
                     e.currentTarget.style.backgroundColor = '#1a1a1a'
@@ -470,7 +472,10 @@ export default function Home() {
                       cursor: 'pointer',
                       transition: 'transform 0.3s ease'
                     }}
-                    onClick={() => window.location.href = `/teams/${match.homeTeam.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = `/teams/${match.homeTeam.id}`
+                    }}
                     onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
@@ -516,7 +521,10 @@ export default function Home() {
                       cursor: 'pointer',
                       transition: 'transform 0.3s ease'
                     }}
-                    onClick={() => window.location.href = `/teams/${match.awayTeam.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = `/teams/${match.awayTeam.id}`
+                    }}
                     onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
@@ -591,6 +599,208 @@ export default function Home() {
               }}
             >
               Join Match Discussions 💬
+            </a>
+          </div>
+        </div>
+
+        {/* Top Competitions Section */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '80px auto',
+          padding: '0 20px'
+        }}>
+          <h2 style={{
+            fontSize: '36px',
+            fontWeight: '700',
+            marginBottom: '40px',
+            textAlign: 'center',
+            color: '#ffffff',
+            animation: 'slideInUp 1s ease-out 0.7s both'
+          }}>
+            🏆 Top Current Competitions
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px'
+          }}>
+            {[
+              {
+                name: 'FIFA Club World Cup 2025',
+                status: 'LIVE',
+                statusColor: '#00ff88',
+                stage: 'Group Stage',
+                teams: '32 Teams',
+                location: '🇺🇸 USA',
+                prize: '$100M',
+                logo: 'https://media.api-sports.io/football/leagues/15.png'
+              },
+              {
+                name: 'UEFA Champions League',
+                status: 'ONGOING',
+                statusColor: '#0099ff',
+                stage: 'League Phase',
+                teams: '36 Teams',
+                location: '🇪🇺 Europe',
+                prize: '€2.03B',
+                logo: 'https://media.api-sports.io/football/leagues/2.png'
+              },
+              {
+                name: 'AFC Champions League',
+                status: 'ONGOING',
+                statusColor: '#0099ff',
+                stage: 'League Stage',
+                teams: '24 Teams',
+                location: '🌏 Asia',
+                prize: '$12M',
+                logo: 'https://media.api-sports.io/football/leagues/1.png'
+              },
+              {
+                name: 'Copa Libertadores',
+                status: 'COMPLETED',
+                statusColor: '#888',
+                stage: 'Final',
+                teams: '47 Teams',
+                location: '🌎 South America',
+                prize: '$23M',
+                logo: 'https://media.api-sports.io/football/leagues/13.png'
+              },
+              {
+                name: 'CAF Champions League',
+                status: 'UPCOMING',
+                statusColor: '#ff6b35',
+                stage: 'Group Stage',
+                teams: '16 Teams',
+                location: '🌍 Africa',
+                prize: '$2.5M',
+                logo: 'https://media.api-sports.io/football/leagues/12.png'
+              }
+            ].map((competition, index) => (
+              <div
+                key={index}
+                className="card-hover"
+                style={{
+                  backgroundColor: '#111',
+                  border: '2px solid #333',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.1}s both`,
+                  cursor: 'pointer'
+                }}
+                onClick={() => window.location.href = '/competitions'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = competition.statusColor
+                  e.currentTarget.style.backgroundColor = '#1a1a1a'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.backgroundColor = '#111'
+                }}
+              >
+                {/* Status Badge */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '15px'
+                }}>
+                  <img 
+                    src={competition.logo} 
+                    alt={competition.name}
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  <span style={{
+                    color: competition.statusColor,
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    backgroundColor: `${competition.statusColor}20`,
+                    padding: '3px 8px',
+                    borderRadius: '10px'
+                  }}>
+                    {competition.status}
+                  </span>
+                </div>
+
+                {/* Competition Name */}
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '12px',
+                  lineHeight: '1.3'
+                }}>
+                  {competition.name}
+                </h4>
+
+                {/* Quick Info */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '11px',
+                  color: '#888'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Stage:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{competition.stage}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Teams:</span>
+                    <span style={{ color: '#00ff88' }}>{competition.teams}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Prize:</span>
+                    <span style={{ color: '#0099ff' }}>{competition.prize}</span>
+                  </div>
+                  <div style={{ 
+                    textAlign: 'center',
+                    marginTop: '8px',
+                    padding: '6px',
+                    backgroundColor: '#0a0a0a',
+                    borderRadius: '6px',
+                    fontSize: '10px',
+                    color: '#ffdd00'
+                  }}>
+                    {competition.location}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            textAlign: 'center',
+            marginTop: '30px'
+          }}>
+            <a 
+              href="/competitions" 
+              style={{
+                display: 'inline-block',
+                backgroundColor: 'transparent',
+                color: '#00ff88',
+                border: '2px solid #00ff88',
+                textDecoration: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#00ff88'
+                e.target.style.color = '#000'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent'
+                e.target.style.color = '#00ff88'
+              }}
+            >
+              View All Competitions →
             </a>
           </div>
         </div>

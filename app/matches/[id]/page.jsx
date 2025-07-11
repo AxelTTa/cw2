@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Header from '../../components/Header'
 import GoogleAuth from '../../components/GoogleAuth'
+import CommentForm from '../../components/CommentForm'
 import { supabase } from '../../utils/supabase'
 
 export default function MatchDetail() {
@@ -12,7 +13,6 @@ export default function MatchDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [comments, setComments] = useState([])
-  const [newComment, setNewComment] = useState('')
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [replyTo, setReplyTo] = useState(null)
@@ -122,9 +122,8 @@ export default function MatchDetail() {
     setCommentsLoading(false)
   }
 
-  const handleSubmitComment = async (e) => {
-    e.preventDefault()
-    if (!user || !newComment.trim() || !match) return
+  const handleSubmitComment = async (commentData) => {
+    if (!user || !match) return
 
     try {
       const response = await fetch('/api/comments', {
@@ -136,14 +135,16 @@ export default function MatchDetail() {
           user_id: user.id,
           match_id: match.id,
           parent_id: replyTo,
-          content: newComment.trim(),
-          comment_type: 'text'
+          content: commentData.content,
+          comment_type: commentData.comment_type,
+          is_meme: commentData.is_meme,
+          meme_url: commentData.meme_url,
+          meme_caption: commentData.meme_caption
         })
       })
 
       const data = await response.json()
       if (data.success) {
-        setNewComment('')
         setReplyTo(null)
         await loadComments()
       }
@@ -320,6 +321,36 @@ export default function MatchDetail() {
         lineHeight: '1.5',
         marginBottom: '12px'
       }}>
+        {comment.is_meme && comment.meme_url && (
+          <div style={{
+            marginBottom: '12px',
+            padding: '12px',
+            backgroundColor: '#0a0a0a',
+            borderRadius: '8px',
+            border: '1px solid #333'
+          }}>
+            <img
+              src={comment.meme_url}
+              alt="Meme"
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '6px',
+                marginBottom: comment.meme_caption ? '8px' : '0'
+              }}
+            />
+            {comment.meme_caption && (
+              <div style={{
+                fontSize: '13px',
+                color: '#ffdd00',
+                fontWeight: 'bold',
+                textAlign: 'center'
+              }}>
+                "{comment.meme_caption}"
+              </div>
+            )}
+          </div>
+        )}
         {comment.content}
       </div>
 
@@ -849,7 +880,7 @@ export default function MatchDetail() {
 
           {/* Comment Form */}
           {user && (
-            <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px' }}>
+            <div style={{ marginBottom: '20px' }}>
               {replyTo && (
                 <div style={{
                   backgroundColor: '#2a2a2a',
@@ -876,41 +907,11 @@ export default function MatchDetail() {
                   </button>
                 </div>
               )}
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <textarea
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder="Share your thoughts on this match..."
-                  style={{
-                    flex: 1,
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #333',
-                    borderRadius: '8px',
-                    padding: '12px',
-                    color: '#ffffff',
-                    fontSize: '14px',
-                    resize: 'vertical',
-                    minHeight: '80px'
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={!newComment.trim()}
-                  style={{
-                    backgroundColor: newComment.trim() ? '#00ff88' : '#333',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '12px 20px',
-                    color: newComment.trim() ? '#000' : '#666',
-                    fontSize: '14px',
-                    cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Post (+10 XP)
-                </button>
-              </div>
-            </form>
+              <CommentForm 
+                onSubmit={handleSubmitComment}
+                placeholder="Share your thoughts on this match..."
+              />
+            </div>
           )}
 
           {/* Comments List */}
