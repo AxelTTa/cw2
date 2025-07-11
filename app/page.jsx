@@ -1,4 +1,4 @@
-import MatchDiscussion from './components/MatchDiscussion'
+import MatchDiscussion from './community/page'
 
 export default function Home() {
   return (
@@ -101,7 +101,7 @@ export default function Home() {
           }}>
             <h3 style={{ color: '#ff6b35', marginBottom: '15px' }}>Crypto Rewards 🪙</h3>
             <p style={{ color: '#888', lineHeight: '1.6' }}>
-              Like comments with tokens and earn crypto for quality contributions. 
+              Like co mments with tokens and earn crypto for quality contributions. 
               Get paid for your sports insights.
             </p>
           </div>
