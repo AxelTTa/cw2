@@ -77,6 +77,7 @@ export async function POST(request) {
       // Let the database generate the UUID automatically
       const newProfile = {
         google_id: googleProfile.id,
+        email: googleProfile.email,
         username: googleProfile.email.split('@')[0],
         display_name: googleProfile.name,
         avatar_url: googleProfile.picture,
@@ -112,6 +113,7 @@ export async function POST(request) {
       const { data: updatedProfile, error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
+          email: googleProfile.email,
           google_access_token: tokens.access_token,
           google_refresh_token: tokens.refresh_token || existingProfile.google_refresh_token,
           google_id_token: tokens.id_token,
