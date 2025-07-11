@@ -117,7 +117,7 @@ export default function CommunityPage() {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://cw2-alpha.vercel.app/auth/callback'
+        redirectTo: 'https://cw2-alpha.vercel.app/auth/v1/callback'
       }
     })
   }
