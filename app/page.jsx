@@ -1,3 +1,5 @@
+import MatchDiscussion from './components/MatchDiscussion'
+
 export default function Home() {
   return (
     <div style={{
@@ -19,7 +21,7 @@ export default function Home() {
           fontWeight: 'bold',
           color: '#00ff88'
         }}>
-          ChilizWinner
+          Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#ffffff', textDecoration: 'none' }}>Home</a>
@@ -119,6 +121,15 @@ export default function Home() {
             No subjective media agenda. Just pure sports data, community engagement, 
             and fair rewards for quality content.
           </p>
+        </div>
+
+        {/* Match Discussion Section */}
+        <div style={{
+          marginTop: '60px',
+          maxWidth: '1200px',
+          margin: '60px auto 0'
+        }}>
+          <MatchDiscussion />
         </div>
       </main>
     </div>
