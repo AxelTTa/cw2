@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { apiFootball } from '../utils/api-football'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
@@ -14,15 +13,47 @@ export default function Teams() {
         setLoading(true)
         setError(null)
         
-        console.log('🚀 Frontend: Starting teams fetch...')
+        console.log('🚀 Frontend: Starting teams fetch from API...')
         console.log('📅 Frontend: Current time:', new Date().toISOString())
         
-        const teamsData = await apiFootball.fetchClubWorldCupTeams()
+        const response = await fetch('/api/teams', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        console.log('📡 Frontend: API Response received:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          headers: Object.fromEntries(response.headers.entries()),
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        }
+        
+        const apiData = await response.json()
+        
+        console.log('📦 Frontend: API Data parsed:', {
+          success: apiData.success,
+          teamsCount: apiData.count,
+          dataKeys: Object.keys(apiData),
+          timestamp: apiData.timestamp,
+          fullApiData: apiData
+        })
+        
+        const teamsData = apiData.teams
         
         console.log('✅ Frontend: Successfully received teams data:', {
           teamsCount: teamsData?.length || 0,
           firstTeam: teamsData?.[0]?.team?.name || 'None',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          fullTeamsData: teamsData,
+          teamsDataStructure: teamsData?.length > 0 ? Object.keys(teamsData[0]) : [],
+          firstFewTeams: teamsData?.slice(0, 3)
         })
         
         if (!teamsData || teamsData.length === 0) {
@@ -36,17 +67,18 @@ export default function Teams() {
         console.error('❌ Frontend: Error loading teams:', {
           error: err.message,
           stack: err.stack,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          errorType: err.constructor.name,
+          fullError: err,
+          errorString: err.toString()
         })
         
         let errorMessage = 'Failed to load teams. '
         
-        if (err.message.includes('HTTP error')) {
-          errorMessage += 'API request failed. Please check your internet connection.'
-        } else if (err.message.includes('No Club World Cup teams found')) {
-          errorMessage += 'Club World Cup 2025 data is not available yet. The tournament may not have started or the league ID may have changed.'
+        if (err.message.includes('API request failed')) {
+          errorMessage += 'Backend API request failed. Please check the server logs.'
         } else if (err.message.includes('fetch')) {
-          errorMessage += 'Network error. Please check your internet connection.'
+          errorMessage += 'Network error connecting to backend. Please check your connection.'
         } else {
           errorMessage += 'Please try again later.'
         }

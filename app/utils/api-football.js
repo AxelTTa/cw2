@@ -30,6 +30,23 @@ const logApiResponse = (endpoint, response, data) => {
       'x-requests-limit': response.headers.get('x-requests-limit')
     }
   })
+  
+  console.log(`🔍 FULL API Response Data for ${endpoint}:`, {
+    fullResponse: data,
+    responseKeys: data ? Object.keys(data) : [],
+    errors: data?.errors || null,
+    results: data?.results || 0,
+    paging: data?.paging || null,
+    parameters: data?.parameters || null
+  })
+  
+  if (data?.response) {
+    console.log(`📋 Response Items (${data.response.length}):`, data.response)
+  }
+  
+  if (data?.errors && data.errors.length > 0) {
+    console.error(`🚨 API ERRORS for ${endpoint}:`, data.errors)
+  }
 }
 
 const logApiError = (endpoint, error) => {
@@ -37,7 +54,9 @@ const logApiError = (endpoint, error) => {
     endpoint,
     error: error.message,
     stack: error.stack,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    errorType: error.constructor.name,
+    fullError: error
   })
 }
 
@@ -61,6 +80,12 @@ export const apiFootball = {
       logApiResponse(endpoint, response, data)
 
       if (!response.ok) {
+        console.error(`🔥 HTTP Error for ${endpoint}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          responseData: data,
+          headers: Object.fromEntries(response.headers.entries())
+        })
         throw new Error(`HTTP error! status: ${response.status} - ${data.message || 'Unknown error'}`)
       }
 
@@ -104,6 +129,14 @@ export const apiFootball = {
         logApiResponse(endpoint, response, data)
 
         if (!response.ok) {
+          console.error(`🔥 HTTP Error for League ID ${leagueId}:`, {
+            status: response.status,
+            statusText: response.statusText,
+            responseData: data,
+            headers: Object.fromEntries(response.headers.entries()),
+            leagueId,
+            season: 2025
+          })
           console.warn(`⚠️ League ID ${leagueId} failed: ${response.status} - ${data.message || 'Unknown error'}`)
           continue
         }
@@ -153,6 +186,15 @@ export const apiFootball = {
           if (response.ok && data.response && data.response.length > 0) {
             console.log(`✅ Success with League ID ${leagueId}, Season ${season}! Found ${data.response.length} teams`)
             return data.response
+          } else if (!response.ok) {
+            console.error(`🔥 HTTP Error for League ID ${leagueId}, Season ${season}:`, {
+              status: response.status,
+              statusText: response.statusText,
+              responseData: data,
+              headers: Object.fromEntries(response.headers.entries()),
+              leagueId,
+              season
+            })
           }
         } catch (error) {
           console.error(`❌ Error with League ID ${leagueId}, Season ${season}:`, error.message)
