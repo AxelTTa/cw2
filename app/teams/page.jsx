@@ -12,13 +12,49 @@ export default function Teams() {
     async function fetchTeams() {
       try {
         setLoading(true)
+        setError(null)
+        
+        console.log('🚀 Frontend: Starting teams fetch...')
+        console.log('📅 Frontend: Current time:', new Date().toISOString())
+        
         const teamsData = await apiFootball.fetchClubWorldCupTeams()
+        
+        console.log('✅ Frontend: Successfully received teams data:', {
+          teamsCount: teamsData?.length || 0,
+          firstTeam: teamsData?.[0]?.team?.name || 'None',
+          timestamp: new Date().toISOString()
+        })
+        
+        if (!teamsData || teamsData.length === 0) {
+          console.warn('⚠️ Frontend: No teams data received')
+          setError('No teams found for Club World Cup 2025. The tournament data may not be available yet.')
+          return
+        }
+        
         setTeams(teamsData)
       } catch (err) {
-        setError('Failed to load teams. Please try again later.')
-        console.error('Error loading teams:', err)
+        console.error('❌ Frontend: Error loading teams:', {
+          error: err.message,
+          stack: err.stack,
+          timestamp: new Date().toISOString()
+        })
+        
+        let errorMessage = 'Failed to load teams. '
+        
+        if (err.message.includes('HTTP error')) {
+          errorMessage += 'API request failed. Please check your internet connection.'
+        } else if (err.message.includes('No Club World Cup teams found')) {
+          errorMessage += 'Club World Cup 2025 data is not available yet. The tournament may not have started or the league ID may have changed.'
+        } else if (err.message.includes('fetch')) {
+          errorMessage += 'Network error. Please check your internet connection.'
+        } else {
+          errorMessage += 'Please try again later.'
+        }
+        
+        setError(errorMessage)
       } finally {
         setLoading(false)
+        console.log('🏁 Frontend: Teams fetch completed')
       }
     }
 
