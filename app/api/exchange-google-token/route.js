@@ -22,7 +22,7 @@ export async function POST(request) {
         code,
         client_id: process.env.GOOGLE_CLIENT_ID,
         client_secret: process.env.GOOGLE_CLIENT_SECRET,
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cw2-alpha.vercel.app'}/oauth2callback`,
+        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL || 'https://cw2-alpha.vercel.app'}/auth/callback`,
         grant_type: 'authorization_code'
       })
     })

@@ -8,7 +8,7 @@ export default function GoogleAuth({ onAuthSuccess, onAuthError }) {
 
   // Google OAuth configuration
   const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID
-  const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cw2-alpha.vercel.app'}/oauth2callback`
+  const REDIRECT_URI = `${process.env.NEXT_PUBLIC_APP_URL || 'https://cw2-alpha.vercel.app'}/auth/callback`
   const SCOPES = 'email profile openid'
 
   const handleGoogleSignIn = () => {
