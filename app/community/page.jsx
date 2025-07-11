@@ -1,177 +1,115 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { MatchService } from '../../backend/services/matchService'
+import { CommentService } from '../../backend/services/commentService'
+import { ReactionService } from '../../backend/services/reactionService'
+import { ProfileService } from '../../backend/services/profileService'
 import { supabase } from '../utils/supabase'
 
-export default function MatchDiscussion({ matchId }) {
+export default function CommunityPage() {
+  const [matches, setMatches] = useState([])
+  const [selectedMatch, setSelectedMatch] = useState(null)
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [selectedMatch, setSelectedMatch] = useState(null)
-  const [matches, setMatches] = useState([])
   const [replyTo, setReplyTo] = useState(null)
   const [sortBy, setSortBy] = useState('newest')
+  const [userProfile, setUserProfile] = useState(null)
 
   useEffect(() => {
-    getUser()
-    getMatches()
+    initializePage()
   }, [])
 
   useEffect(() => {
-    if (matchId) {
-      getComments()
-      getMatchDetails()
+    if (selectedMatch) {
+      loadComments()
     }
-  }, [matchId, sortBy])
+  }, [selectedMatch, sortBy])
 
-  const getUser = async () => {
+  const initializePage = async () => {
+    await getCurrentUser()
+    await loadMatches()
+    setLoading(false)
+  }
+
+  const getCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser()
     setUser(user)
+    
+    if (user) {
+      const profileResult = await ProfileService.getProfile(user.id)
+      if (profileResult.success) {
+        setUserProfile(profileResult.data)
+      }
+    }
   }
 
-  const getMatches = async () => {
-    const { data, error } = await supabase
-      .from('matches')
-      .select('*')
-      .order('match_date', { ascending: false })
-      .limit(10)
-
-    if (data) setMatches(data)
+  const loadMatches = async () => {
+    const result = await MatchService.getAllMatches()
+    if (result.success) {
+      setMatches(result.data)
+    }
   }
 
-  const getMatchDetails = async () => {
-    const { data, error } = await supabase
-      .from('matches')
-      .select('*')
-      .eq('id', matchId)
-      .single()
-
-    if (data) setSelectedMatch(data)
-  }
-
-  const getComments = async () => {
+  const loadComments = async () => {
+    if (!selectedMatch) return
+    
     setLoading(true)
-    const orderBy = sortBy === 'popular' ? 'upvotes' : 'created_at'
-    const ascending = sortBy === 'oldest'
-
-    const { data, error } = await supabase
-      .from('comments')
-      .select(`
-        *,
-        profiles:user_id (
-          username,
-          display_name,
-          avatar_url,
-          level,
-          xp
-        ),
-        reactions (
-          id,
-          user_id,
-          reaction_type
-        )
-      `)
-      .eq('match_id', matchId)
-      .is('parent_id', null)
-      .order(orderBy, { ascending })
-
-    if (data) {
-      const commentsWithReplies = await Promise.all(
-        data.map(async (comment) => {
-          const { data: replies } = await supabase
-            .from('comments')
-            .select(`
-              *,
-              profiles:user_id (
-                username,
-                display_name,
-                avatar_url,
-                level,
-                xp
-              ),
-              reactions (
-                id,
-                user_id,
-                reaction_type
-              )
-            `)
-            .eq('parent_id', comment.id)
-            .order('created_at', { ascending: true })
-
-          return { ...comment, replies: replies || [] }
-        })
-      )
-      setComments(commentsWithReplies)
+    const result = await CommentService.getCommentsByMatchId(selectedMatch.id, sortBy)
+    if (result.success) {
+      setComments(result.data)
     }
     setLoading(false)
   }
 
+  const handleMatchSelect = async (match) => {
+    setSelectedMatch(match)
+    setComments([])
+    setReplyTo(null)
+  }
+
   const handleSubmitComment = async (e) => {
     e.preventDefault()
-    if (!user || !newComment.trim()) return
+    if (!user || !newComment.trim() || !selectedMatch) return
 
-    const { data, error } = await supabase
-      .from('comments')
-      .insert([
-        {
-          user_id: user.id,
-          match_id: matchId,
-          parent_id: replyTo,
-          content: newComment.trim(),
-          comment_type: 'text'
-        }
-      ])
+    const commentData = {
+      user_id: user.id,
+      match_id: selectedMatch.id,
+      parent_id: replyTo,
+      content: newComment.trim(),
+      comment_type: 'text'
+    }
 
-    if (!error) {
+    const result = await CommentService.createComment(commentData)
+    if (result.success) {
       setNewComment('')
       setReplyTo(null)
-      getComments()
+      await loadComments()
+      
+      // Award XP for posting comment
+      if (userProfile) {
+        await ProfileService.addXP(user.id, 10)
+      }
+    }
+  }
+
+  const handleUpvote = async (commentId) => {
+    if (!user) return
+    
+    const result = await CommentService.upvoteComment(commentId)
+    if (result.success) {
+      await loadComments()
     }
   }
 
   const handleReaction = async (commentId, reactionType) => {
     if (!user) return
 
-    const existingReaction = await supabase
-      .from('reactions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('comment_id', commentId)
-      .eq('reaction_type', reactionType)
-      .single()
-
-    if (existingReaction.data) {
-      await supabase
-        .from('reactions')
-        .delete()
-        .eq('id', existingReaction.data.id)
-    } else {
-      await supabase
-        .from('reactions')
-        .insert([
-          {
-            user_id: user.id,
-            comment_id: commentId,
-            reaction_type: reactionType
-          }
-        ])
-    }
-
-    getComments()
-  }
-
-  const handleUpvote = async (commentId) => {
-    const comment = comments.find(c => c.id === commentId)
-    if (!comment) return
-
-    const { error } = await supabase
-      .from('comments')
-      .update({ upvotes: comment.upvotes + 1 })
-      .eq('id', commentId)
-
-    if (!error) {
-      getComments()
+    const result = await ReactionService.addReaction(user.id, commentId, reactionType)
+    if (result.success) {
+      await loadComments()
     }
   }
 
@@ -187,10 +125,20 @@ export default function MatchDiscussion({ matchId }) {
   const signOut = async () => {
     await supabase.auth.signOut()
     setUser(null)
+    setUserProfile(null)
   }
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleString()
+  }
+
+  const getMatchStatusColor = (status) => {
+    switch (status) {
+      case 'live': return '#00ff88'
+      case 'finished': return '#888'
+      case 'scheduled': return '#0099ff'
+      default: return '#888'
+    }
   }
 
   const CommentComponent = ({ comment, isReply = false }) => (
@@ -274,7 +222,7 @@ export default function MatchDiscussion({ matchId }) {
             gap: '4px'
           }}
         >
-          ⬆️ {comment.upvotes}
+          ⬆️ {comment.upvotes || 0}
         </button>
         <button
           onClick={() => handleReaction(comment.id, 'like')}
@@ -326,246 +274,335 @@ export default function MatchDiscussion({ matchId }) {
     </div>
   )
 
-  if (!matchId) {
-    return (
-      <div style={{
-        backgroundColor: '#0a0a0a',
-        color: '#ffffff',
-        padding: '20px',
-        borderRadius: '12px',
-        border: '1px solid #333'
-      }}>
-        <h2 style={{ marginBottom: '20px', color: '#00ff88' }}>🔥 Live Match Discussions</h2>
-        <p style={{ color: '#888', marginBottom: '20px' }}>
-          Select a match to join the discussion and earn XP for your contributions!
-        </p>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {matches.map(match => (
-            <div
-              key={match.id}
-              onClick={() => setSelectedMatch(match)}
-              style={{
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '8px',
-                padding: '16px',
-                cursor: 'pointer',
-                transition: 'border-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.target.style.borderColor = '#00ff88'}
-              onMouseLeave={(e) => e.target.style.borderColor = '#333'}
-            >
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    {match.home_team} vs {match.away_team}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#888' }}>
-                    {match.league} • {formatTime(match.match_date)}
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: '18px',
-                  fontWeight: 'bold',
-                  color: match.status === 'live' ? '#00ff88' : '#888'
-                }}>
-                  {match.status === 'live' ? `${match.home_score} - ${match.away_score}` : match.status}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{
       backgroundColor: '#0a0a0a',
       color: '#ffffff',
-      padding: '20px',
-      borderRadius: '12px',
-      border: '1px solid #333',
-      maxWidth: '800px',
-      margin: '0 auto'
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {selectedMatch && (
+      {/* Header */}
+      <header style={{
+        padding: '20px',
+        borderBottom: '1px solid #333',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }}>
+        <div style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: '#00ff88'
+        }}>
+          Clutch Community
+        </div>
+        <nav style={{ display: 'flex', gap: '30px' }}>
+          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
+          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
+          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
+          <a href="/community" style={{ color: '#ffffff', textDecoration: 'none' }}>Community</a>
+        </nav>
+      </header>
+
+      <main style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* User Profile Section */}
+        {userProfile && (
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '12px',
+            padding: '20px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '16px'
+          }}>
+            <div style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '50%',
+              backgroundColor: '#00ff88',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#000'
+            }}>
+              {userProfile.username?.[0]?.toUpperCase() || '?'}
+            </div>
+            <div>
+              <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+                {userProfile.display_name || userProfile.username}
+              </div>
+              <div style={{ fontSize: '14px', color: '#888' }}>
+                Level {userProfile.level} • {userProfile.xp} XP • {userProfile.fan_tokens} Tokens
+              </div>
+            </div>
+            <div style={{ marginLeft: 'auto' }}>
+              <button
+                onClick={signOut}
+                style={{
+                  backgroundColor: '#ff4444',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Match Selection */}
         <div style={{
           backgroundColor: '#1a1a1a',
           border: '1px solid #333',
-          borderRadius: '8px',
+          borderRadius: '12px',
           padding: '20px',
           marginBottom: '20px'
         }}>
+          <h2 style={{ color: '#00ff88', marginBottom: '20px' }}>
+            🔥 Select a Match to Join the Discussion
+          </h2>
+          
           <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '8px'
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gap: '16px'
           }}>
-            <h2 style={{ color: '#00ff88', margin: 0 }}>
-              {selectedMatch.home_team} vs {selectedMatch.away_team}
-            </h2>
-            <div style={{
-              fontSize: '24px',
-              fontWeight: 'bold',
-              color: selectedMatch.status === 'live' ? '#00ff88' : '#888'
-            }}>
-              {selectedMatch.status === 'live' ? `${selectedMatch.home_score} - ${selectedMatch.away_score}` : selectedMatch.status}
-            </div>
-          </div>
-          <div style={{ fontSize: '14px', color: '#888' }}>
-            {selectedMatch.league} • {formatTime(selectedMatch.match_date)}
-          </div>
-        </div>
-      )}
-
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '20px'
-      }}>
-        <h3 style={{ color: '#ffffff', margin: 0 }}>
-          💬 Discussion ({comments.length})
-        </h3>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              padding: '6px 12px',
-              color: '#ffffff',
-              fontSize: '12px'
-            }}
-          >
-            <option value="newest">Newest</option>
-            <option value="oldest">Oldest</option>
-            <option value="popular">Most Popular</option>
-          </select>
-          {user ? (
-            <button
-              onClick={signOut}
-              style={{
-                backgroundColor: '#ff4444',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '6px 12px',
-                color: '#ffffff',
-                fontSize: '12px',
-                cursor: 'pointer'
-              }}
-            >
-              Sign Out
-            </button>
-          ) : (
-            <button
-              onClick={signIn}
-              style={{
-                backgroundColor: '#00ff88',
-                border: 'none',
-                borderRadius: '4px',
-                padding: '6px 12px',
-                color: '#000',
-                fontSize: '12px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Sign In
-            </button>
-          )}
-        </div>
-      </div>
-
-      {user && (
-        <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px' }}>
-          {replyTo && (
-            <div style={{
-              backgroundColor: '#1a1a1a',
-              border: '1px solid #333',
-              borderRadius: '4px',
-              padding: '8px',
-              marginBottom: '8px',
-              fontSize: '12px',
-              color: '#888'
-            }}>
-              Replying to comment...{' '}
-              <button
-                type="button"
-                onClick={() => setReplyTo(null)}
+            {matches.map(match => (
+              <div
+                key={match.id}
+                onClick={() => handleMatchSelect(match)}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#ff4444',
+                  backgroundColor: selectedMatch?.id === match.id ? '#2a2a2a' : '#111',
+                  border: `1px solid ${selectedMatch?.id === match.id ? '#00ff88' : '#333'}`,
+                  borderRadius: '8px',
+                  padding: '16px',
                   cursor: 'pointer',
-                  fontSize: '12px'
+                  transition: 'all 0.2s'
                 }}
               >
-                Cancel
-              </button>
-            </div>
-          )}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <textarea
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              placeholder="Share your thoughts on the match..."
-              style={{
-                flex: 1,
-                backgroundColor: '#1a1a1a',
-                border: '1px solid #333',
-                borderRadius: '8px',
-                padding: '12px',
-                color: '#ffffff',
-                fontSize: '14px',
-                resize: 'vertical',
-                minHeight: '60px'
-              }}
-            />
-            <button
-              type="submit"
-              disabled={!newComment.trim()}
-              style={{
-                backgroundColor: newComment.trim() ? '#00ff88' : '#333',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 20px',
-                color: newComment.trim() ? '#000' : '#666',
-                fontSize: '14px',
-                cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                fontWeight: 'bold'
-              }}
-            >
-              Post
-            </button>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+                    {match.home_team} vs {match.away_team}
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    backgroundColor: getMatchStatusColor(match.status),
+                    color: '#000',
+                    fontWeight: 'bold'
+                  }}>
+                    {match.status}
+                  </div>
+                </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <div style={{ fontSize: '12px', color: '#888' }}>
+                    {match.league} • {formatTime(match.match_date)}
+                  </div>
+                  {match.status === 'live' && (
+                    <div style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#00ff88'
+                    }}>
+                      {match.home_score} - {match.away_score}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
-        </form>
-      )}
+        </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-          Loading comments...
-        </div>
-      ) : comments.length === 0 ? (
-        <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-          No comments yet. Be the first to share your thoughts!
-        </div>
-      ) : (
-        <div>
-          {comments.map(comment => (
-            <CommentComponent key={comment.id} comment={comment} />
-          ))}
-        </div>
-      )}
+        {/* Discussion Section */}
+        {selectedMatch && (
+          <div style={{
+            backgroundColor: '#1a1a1a',
+            border: '1px solid #333',
+            borderRadius: '12px',
+            padding: '20px'
+          }}>
+            {/* Match Header */}
+            <div style={{
+              backgroundColor: '#2a2a2a',
+              border: '1px solid #333',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '20px'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '8px'
+              }}>
+                <h2 style={{ color: '#00ff88', margin: 0 }}>
+                  {selectedMatch.home_team} vs {selectedMatch.away_team}
+                </h2>
+                <div style={{
+                  fontSize: '24px',
+                  fontWeight: 'bold',
+                  color: getMatchStatusColor(selectedMatch.status)
+                }}>
+                  {selectedMatch.status === 'live' ? 
+                    `${selectedMatch.home_score} - ${selectedMatch.away_score}` : 
+                    selectedMatch.status}
+                </div>
+              </div>
+              <div style={{ fontSize: '14px', color: '#888' }}>
+                {selectedMatch.league} • {formatTime(selectedMatch.match_date)}
+              </div>
+            </div>
+
+            {/* Discussion Controls */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '20px'
+            }}>
+              <h3 style={{ color: '#ffffff', margin: 0 }}>
+                💬 Discussion ({comments.length})
+              </h3>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    color: '#ffffff',
+                    fontSize: '12px'
+                  }}
+                >
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                  <option value="popular">Most Popular</option>
+                </select>
+                {!user && (
+                  <button
+                    onClick={signIn}
+                    style={{
+                      backgroundColor: '#00ff88',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '6px 12px',
+                      color: '#000',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Sign In to Comment
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Comment Form */}
+            {user && (
+              <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px' }}>
+                {replyTo && (
+                  <div style={{
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: '4px',
+                    padding: '8px',
+                    marginBottom: '8px',
+                    fontSize: '12px',
+                    color: '#888'
+                  }}>
+                    Replying to comment...{' '}
+                    <button
+                      type="button"
+                      onClick={() => setReplyTo(null)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#ff4444',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Share your thoughts on the match..."
+                    style={{
+                      flex: 1,
+                      backgroundColor: '#2a2a2a',
+                      border: '1px solid #333',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      resize: 'vertical',
+                      minHeight: '80px'
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={!newComment.trim()}
+                    style={{
+                      backgroundColor: newComment.trim() ? '#00ff88' : '#333',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 20px',
+                      color: newComment.trim() ? '#000' : '#666',
+                      fontSize: '14px',
+                      cursor: newComment.trim() ? 'pointer' : 'not-allowed',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    Post (+10 XP)
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Comments List */}
+            {loading ? (
+              <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
+                Loading comments...
+              </div>
+            ) : comments.length === 0 ? (
+              <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
+                No comments yet. Be the first to share your thoughts!
+              </div>
+            ) : (
+              <div>
+                {comments.map(comment => (
+                  <CommentComponent key={comment.id} comment={comment} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </main>
     </div>
   )
 }
