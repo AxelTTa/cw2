@@ -62,19 +62,14 @@ const logApiError = (endpoint, error) => {
   })
 }
 
-async function fetchClubWorldCupPlayers() {
-  console.log('🔍 Backend Starting Club World Cup 2025 players fetch...')
+async function fetchAllClubWorldCupTeams() {
+  console.log('🔍 Backend Starting teams fetch to get ALL players...')
   
-  // Try multiple league IDs
   for (const leagueId of POTENTIAL_LEAGUE_IDS) {
-    const endpoint = '/players'
-    const params = { league: leagueId, season: 2025 }
-    
     try {
-      console.log(`🎯 Backend Trying League ID: ${leagueId} for players`)
-      logApiRequest(endpoint, params)
+      console.log(`🎯 Backend Trying League ID: ${leagueId} for teams`)
       
-      const response = await fetch(`${BASE_URL}/players?league=${leagueId}&season=2025`, {
+      const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2025`, {
         method: 'GET',
         headers: {
           'X-RapidAPI-Key': API_KEY,
@@ -83,54 +78,22 @@ async function fetchClubWorldCupPlayers() {
       })
 
       const data = await response.json()
-      logApiResponse(endpoint, response, data)
 
-      if (!response.ok) {
-        console.error(`🔥 Backend HTTP Error for League ID ${leagueId}:`, {
-          status: response.status,
-          statusText: response.statusText,
-          responseData: data,
-          headers: Object.fromEntries(response.headers.entries()),
-          leagueId,
-          season: 2025
-        })
-        console.warn(`⚠️ Backend League ID ${leagueId} failed: ${response.status} - ${data.message || 'Unknown error'}`)
-        continue
-      }
-
-      if (data.response && data.response.length > 0) {
-        console.log(`✅ Backend Success with League ID ${leagueId}! Found ${data.response.length} players`)
-        console.log('🏃 Backend Players found:', data.response.slice(0, 5).map(p => ({
-          name: p.player?.name,
-          position: p.player?.position,
-          nationality: p.player?.nationality,
-          id: p.player?.id
-        })))
+      if (response.ok && data.response && data.response.length > 0) {
+        console.log(`✅ Backend Found ${data.response.length} teams for League ID ${leagueId}`)
         return data.response
-      } else {
-        console.warn(`⚠️ Backend League ID ${leagueId} returned no players`)
       }
     } catch (error) {
       console.error(`❌ Backend Error with League ID ${leagueId}:`, error.message)
-      logApiError(endpoint, error)
       continue
     }
   }
 
-  // If no league IDs work for 2025, try different seasons
-  console.log('🔄 Backend Trying different seasons for players...')
   const seasons = [2024, 2023]
-  
   for (const season of seasons) {
-    for (const leagueId of POTENTIAL_LEAGUE_IDS.slice(0, 2)) { // Try only first 2 IDs for other seasons
-      const endpoint = '/players'
-      const params = { league: leagueId, season }
-      
+    for (const leagueId of POTENTIAL_LEAGUE_IDS.slice(0, 2)) {
       try {
-        console.log(`🎯 Backend Trying League ID: ${leagueId}, Season: ${season} for players`)
-        logApiRequest(endpoint, params)
-        
-        const response = await fetch(`${BASE_URL}/players?league=${leagueId}&season=${season}`, {
+        const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=${season}`, {
           method: 'GET',
           headers: {
             'X-RapidAPI-Key': API_KEY,
@@ -139,31 +102,156 @@ async function fetchClubWorldCupPlayers() {
         })
 
         const data = await response.json()
-        logApiResponse(endpoint, response, data)
-
         if (response.ok && data.response && data.response.length > 0) {
-          console.log(`✅ Backend Success with League ID ${leagueId}, Season ${season}! Found ${data.response.length} players`)
+          console.log(`✅ Backend Found ${data.response.length} teams for League ID ${leagueId}, Season ${season}`)
           return data.response
-        } else if (!response.ok) {
-          console.error(`🔥 Backend HTTP Error for League ID ${leagueId}, Season ${season}:`, {
-            status: response.status,
-            statusText: response.statusText,
-            responseData: data,
-            headers: Object.fromEntries(response.headers.entries()),
-            leagueId,
-            season
-          })
         }
       } catch (error) {
-        console.error(`❌ Backend Error with League ID ${leagueId}, Season ${season}:`, error.message)
         continue
       }
     }
   }
 
-  // If all API attempts fail, throw an error instead of using mock data
-  console.error('❌ Backend All API requests failed, no real players data available')
-  throw new Error('Unable to fetch real players data from Football API. All league IDs and seasons attempted failed.')
+  throw new Error('Unable to fetch teams data')
+}
+
+async function fetchPlayersForTeam(teamId, season = 2025) {
+  const endpoint = '/players/squads'
+  
+  try {
+    console.log(`🏃 Backend Fetching players for team: ${teamId}`)
+    
+    const response = await fetch(`${BASE_URL}/players/squads?team=${teamId}`, {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': API_KEY,
+        'X-RapidAPI-Host': 'v3.football.api-sports.io'
+      }
+    })
+
+    const data = await response.json()
+    
+    if (response.ok && data.response && data.response.length > 0) {
+      return data.response[0].players || []
+    }
+    
+    return []
+  } catch (error) {
+    console.error(`❌ Backend Error fetching players for team ${teamId}:`, error.message)
+    return []
+  }
+}
+
+async function fetchPlayerStatistics(playerId, season = 2025) {
+  try {
+    const response = await fetch(`${BASE_URL}/players?id=${playerId}&season=${season}`, {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': API_KEY,
+        'X-RapidAPI-Host': 'v3.football.api-sports.io'
+      }
+    })
+
+    const data = await response.json()
+    
+    if (response.ok && data.response && data.response.length > 0) {
+      return data.response[0].statistics || []
+    }
+    
+    return []
+  } catch (error) {
+    console.error(`❌ Backend Error fetching stats for player ${playerId}:`, error.message)
+    return []
+  }
+}
+
+async function fetchClubWorldCupPlayers() {
+  console.log('🔍 Backend Starting Club World Cup 2025 ALL players fetch...')
+  
+  // First, get all teams
+  const teams = await fetchAllClubWorldCupTeams()
+  console.log(`📋 Backend Found ${teams.length} teams, now fetching ALL players...`)
+  
+  const allPlayers = []
+  const playerPromises = []
+  
+  // Fetch players for each team
+  for (const teamData of teams) {
+    const teamId = teamData.team.id
+    const teamName = teamData.team.name
+    const teamLogo = teamData.team.logo
+    
+    playerPromises.push(
+      fetchPlayersForTeam(teamId).then(async (players) => {
+        const teamPlayers = []
+        
+        for (const player of players) {
+          // Fetch detailed stats for each player
+          const stats = await fetchPlayerStatistics(player.id, 2025)
+          
+          // Find the most relevant stat (usually the league/competition stat)
+          const relevantStat = stats.find(s => s.league?.name?.toLowerCase().includes('world')) || 
+                              stats.find(s => s.league?.name?.toLowerCase().includes('cup')) || 
+                              stats[0] // fallback to first stat
+          
+          teamPlayers.push({
+            player: {
+              id: player.id,
+              name: player.name,
+              photo: player.photo,
+              age: player.age,
+              nationality: player.birth?.country || 'Unknown',
+              position: player.position,
+              height: player.height,
+              weight: player.weight
+            },
+            team: {
+              id: teamId,
+              name: teamName,
+              logo: teamLogo
+            },
+            statistics: relevantStat ? {
+              games: relevantStat.games?.appearences || 0,
+              goals: relevantStat.goals?.total || 0,
+              assists: relevantStat.goals?.assists || 0,
+              minutes: relevantStat.games?.minutes || 0,
+              rating: relevantStat.games?.rating || null,
+              yellow_cards: relevantStat.cards?.yellow || 0,
+              red_cards: relevantStat.cards?.red || 0
+            } : {
+              games: 0,
+              goals: 0,
+              assists: 0,
+              minutes: 0,
+              rating: null,
+              yellow_cards: 0,
+              red_cards: 0
+            }
+          })
+        }
+        
+        return teamPlayers
+      })
+    )
+  }
+  
+  // Wait for all player fetches to complete
+  const teamPlayersArrays = await Promise.all(playerPromises)
+  
+  // Flatten all players into one array
+  for (const teamPlayers of teamPlayersArrays) {
+    allPlayers.push(...teamPlayers)
+  }
+  
+  console.log(`✅ Backend Successfully fetched ${allPlayers.length} total players from ${teams.length} teams`)
+  console.log('📊 Backend Sample players:', allPlayers.slice(0, 3).map(p => ({
+    name: p.player?.name,
+    team: p.team?.name,
+    position: p.player?.position,
+    goals: p.statistics?.goals
+  })))
+  
+  return allPlayers
 }
 
 
