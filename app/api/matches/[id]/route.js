@@ -47,11 +47,11 @@ export async function GET(request, { params }) {
       if (fixtureData.response && fixtureData.response.length > 0) {
         const fixture = fixtureData.response[0]
         matchDetails = {
-          referee: fixture.fixture.referee,
-          weather: fixture.fixture.weather,
-          lineups: fixture.lineups,
-          events: fixture.events,
-          players: fixture.players
+          referee: fixture.fixture?.referee || null,
+          weather: fixture.fixture?.weather || null,
+          lineups: fixture.lineups || null,
+          events: fixture.events || null,
+          players: fixture.players || null
         }
       }
     }
@@ -62,7 +62,7 @@ export async function GET(request, { params }) {
       if (oddsData.response && oddsData.response.length > 0) {
         // Find the main betting odds (1X2)
         const mainOdds = oddsData.response.find(odd => 
-          odd.bookmaker.name === 'Bet365' || odd.bookmaker.name === 'William Hill'
+          odd.bookmaker?.name === 'Bet365' || odd.bookmaker?.name === 'William Hill'
         ) || oddsData.response[0]
 
         if (mainOdds && mainOdds.bets) {
@@ -72,7 +72,7 @@ export async function GET(request, { params }) {
               home: matchWinnerBet.values.find(v => v.value === 'Home')?.odd,
               draw: matchWinnerBet.values.find(v => v.value === 'Draw')?.odd,
               away: matchWinnerBet.values.find(v => v.value === 'Away')?.odd,
-              bookmaker: mainOdds.bookmaker.name
+              bookmaker: mainOdds.bookmaker?.name || 'Unknown'
             }
           }
         }

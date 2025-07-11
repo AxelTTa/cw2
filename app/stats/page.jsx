@@ -32,17 +32,17 @@ export default function Stats() {
       setCurrentTime(new Date());
     }, 1000);
 
-    // Refresh data every 30 seconds
+    // Refresh data every 60 seconds instead of 30 to reduce API calls
     const dataInterval = setInterval(() => {
       loadRealData();
-    }, 30000);
+    }, 60000);
 
     return () => {
       clearInterval(statsInterval);
       clearInterval(timeInterval);
       clearInterval(dataInterval);
     };
-  }, []);
+  }, []); // Keep empty dependency array
 
   const loadRealData = async () => {
     setLoading(true);

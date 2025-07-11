@@ -321,19 +321,39 @@ export async function GET(request) {
     console.log('🎯 Backend API Route /api/players called')
     console.log('📅 Backend Current time:', new Date().toISOString())
     
-    // Parse limit from query parameters for pagination support
+    // Parse query parameters
     const { searchParams } = new URL(request.url)
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : null
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')) : 0
+    const sort = searchParams.get('sort') || null
     
-    console.log('🔍 Backend Query parameters:', { limit, offset })
+    console.log('🔍 Backend Query parameters:', { limit, offset, sort })
     
     const players = await fetchClubWorldCupPlayers()
     
+    // Apply sorting if requested
+    let sortedPlayers = players
+    if (sort) {
+      switch (sort) {
+        case 'goals_desc':
+          sortedPlayers = players.sort((a, b) => (b.statistics?.goals || 0) - (a.statistics?.goals || 0))
+          break
+        case 'assists_desc':
+          sortedPlayers = players.sort((a, b) => (b.statistics?.assists || 0) - (a.statistics?.assists || 0))
+          break
+        case 'games_desc':
+          sortedPlayers = players.sort((a, b) => (b.statistics?.games || 0) - (a.statistics?.games || 0))
+          break
+        default:
+          sortedPlayers = players
+      }
+      console.log(`🔃 Backend Sorting applied: ${sort}`)
+    }
+    
     // Apply pagination if requested
-    let paginatedPlayers = players
+    let paginatedPlayers = sortedPlayers
     if (limit && limit > 0) {
-      paginatedPlayers = players.slice(offset, offset + limit)
+      paginatedPlayers = sortedPlayers.slice(offset, offset + limit)
       console.log(`📊 Backend Pagination applied: ${paginatedPlayers.length} players (offset: ${offset}, limit: ${limit})`)
     }
     
@@ -342,18 +362,19 @@ export async function GET(request) {
       returnedPlayersCount: paginatedPlayers?.length || 0,
       firstPlayer: paginatedPlayers?.[0]?.player?.name || 'None',
       timestamp: new Date().toISOString(),
-      pagination: { limit, offset }
+      pagination: { limit, offset },
+      sort
     })
     
     return NextResponse.json({
       success: true,
       players: paginatedPlayers,
       count: paginatedPlayers?.length || 0,
-      totalCount: players?.length || 0,
+      totalCount: sortedPlayers?.length || 0,
       pagination: {
         offset,
         limit,
-        hasMore: limit ? (offset + limit) < (players?.length || 0) : false
+        hasMore: limit ? (offset + limit) < (sortedPlayers?.length || 0) : false
       },
       timestamp: new Date().toISOString()
     })

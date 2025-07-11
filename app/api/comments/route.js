@@ -30,7 +30,8 @@ export async function GET(request) {
       .range(offset, offset + limit - 1)
 
     if (matchId) {
-      query = query.eq('match_id', matchId)
+      // Convert to string to handle both integers and UUIDs
+      query = query.eq('match_id', matchId.toString())
     }
 
     const { data: comments, error } = await query
@@ -84,11 +85,23 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
+    // Convert match_id to string to handle both integers and UUIDs
+    const matchIdString = match_id ? match_id.toString() : null
+
+    console.log('Creating comment with data:', {
+      content,
+      match_id: matchIdString,
+      user_id,
+      parent_id,
+      is_meme,
+      comment_type
+    })
+
     const { data: comment, error } = await supabaseAdmin
       .from('comments')
       .insert([{
         content,
-        match_id,
+        match_id: matchIdString,
         user_id,
         parent_id,
         is_meme,
