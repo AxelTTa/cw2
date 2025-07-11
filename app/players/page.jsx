@@ -1,28 +1,76 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 
 export default function Players() {
   const [allPlayers, setAllPlayers] = useState([])
   const [filteredPlayers, setFilteredPlayers] = useState([])
   const [displayedPlayers, setDisplayedPlayers] = useState([])
+  const [loadedPlayers, setLoadedPlayers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [backgroundLoading, setBackgroundLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
-  const [playersPerPage] = useState(24)
+  const [playersPerPage] = useState(25)
   const [currentPage, setCurrentPage] = useState(1)
   const [teams, setTeams] = useState([])
+  const [searchLoading, setSearchLoading] = useState(false)
 
   useEffect(() => {
-    async function fetchPlayers() {
+    async function fetchInitialPlayers() {
       try {
         setLoading(true)
         setError(null)
         
-        console.log('🚀 Frontend: Starting players fetch from API...')
-        console.log('📅 Frontend: Current time:', new Date().toISOString())
+        console.log('🚀 Frontend: Starting initial 25 players fetch...')
+        
+        const response = await fetch(`/api/players?limit=${playersPerPage}&offset=0`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (!response.ok) {
+          throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        }
+        
+        const apiData = await response.json()
+        const playersData = apiData.players
+        
+        if (!playersData || playersData.length === 0) {
+          setError('No players found for Club World Cup 2025.')
+          return
+        }
+        
+        // Extract unique teams from initial data
+        const uniqueTeams = [...new Set(playersData.map(p => p.team?.name).filter(Boolean))]
+          .sort()
+        setTeams(uniqueTeams)
+        
+        setLoadedPlayers(playersData)
+        setFilteredPlayers(playersData)
+        setDisplayedPlayers(playersData)
+        
+        console.log(`✅ Frontend: Loaded initial ${playersData.length} players`)
+        
+        // Start background loading of all players
+        fetchAllPlayersInBackground()
+      } catch (err) {
+        console.error('❌ Frontend: Error loading initial players:', err)
+        setError('Failed to load players. Please try again later.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    async function fetchAllPlayersInBackground() {
+      try {
+        setBackgroundLoading(true)
+        console.log('🔄 Frontend: Starting background fetch of all players...')
         
         const response = await fetch('/api/players', {
           method: 'GET',
@@ -31,88 +79,43 @@ export default function Players() {
           },
         })
         
-        console.log('📡 Frontend: API Response received:', {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-          headers: Object.fromEntries(response.headers.entries()),
-          timestamp: new Date().toISOString()
-        })
-        
-        if (!response.ok) {
-          throw new Error(`API request failed: ${response.status} ${response.statusText}`)
+        if (response.ok) {
+          const apiData = await response.json()
+          const allPlayersData = apiData.players
+          
+          if (allPlayersData && allPlayersData.length > 0) {
+            setAllPlayers(allPlayersData)
+            
+            // Update teams list with all teams
+            const allUniqueTeams = [...new Set(allPlayersData.map(p => p.team?.name).filter(Boolean))]
+              .sort()
+            setTeams(allUniqueTeams)
+            
+            console.log(`✅ Frontend: Background loaded ${allPlayersData.length} total players`)
+          }
         }
-        
-        const apiData = await response.json()
-        
-        console.log('📦 Frontend: API Data parsed:', {
-          success: apiData.success,
-          playersCount: apiData.count,
-          totalPlayersCount: apiData.totalCount,
-          pagination: apiData.pagination,
-          dataKeys: Object.keys(apiData),
-          timestamp: apiData.timestamp,
-          fullApiData: apiData
-        })
-        
-        const playersData = apiData.players
-        
-        console.log('✅ Frontend: Successfully received players data:', {
-          playersCount: playersData?.length || 0,
-          firstPlayer: playersData?.[0]?.player?.name || 'None',
-          timestamp: new Date().toISOString(),
-          fullPlayersData: playersData,
-          playersDataStructure: playersData?.length > 0 ? Object.keys(playersData[0]) : [],
-          firstFewPlayers: playersData?.slice(0, 3)
-        })
-        
-        if (!playersData || playersData.length === 0) {
-          console.warn('⚠️ Frontend: No players data received')
-          setError('No players found for Club World Cup 2025. The tournament data may not be available yet.')
-          return
-        }
-        
-        // Extract unique teams
-        const uniqueTeams = [...new Set(playersData.map(p => p.team?.name).filter(Boolean))]
-          .sort()
-        setTeams(uniqueTeams)
-        
-        setAllPlayers(playersData)
-        setFilteredPlayers(playersData)
-        setDisplayedPlayers(playersData.slice(0, playersPerPage))
       } catch (err) {
-        console.error('❌ Frontend: Error loading players:', {
-          error: err.message,
-          stack: err.stack,
-          timestamp: new Date().toISOString(),
-          errorType: err.constructor.name,
-          fullError: err,
-          errorString: err.toString()
-        })
-        
-        let errorMessage = 'Failed to load players. '
-        
-        if (err.message.includes('API request failed')) {
-          errorMessage += 'Backend API request failed. Please check the server logs.'
-        } else if (err.message.includes('fetch')) {
-          errorMessage += 'Network error connecting to backend. Please check your connection.'
-        } else {
-          errorMessage += 'Please try again later.'
-        }
-        
-        setError(errorMessage)
+        console.error('❌ Frontend: Error loading all players in background:', err)
       } finally {
-        setLoading(false)
-        console.log('🏁 Frontend: Players fetch completed')
+        setBackgroundLoading(false)
       }
     }
 
-    fetchPlayers()
+    fetchInitialPlayers()
   }, [])
 
   // Filter and search functionality
   useEffect(() => {
-    let filtered = allPlayers
+    // Determine which dataset to use for filtering
+    const datasetToFilter = allPlayers.length > 0 ? allPlayers : loadedPlayers
+    let filtered = datasetToFilter
+
+    // Check if we're searching for something not in loaded players
+    if (searchTerm && allPlayers.length === 0) {
+      setSearchLoading(true)
+    } else {
+      setSearchLoading(false)
+    }
 
     // Apply search filter
     if (searchTerm) {
@@ -136,14 +139,60 @@ export default function Players() {
     setFilteredPlayers(filtered)
     setCurrentPage(1)
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
-  }, [searchTerm, selectedTeam, selectedPosition, allPlayers, playersPerPage])
+  }, [searchTerm, selectedTeam, selectedPosition, allPlayers, loadedPlayers, playersPerPage])
 
-  // Pagination for display
-  const handleNextPage = () => {
-    const startIndex = currentPage * playersPerPage
-    const endIndex = startIndex + playersPerPage
-    setDisplayedPlayers(filteredPlayers.slice(0, endIndex))
-    setCurrentPage(currentPage + 1)
+  // Load more players
+  const handleLoadMore = async () => {
+    if (allPlayers.length > 0) {
+      // If all players are already loaded, just show more from filtered results
+      const startIndex = displayedPlayers.length
+      const endIndex = startIndex + playersPerPage
+      const newPlayers = filteredPlayers.slice(startIndex, endIndex)
+      setDisplayedPlayers(prev => [...prev, ...newPlayers])
+    } else {
+      // Load more from API
+      try {
+        const offset = loadedPlayers.length
+        const response = await fetch(`/api/players?limit=${playersPerPage}&offset=${offset}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (response.ok) {
+          const apiData = await response.json()
+          const newPlayersData = apiData.players
+          
+          if (newPlayersData && newPlayersData.length > 0) {
+            const updatedLoadedPlayers = [...loadedPlayers, ...newPlayersData]
+            setLoadedPlayers(updatedLoadedPlayers)
+            
+            // Apply current filters to the new combined dataset
+            let filtered = updatedLoadedPlayers
+            
+            if (searchTerm) {
+              filtered = filtered.filter(playerData => 
+                playerData.player?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                playerData.team?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                playerData.player?.nationality?.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+            }
+            if (selectedTeam) {
+              filtered = filtered.filter(playerData => playerData.team?.name === selectedTeam)
+            }
+            if (selectedPosition) {
+              filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
+            }
+            
+            setFilteredPlayers(filtered)
+            setDisplayedPlayers(filtered.slice(0, displayedPlayers.length + playersPerPage))
+          }
+        }
+      } catch (err) {
+        console.error('Error loading more players:', err)
+      }
+    }
   }
 
   const hasMorePlayers = displayedPlayers.length < filteredPlayers.length
@@ -209,36 +258,7 @@ export default function Players() {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer'
-          }}
-          onClick={() => window.location.href = '/'}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
-          <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
-          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Players Content */}
       <main style={{ padding: '40px 20px' }}>
@@ -343,7 +363,7 @@ export default function Players() {
               fontSize: '14px',
               minWidth: '120px'
             }}>
-              {filteredPlayers.length} players
+              {filteredPlayers.length} players {searchLoading && searchTerm && allPlayers.length === 0 ? '(searching...)' : ''}
             </div>
           </div>
         )}
@@ -581,7 +601,7 @@ export default function Players() {
                 marginTop: '40px'
               }}>
                 <button 
-                  onClick={handleNextPage}
+                  onClick={handleLoadMore}
                   style={{
                     backgroundColor: '#00ff88',
                     color: '#000',
@@ -604,6 +624,15 @@ export default function Players() {
                 >
                   Load More Players ({filteredPlayers.length - displayedPlayers.length} remaining)
                 </button>
+                {backgroundLoading && (
+                  <div style={{
+                    marginTop: '10px',
+                    fontSize: '14px',
+                    color: '#888'
+                  }}>
+                    Loading all players in background...
+                  </div>
+                )}
               </div>
             )}
 
@@ -633,7 +662,7 @@ export default function Players() {
               }}>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#00ff88' }}>
-                    {allPlayers.length}
+                    {allPlayers.length > 0 ? allPlayers.length : `${loadedPlayers.length}+`}
                   </div>
                   <div style={{ fontSize: '14px', color: '#888' }}>Total Players</div>
                 </div>
@@ -645,13 +674,13 @@ export default function Players() {
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ff6b35' }}>
-                    {allPlayers.filter(p => p.player?.position === 'Goalkeeper').length}
+                    {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Goalkeeper').length}
                   </div>
                   <div style={{ fontSize: '14px', color: '#888' }}>Goalkeepers</div>
                 </div>
                 <div>
                   <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#ef4444' }}>
-                    {allPlayers.filter(p => p.player?.position === 'Attacker').length}
+                    {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Attacker').length}
                   </div>
                   <div style={{ fontSize: '14px', color: '#888' }}>Attackers</div>
                 </div>

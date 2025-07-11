@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from './components/Header'
 import MatchDiscussion from './community/page'
 
 export default function Home() {
@@ -68,36 +69,7 @@ export default function Home() {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer'
-          }}
-          onClick={() => window.location.href = '/'}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#ffffff', textDecoration: 'none' }}>Home</a>
-          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
-          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main style={{ padding: '60px 20px', textAlign: 'center' }}>
