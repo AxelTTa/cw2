@@ -261,6 +261,8 @@ function getClubWorldCup2025MockData() {
   ]
 }
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request) {
   try {
     console.log('🎯 Backend API Route /api/teams called')
