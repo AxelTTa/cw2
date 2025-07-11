@@ -48,6 +48,8 @@ export default function Players() {
         console.log('📦 Frontend: API Data parsed:', {
           success: apiData.success,
           playersCount: apiData.count,
+          totalPlayersCount: apiData.totalCount,
+          pagination: apiData.pagination,
           dataKeys: Object.keys(apiData),
           timestamp: apiData.timestamp,
           fullApiData: apiData
@@ -136,14 +138,12 @@ export default function Players() {
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
   }, [searchTerm, selectedTeam, selectedPosition, allPlayers, playersPerPage])
 
-  const loadMorePlayers = () => {
-    const nextPage = currentPage + 1
+  // Pagination for display
+  const handleNextPage = () => {
     const startIndex = currentPage * playersPerPage
-    const endIndex = nextPage * playersPerPage
-    const newPlayers = filteredPlayers.slice(startIndex, endIndex)
-    
-    setDisplayedPlayers(prev => [...prev, ...newPlayers])
-    setCurrentPage(nextPage)
+    const endIndex = startIndex + playersPerPage
+    setDisplayedPlayers(filteredPlayers.slice(0, endIndex))
+    setCurrentPage(currentPage + 1)
   }
 
   const hasMorePlayers = displayedPlayers.length < filteredPlayers.length
@@ -226,9 +226,9 @@ export default function Players() {
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
+          <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
         </nav>
       </header>
@@ -574,7 +574,7 @@ export default function Players() {
                 marginTop: '40px'
               }}>
                 <button 
-                  onClick={loadMorePlayers}
+                  onClick={handleNextPage}
                   style={{
                     backgroundColor: '#00ff88',
                     color: '#000',

@@ -4,8 +4,8 @@ const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
 const POTENTIAL_LEAGUE_IDS = [
-  537,  // Current ID being used
-  15,   // FIFA Club World Cup (historical)
+  15,   // FIFA Club World Cup - WORKING ✅
+  537,  // Alternative ID
   960,  // Alternative Club World Cup ID
   1    // World Cup ID (different tournament but similar format)
 ]
@@ -198,8 +198,9 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   }
 }
 
-async function fetchClubWorldCupPlayers() {
+async function fetchClubWorldCupPlayers(limit = null) {
   console.log('🔍 Backend Starting Club World Cup 2025 ALL players fetch...')
+  console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
   // First, get all teams
   const teams = await fetchAllClubWorldCupTeams()
@@ -223,8 +224,8 @@ async function fetchClubWorldCupPlayers() {
       fetchPlayersForTeam(teamId).then(async (players) => {
         const teamPlayers = []
         
-        // Process only first 25 players per team to avoid API overload
-        const playersToProcess = players.slice(0, 25)
+        // Process all players to get complete squad data
+        const playersToProcess = players
         
         for (const player of playersToProcess) {
           // Fetch detailed stats for each player with multiple fallbacks
@@ -303,6 +304,12 @@ async function fetchClubWorldCupPlayers() {
     goals: p.statistics?.goals
   })))
   
+  // Apply limit if requested (for pagination)
+  if (limit && limit > 0) {
+    console.log(`🔄 Backend Applying limit of ${limit} players`)
+    return allPlayers.slice(0, limit)
+  }
+  
   return allPlayers
 }
 
@@ -314,18 +321,40 @@ export async function GET(request) {
     console.log('🎯 Backend API Route /api/players called')
     console.log('📅 Backend Current time:', new Date().toISOString())
     
+    // Parse limit from query parameters for pagination support
+    const { searchParams } = new URL(request.url)
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : null
+    const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')) : 0
+    
+    console.log('🔍 Backend Query parameters:', { limit, offset })
+    
     const players = await fetchClubWorldCupPlayers()
     
+    // Apply pagination if requested
+    let paginatedPlayers = players
+    if (limit && limit > 0) {
+      paginatedPlayers = players.slice(offset, offset + limit)
+      console.log(`📊 Backend Pagination applied: ${paginatedPlayers.length} players (offset: ${offset}, limit: ${limit})`)
+    }
+    
     console.log('✅ Backend Successfully processed players request:', {
-      playersCount: players?.length || 0,
-      firstPlayer: players?.[0]?.player?.name || 'None',
-      timestamp: new Date().toISOString()
+      totalPlayersCount: players?.length || 0,
+      returnedPlayersCount: paginatedPlayers?.length || 0,
+      firstPlayer: paginatedPlayers?.[0]?.player?.name || 'None',
+      timestamp: new Date().toISOString(),
+      pagination: { limit, offset }
     })
     
     return NextResponse.json({
       success: true,
-      players,
-      count: players?.length || 0,
+      players: paginatedPlayers,
+      count: paginatedPlayers?.length || 0,
+      totalCount: players?.length || 0,
+      pagination: {
+        offset,
+        limit,
+        hasMore: limit ? (offset + limit) < (players?.length || 0) : false
+      },
       timestamp: new Date().toISOString()
     })
     
