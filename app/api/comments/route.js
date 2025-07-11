@@ -94,23 +94,12 @@ export async function POST(request) {
         .single()
 
       if (profileCheckError || !existingProfile) {
-        // Create profile if it doesn't exist
+        // Create profile if it doesn't exist using the SQL function
         const { error: profileCreateError } = await supabaseAdmin
-          .from('profiles')
-          .insert([{
-            id: user_id,
-            email: `${user_id}@tempuser.com`,
-            username: `user_${user_id.substring(0, 8)}`,
-            display_name: `User ${user_id.substring(0, 8)}`,
-            level: 1,
-            xp: 0,
-            fan_tokens: 0,
-            total_chz_earned: 0,
-            google_id: null,
-            auth_provider: 'email',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          }])
+          .rpc('create_profile_if_not_exists', {
+            p_user_id: user_id,
+            p_email: `${user_id}@tempuser.com`
+          })
 
         if (profileCreateError) {
           console.error('Error creating profile:', profileCreateError)

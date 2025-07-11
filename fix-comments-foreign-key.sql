@@ -4,36 +4,68 @@
 -- First, create a function to automatically create profiles for users that don't exist
 CREATE OR REPLACE FUNCTION create_profile_if_not_exists(p_user_id UUID, p_email TEXT DEFAULT NULL)
 RETURNS VOID AS $$
+DECLARE
+    has_google_id BOOLEAN := FALSE;
+    has_auth_provider BOOLEAN := FALSE;
+    insert_sql TEXT;
 BEGIN
-    -- Insert profile if it doesn't exist
-    INSERT INTO profiles (
-        id,
-        email,
-        username,
-        display_name,
-        level,
-        xp,
-        fan_tokens,
-        total_chz_earned,
-        created_at,
-        updated_at,
-        google_id,
-        auth_provider
-    ) VALUES (
-        p_user_id,
-        COALESCE(p_email, p_user_id::text || '@tempuser.com'),
-        'user_' || SUBSTRING(p_user_id::text, 1, 8),
-        'User ' || SUBSTRING(p_user_id::text, 1, 8),
-        1,
-        0,
-        0,
-        0,
-        NOW(),
-        NOW(),
-        NULL,
-        'email'
-    )
-    ON CONFLICT (id) DO NOTHING;
+    -- Check which columns exist
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='profiles' AND column_name='google_id'
+    ) INTO has_google_id;
+    
+    SELECT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_name='profiles' AND column_name='auth_provider'
+    ) INTO has_auth_provider;
+    
+    -- Build dynamic insert statement based on available columns
+    insert_sql := 'INSERT INTO profiles (id, email, username, display_name, level, xp, fan_tokens, total_chz_earned, created_at, updated_at';
+    
+    IF has_google_id THEN
+        insert_sql := insert_sql || ', google_id';
+    END IF;
+    
+    IF has_auth_provider THEN
+        insert_sql := insert_sql || ', auth_provider';
+    END IF;
+    
+    insert_sql := insert_sql || ') VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10';
+    
+    IF has_google_id THEN
+        insert_sql := insert_sql || ', $11';
+    END IF;
+    
+    IF has_auth_provider THEN
+        insert_sql := insert_sql || ', $12';
+    END IF;
+    
+    insert_sql := insert_sql || ') ON CONFLICT (id) DO NOTHING';
+    
+    -- Execute the dynamic insert
+    IF has_google_id AND has_auth_provider THEN
+        EXECUTE insert_sql USING 
+            p_user_id,
+            COALESCE(p_email, p_user_id::text || '@tempuser.com'),
+            'user_' || SUBSTRING(p_user_id::text, 1, 8),
+            'User ' || SUBSTRING(p_user_id::text, 1, 8),
+            1, 0, 0, 0, NOW(), NOW(), NULL, 'email';
+    ELSIF has_google_id THEN
+        EXECUTE insert_sql USING 
+            p_user_id,
+            COALESCE(p_email, p_user_id::text || '@tempuser.com'),
+            'user_' || SUBSTRING(p_user_id::text, 1, 8),
+            'User ' || SUBSTRING(p_user_id::text, 1, 8),
+            1, 0, 0, 0, NOW(), NOW(), NULL;
+    ELSE
+        EXECUTE insert_sql USING 
+            p_user_id,
+            COALESCE(p_email, p_user_id::text || '@tempuser.com'),
+            'user_' || SUBSTRING(p_user_id::text, 1, 8),
+            'User ' || SUBSTRING(p_user_id::text, 1, 8),
+            1, 0, 0, 0, NOW(), NOW();
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -55,71 +87,35 @@ CREATE TRIGGER auto_create_profile_trigger
     EXECUTE FUNCTION auto_create_profile_for_comment();
 
 -- Fix any existing orphaned comments by creating profiles for them
--- Create profiles for any user_ids that exist in comments but not in profiles
-INSERT INTO profiles (
-    id,
-    email,
-    username,
-    display_name,
-    level,
-    xp,
-    fan_tokens,
-    total_chz_earned,
-    created_at,
-    updated_at,
-    google_id,
-    auth_provider
-)
-SELECT DISTINCT
-    c.user_id,
-    c.user_id::text || '@tempuser.com',
-    'user_' || SUBSTRING(c.user_id::text, 1, 8),
-    'User ' || SUBSTRING(c.user_id::text, 1, 8),
-    1,
-    0,
-    0,
-    0,
-    NOW(),
-    NOW(),
-    NULL,
-    'email'
-FROM comments c
-LEFT JOIN profiles p ON p.id = c.user_id
-WHERE p.id IS NULL
-ON CONFLICT (id) DO NOTHING;
+-- Use the function to create profiles for missing users from comments
+DO $$
+DECLARE
+    missing_user_id UUID;
+BEGIN
+    FOR missing_user_id IN
+        SELECT DISTINCT c.user_id
+        FROM comments c
+        LEFT JOIN profiles p ON p.id = c.user_id
+        WHERE p.id IS NULL
+    LOOP
+        PERFORM create_profile_if_not_exists(missing_user_id);
+    END LOOP;
+END $$;
 
--- Also create profiles for any user_ids that exist in other tables
-INSERT INTO profiles (
-    id,
-    email,
-    username,
-    display_name,
-    level,
-    xp,
-    fan_tokens,
-    total_chz_earned,
-    created_at,
-    updated_at,
-    google_id,
-    auth_provider
-)
-SELECT DISTINCT
-    r.user_id,
-    r.user_id::text || '@tempuser.com',
-    'user_' || SUBSTRING(r.user_id::text, 1, 8),
-    'User ' || SUBSTRING(r.user_id::text, 1, 8),
-    1,
-    0,
-    0,
-    0,
-    NOW(),
-    NOW(),
-    NULL,
-    'email'
-FROM reactions r
-LEFT JOIN profiles p ON p.id = r.user_id
-WHERE p.id IS NULL
-ON CONFLICT (id) DO NOTHING;
+-- Also create profiles for any user_ids that exist in reactions table
+DO $$
+DECLARE
+    missing_user_id UUID;
+BEGIN
+    FOR missing_user_id IN
+        SELECT DISTINCT r.user_id
+        FROM reactions r
+        LEFT JOIN profiles p ON p.id = r.user_id
+        WHERE p.id IS NULL
+    LOOP
+        PERFORM create_profile_if_not_exists(missing_user_id);
+    END LOOP;
+END $$;
 
 -- First, let's check what columns exist and their constraints
 DO $$ 
@@ -146,34 +142,7 @@ BEGIN
 END $$;
 
 -- Create the specific user that was failing
-INSERT INTO profiles (
-    id,
-    email,
-    username,
-    display_name,
-    level,
-    xp,
-    fan_tokens,
-    total_chz_earned,
-    created_at,
-    updated_at,
-    google_id,
-    auth_provider
-) VALUES (
-    '8a3fdcd8-51e8-4643-8611-0855f425ff2c',
-    '8a3fdcd8-51e8-4643-8611-0855f425ff2c@tempuser.com',
-    'user_8a3fdcd8',
-    'User 8a3fdcd8',
-    1,
-    0,
-    0,
-    0,
-    NOW(),
-    NOW(),
-    NULL,
-    'email'
-)
-ON CONFLICT (id) DO NOTHING;
+SELECT create_profile_if_not_exists('8a3fdcd8-51e8-4643-8611-0855f425ff2c'::UUID, '8a3fdcd8-51e8-4643-8611-0855f425ff2c@tempuser.com');
 
 -- Make sure the profiles table has all necessary columns
 DO $$ 
