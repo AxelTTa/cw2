@@ -7,9 +7,31 @@ export default function Home() {
   const [recentMatches, setRecentMatches] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isVisible, setIsVisible] = useState(false)
+  const [floatingElements, setFloatingElements] = useState([])
+  const [currentAnimation, setCurrentAnimation] = useState(0)
 
   useEffect(() => {
     fetchRecentMatches()
+    setIsVisible(true)
+    
+    // Create floating elements
+    const elements = Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      emoji: ['⚽', '🏆', '🔥', '⭐', '🎯', '⚡'][Math.floor(Math.random() * 6)],
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      delay: Math.random() * 5,
+      speed: 15 + Math.random() * 10
+    }))
+    setFloatingElements(elements)
+
+    // Cycle through animation states
+    const animationInterval = setInterval(() => {
+      setCurrentAnimation(prev => (prev + 1) % 3)
+    }, 4000)
+
+    return () => clearInterval(animationInterval)
   }, [])
 
   const fetchRecentMatches = async () => {
@@ -61,80 +83,277 @@ export default function Home() {
       minute: '2-digit'
     })
   }
+
   return (
     <div style={{
       backgroundColor: '#0a0a0a',
       color: '#ffffff',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      <style jsx>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+          25% { transform: translateY(-25px) rotate(90deg); opacity: 0.6; }
+          50% { transform: translateY(-15px) rotate(180deg); opacity: 0.8; }
+          75% { transform: translateY(-20px) rotate(270deg); opacity: 0.4; }
+        }
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(60px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-60px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(60px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.1); opacity: 1; }
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-15px); }
+          60% { transform: translateY(-8px); }
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 25px rgba(0, 255, 136, 0.4); }
+          50% { box-shadow: 0 0 45px rgba(0, 255, 136, 0.8); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes heartbeat {
+          0%, 100% { transform: scale(1); }
+          14% { transform: scale(1.2); }
+          28% { transform: scale(1); }
+          42% { transform: scale(1.2); }
+          70% { transform: scale(1); }
+        }
+        
+        .floating-element {
+          position: absolute;
+          font-size: 28px;
+          pointer-events: none;
+          animation: float var(--duration) ease-in-out infinite;
+          animation-delay: var(--delay);
+          z-index: 1;
+        }
+        
+        .hero-bg {
+          background: linear-gradient(-45deg, #0a0a0a, #111111, #0f0f0f, #0a0a0a);
+          background-size: 400% 400%;
+          animation: gradientShift 12s ease infinite;
+        }
+        
+        .card-hover {
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .card-hover:hover {
+          transform: translateY(-12px) scale(1.03);
+          box-shadow: 0 25px 50px rgba(0, 255, 136, 0.3);
+        }
+        
+        .card-hover::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          transition: left 0.5s;
+        }
+        
+        .card-hover:hover::before {
+          left: 100%;
+        }
+        
+        .live-indicator {
+          animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        .rotating-border {
+          position: relative;
+        }
+        
+        .rotating-border::before {
+          content: '';
+          position: absolute;
+          inset: -2px;
+          background: linear-gradient(45deg, #00ff88, #0099ff, #ff6b35, #00ff88);
+          border-radius: inherit;
+          opacity: 0;
+          transition: opacity 0.3s;
+          animation: rotate 3s linear infinite;
+          z-index: -1;
+        }
+        
+        .rotating-border:hover::before {
+          opacity: 1;
+        }
+      `}</style>
+
+      {/* Floating Background Elements */}
+      {floatingElements.map(element => (
+        <div
+          key={element.id}
+          className="floating-element"
+          style={{
+            '--duration': `${element.speed}s`,
+            '--delay': `${element.delay}s`,
+            top: `${element.y}%`,
+            left: `${element.x}%`
+          }}
+        >
+          {element.emoji}
+        </div>
+      ))}
+
       {/* Header */}
       <header style={{
         padding: '20px',
         borderBottom: '1px solid #333',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        backdropFilter: 'blur(15px)',
+        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100
       }}>
         <div 
           style={{
             fontSize: '24px',
             fontWeight: 'bold',
             color: '#00ff88',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
           }}
           onClick={() => window.location.href = '/'}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.15)'
+            e.target.style.textShadow = '0 0 25px #00ff88'
+            e.target.style.filter = 'brightness(1.2)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)'
+            e.target.style.textShadow = 'none'
+            e.target.style.filter = 'brightness(1)'
+          }}
         >
           Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#ffffff', textDecoration: 'none' }}>Home</a>
-          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
-          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
+          {[
+            { href: '/', label: 'Home', active: true },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players' },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/community', label: 'Community' },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '8px 0'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateY(-3px)'
+                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.textShadow = 'none'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
         </nav>
       </header>
 
       {/* Hero Section */}
-      <main style={{ padding: '60px 20px', textAlign: 'center' }}>
-        <h1 style={{
-          fontSize: '48px',
-          fontWeight: '700',
-          marginBottom: '20px',
-          background: 'linear-gradient(45deg, #00ff88, #0099ff)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text'
+      <main className="hero-bg" style={{ 
+        padding: '80px 20px', 
+        textAlign: 'center',
+        position: 'relative'
+      }}>
+        <div style={{
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
+          transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-          FIFA Club World Cup 2025 ⚽
-        </h1>
-        <p style={{
-          fontSize: '20px',
-          color: '#888',
-          marginBottom: '40px',
-          maxWidth: '600px',
-          margin: '0 auto 40px'
-        }}>
-          Follow the expanded Club World Cup with 32 teams from around the world. 
-          Real-time match results, player stats, and community discussions.
-        </p>
+          <h1 style={{
+            fontSize: '56px',
+            fontWeight: '900',
+            marginBottom: '25px',
+            background: 'linear-gradient(45deg, #00ff88, #0099ff, #ff6b35, #00ff88)',
+            backgroundSize: '300% 300%',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            animation: 'gradientShift 4s ease infinite',
+            textShadow: '0 0 40px rgba(0, 255, 136, 0.3)'
+          }}>
+            FIFA Club World Cup 2025 ⚽
+          </h1>
+          <p style={{
+            fontSize: '22px',
+            color: '#cccccc',
+            marginBottom: '50px',
+            maxWidth: '700px',
+            margin: '0 auto 50px',
+            animation: 'slideInUp 1s ease-out 0.3s both',
+            lineHeight: '1.6'
+          }}>
+            Follow the expanded Club World Cup with 32 teams from around the world. 
+            Real-time match results, player stats, and community discussions.
+          </p>
+        </div>
 
         {/* Recent Matches Section */}
         <div style={{
           maxWidth: '1200px',
-          margin: '60px auto',
+          margin: '80px auto',
           padding: '0 20px'
         }}>
           <h2 style={{
-            fontSize: '32px',
+            fontSize: '36px',
             fontWeight: '700',
-            marginBottom: '30px',
+            marginBottom: '40px',
             textAlign: 'center',
-            color: '#ffffff'
+            color: '#ffffff',
+            animation: 'slideInUp 1s ease-out 0.5s both'
           }}>
             🏆 Recent Club World Cup Results
           </h2>
@@ -142,67 +361,93 @@ export default function Home() {
           {loading ? (
             <div style={{
               textAlign: 'center',
-              padding: '40px',
+              padding: '60px',
               color: '#888'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '15px' }}>⚽</div>
-              Loading recent matches...
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '20px',
+                animation: 'bounce 1.5s infinite'
+              }}>⚽</div>
+              <div style={{ 
+                fontSize: '20px',
+                animation: 'pulse 2s infinite'
+              }}>
+                Loading recent matches...
+              </div>
             </div>
           ) : error ? (
             <div style={{
               textAlign: 'center',
-              padding: '40px',
+              padding: '60px',
               color: '#ff4444'
             }}>
-              <div style={{ fontSize: '32px', marginBottom: '15px' }}>⚠️</div>
-              {error}
+              <div style={{ fontSize: '48px', marginBottom: '20px', animation: 'bounce 1s infinite' }}>⚠️</div>
+              <div style={{ fontSize: '18px' }}>{error}</div>
             </div>
           ) : (
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-              gap: '20px'
+              gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+              gap: '25px'
             }}>
-              {recentMatches.map(match => (
+              {recentMatches.map((match, index) => (
                 <div
                   key={match.id}
+                  className="card-hover rotating-border"
                   style={{
                     backgroundColor: '#111',
-                    border: '1px solid #333',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
+                    border: '2px solid #333',
+                    borderRadius: '16px',
+                    padding: '25px',
+                    animation: `slideInUp 0.8s ease-out ${index * 0.15}s both`,
+                    position: 'relative'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)'
                     e.currentTarget.style.borderColor = '#00ff88'
+                    e.currentTarget.style.backgroundColor = '#1a1a1a'
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
                     e.currentTarget.style.borderColor = '#333'
+                    e.currentTarget.style.backgroundColor = '#111'
                   }}
                 >
+                  {/* Live Match Shimmer Effect */}
+                  {match.status === 'live' && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background: 'linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent)',
+                      animation: 'shimmer 2s infinite'
+                    }} />
+                  )}
+                  
                   {/* Match Header */}
                   <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '15px'
+                    marginBottom: '20px'
                   }}>
                     <div style={{
                       fontSize: '12px',
-                      color: '#888'
+                      color: '#888',
+                      textTransform: 'uppercase',
+                      fontWeight: 'bold'
                     }}>
                       {match.round}
                     </div>
-                    <div style={{
+                    <div className={match.status === 'live' ? 'live-indicator' : ''} style={{
                       fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
+                      padding: '6px 12px',
+                      borderRadius: '20px',
                       backgroundColor: getStatusColor(match.status),
                       color: match.status === 'live' ? '#000' : '#fff',
-                      fontWeight: 'bold'
+                      fontWeight: 'bold',
+                      animation: match.status === 'live' ? 'pulse 2s infinite' : 'none'
                     }}>
                       {match.status === 'ft' ? 'FINAL' : match.status === 'live' ? 'LIVE' : 'UPCOMING'}
                     </div>
@@ -213,28 +458,32 @@ export default function Home() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '15px'
+                    marginBottom: '20px'
                   }}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
+                      gap: '12px',
                       flex: 1,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'transform 0.3s ease'
                     }}
                     onClick={() => window.location.href = `/teams/${match.homeTeam.id}`}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
                       <img 
                         src={match.homeTeam.logo} 
                         alt={match.homeTeam.name}
                         style={{
-                          width: '24px',
-                          height: '24px',
-                          objectFit: 'contain'
+                          width: '28px',
+                          height: '28px',
+                          objectFit: 'contain',
+                          transition: 'transform 0.3s ease'
                         }}
                       />
                       <span style={{
-                        fontSize: '14px',
+                        fontSize: '15px',
                         fontWeight: 'bold',
                         color: '#ffffff'
                       }}>
@@ -243,10 +492,12 @@ export default function Home() {
                     </div>
                     
                     <div style={{
-                      fontSize: '18px',
+                      fontSize: '24px',
                       fontWeight: 'bold',
                       color: '#00ff88',
-                      margin: '0 15px'
+                      margin: '0 20px',
+                      animation: match.status === 'live' ? 'glow 2s infinite' : 'none',
+                      textShadow: match.status === 'live' ? '0 0 20px rgba(0, 255, 136, 0.6)' : 'none'
                     }}>
                       {match.score.home !== null && match.score.away !== null ? 
                         `${match.score.home} - ${match.score.away}` : 
@@ -257,15 +508,18 @@ export default function Home() {
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
+                      gap: '12px',
                       flex: 1,
                       justifyContent: 'flex-end',
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      transition: 'transform 0.3s ease'
                     }}
                     onClick={() => window.location.href = `/teams/${match.awayTeam.id}`}
+                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
+                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
                       <span style={{
-                        fontSize: '14px',
+                        fontSize: '15px',
                         fontWeight: 'bold',
                         color: '#ffffff'
                       }}>
@@ -275,9 +529,10 @@ export default function Home() {
                         src={match.awayTeam.logo} 
                         alt={match.awayTeam.name}
                         style={{
-                          width: '24px',
-                          height: '24px',
-                          objectFit: 'contain'
+                          width: '28px',
+                          height: '28px',
+                          objectFit: 'contain',
+                          transition: 'transform 0.3s ease'
                         }}
                       />
                     </div>
@@ -288,8 +543,10 @@ export default function Home() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    fontSize: '12px',
-                    color: '#666'
+                    fontSize: '13px',
+                    color: '#666',
+                    paddingTop: '10px',
+                    borderTop: '1px solid #333'
                   }}>
                     <span>{formatDate(match.date)}</span>
                     <span>{match.venue}</span>
@@ -301,28 +558,34 @@ export default function Home() {
           
           <div style={{
             textAlign: 'center',
-            marginTop: '30px'
+            marginTop: '50px'
           }}>
             <a 
               href="/community" 
+              className="rotating-border"
               style={{
                 display: 'inline-block',
                 backgroundColor: '#00ff88',
                 color: '#000',
                 textDecoration: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                fontSize: '16px',
+                padding: '16px 32px',
+                borderRadius: '50px',
+                fontSize: '18px',
                 fontWeight: 'bold',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                animation: 'glow 4s infinite',
+                position: 'relative',
+                overflow: 'hidden'
               }}
               onMouseEnter={(e) => {
                 e.target.style.backgroundColor = '#00cc6a'
-                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.transform = 'translateY(-5px) scale(1.08)'
+                e.target.style.boxShadow = '0 15px 35px rgba(0, 255, 136, 0.5)'
               }}
               onMouseLeave={(e) => {
                 e.target.style.backgroundColor = '#00ff88'
-                e.target.style.transform = 'translateY(0)'
+                e.target.style.transform = 'translateY(0) scale(1)'
+                e.target.style.boxShadow = 'none'
               }}
             >
               Join Match Discussions 💬
@@ -333,76 +596,122 @@ export default function Home() {
         {/* Feature Cards */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-          gap: '30px',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: '35px',
           maxWidth: '1200px',
-          margin: '60px auto',
+          margin: '80px auto',
           padding: '0 20px'
         }}>
-          <div style={{
-            backgroundColor: '#111',
-            border: '1px solid #333',
-            borderRadius: '12px',
-            padding: '30px',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ color: '#00ff88', marginBottom: '15px' }}>Live Statistics 📊</h3>
-            <p style={{ color: '#888', lineHeight: '1.6' }}>
-              Real-time player and team stats from all 32 Club World Cup teams. 
-              Track goals, assists, and performances.
-            </p>
-          </div>
-          
-          <div style={{
-            backgroundColor: '#111',
-            border: '1px solid #333',
-            borderRadius: '12px',
-            padding: '30px',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ color: '#0099ff', marginBottom: '15px' }}>Community Discussions 💬</h3>
-            <p style={{ color: '#888', lineHeight: '1.6' }}>
-              Share your thoughts on matches and players. Engage with fans 
-              from around the world during live games.
-            </p>
-          </div>
-          
-          <div style={{
-            backgroundColor: '#111',
-            border: '1px solid #333',
-            borderRadius: '12px',
-            padding: '30px',
-            textAlign: 'left'
-          }}>
-            <h3 style={{ color: '#ff6b35', marginBottom: '15px' }}>Player Profiles 👤</h3>
-            <p style={{ color: '#888', lineHeight: '1.6' }}>
-              Explore detailed profiles of all Club World Cup players. 
-              View stats, photos, and career highlights.
-            </p>
-          </div>
+          {[
+            {
+              title: 'Live Statistics 📊',
+              desc: 'Real-time player and team stats from all 32 Club World Cup teams. Track goals, assists, and performances.',
+              color: '#00ff88',
+              delay: '0.2s'
+            },
+            {
+              title: 'Community Discussions 💬',
+              desc: 'Share your thoughts on matches and players. Engage with fans from around the world during live games.',
+              color: '#0099ff',
+              delay: '0.4s'
+            },
+            {
+              title: 'Player Profiles 👤',
+              desc: 'Explore detailed profiles of all Club World Cup players. View stats, photos, and career highlights.',
+              color: '#ff6b35',
+              delay: '0.6s'
+            }
+          ].map((feature, index) => (
+            <div 
+              key={index}
+              className="card-hover rotating-border"
+              style={{
+                backgroundColor: '#111',
+                border: `2px solid ${feature.color}`,
+                borderRadius: '16px',
+                padding: '35px',
+                textAlign: 'left',
+                animation: `slideInUp 0.8s ease-out ${feature.delay} both`,
+                position: 'relative'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = feature.color
+                e.currentTarget.style.boxShadow = `0 0 40px ${feature.color}60`
+                e.currentTarget.style.backgroundColor = '#1a1a1a'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = feature.color
+                e.currentTarget.style.boxShadow = 'none'
+                e.currentTarget.style.backgroundColor = '#111'
+              }}
+            >
+              <h3 style={{ 
+                color: feature.color, 
+                marginBottom: '18px',
+                fontSize: '20px',
+                animation: 'bounce 3s infinite',
+                animationDelay: feature.delay
+              }}>
+                {feature.title}
+              </h3>
+              <p style={{ 
+                color: '#aaa', 
+                lineHeight: '1.7',
+                fontSize: '16px'
+              }}>
+                {feature.desc}
+              </p>
+            </div>
+          ))}
         </div>
 
         <div style={{
-          marginTop: '60px',
-          padding: '40px',
+          marginTop: '80px',
+          padding: '50px',
           backgroundColor: '#111',
-          borderRadius: '12px',
-          border: '1px solid #333',
-          maxWidth: '800px',
-          margin: '60px auto 0'
+          borderRadius: '20px',
+          border: '2px solid #333',
+          maxWidth: '900px',
+          margin: '80px auto 0',
+          animation: 'slideInUp 0.8s ease-out 0.8s both',
+          position: 'relative',
+          overflow: 'hidden'
         }}>
-          <h2 style={{ marginBottom: '20px', color: '#ffffff' }}>FIFA Club World Cup 2025</h2>
-          <p style={{ color: '#888', fontSize: '18px', lineHeight: '1.6' }}>
-            The expanded tournament featuring 32 clubs from around the world. 
-            Real-time data, comprehensive player profiles, and community discussions.
-          </p>
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(0,255,136,0.15), rgba(0,153,255,0.15), rgba(255,107,53,0.15))',
+            opacity: 0.7
+          }} />
+          <div style={{ position: 'relative', zIndex: 10 }}>
+            <h2 style={{ 
+              marginBottom: '25px', 
+              color: '#ffffff',
+              fontSize: '28px',
+              animation: 'glow 4s infinite'
+            }}>
+              FIFA Club World Cup 2025
+            </h2>
+            <p style={{ 
+              color: '#bbb', 
+              fontSize: '19px', 
+              lineHeight: '1.7'
+            }}>
+              The expanded tournament featuring 32 clubs from around the world. 
+              Real-time data, comprehensive player profiles, and community discussions.
+            </p>
+          </div>
         </div>
 
         {/* Match Discussion Section */}
         <div style={{
-          marginTop: '60px',
+          marginTop: '80px',
           maxWidth: '1200px',
-          margin: '60px auto 0'
+          margin: '80px auto 0',
+          animation: 'slideInUp 0.8s ease-out 1s both'
         }}>
           <MatchDiscussion />
         </div>

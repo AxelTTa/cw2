@@ -19,9 +19,27 @@ export default function CommunityPage() {
   const [replyTo, setReplyTo] = useState(null)
   const [sortBy, setSortBy] = useState('newest')
   const [userProfile, setUserProfile] = useState(null)
+  const [isVisible, setIsVisible] = useState(false)
+  const [floatingReactions, setFloatingReactions] = useState([])
 
   useEffect(() => {
     initializePage()
+    setIsVisible(true)
+    
+    // Floating reactions animation
+    const reactionsInterval = setInterval(() => {
+      const newReaction = {
+        id: Date.now(),
+        emoji: ['⚽', '🔥', '💪', '⚡', '🎯', '🏆', '👑', '💎'][Math.floor(Math.random() * 8)],
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        delay: Math.random() * 3,
+        speed: 8 + Math.random() * 6
+      }
+      setFloatingReactions(prev => [...prev.slice(-7), newReaction])
+    }, 4000)
+
+    return () => clearInterval(reactionsInterval)
   }, [])
 
   useEffect(() => {
@@ -177,13 +195,23 @@ export default function CommunityPage() {
   }
 
   const CommentComponent = ({ comment, isReply = false }) => (
-    <div style={{
+    <div className="card-hover" style={{
       backgroundColor: isReply ? '#0f0f0f' : '#1a1a1a',
-      border: '1px solid #333',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: isReply ? '8px' : '16px',
-      marginLeft: isReply ? '32px' : '0'
+      border: '2px solid #333',
+      borderRadius: '12px',
+      padding: '20px',
+      marginBottom: isReply ? '12px' : '20px',
+      marginLeft: isReply ? '32px' : '0',
+      transition: 'all 0.3s ease',
+      position: 'relative'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = '#00ff88'
+      e.currentTarget.style.backgroundColor = isReply ? '#1a1a1a' : '#222'
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = '#333'
+      e.currentTarget.style.backgroundColor = isReply ? '#0f0f0f' : '#1a1a1a'
     }}>
       <div style={{
         display: 'flex',
@@ -193,16 +221,18 @@ export default function CommunityPage() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div style={{
-            width: '32px',
-            height: '32px',
+            width: '36px',
+            height: '36px',
             borderRadius: '50%',
             backgroundColor: '#00ff88',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: '14px',
+            fontSize: '16px',
             fontWeight: 'bold',
-            color: '#000'
+            color: '#000',
+            animation: 'pulse 3s ease-in-out infinite',
+            boxShadow: '0 0 15px rgba(0, 255, 136, 0.4)'
           }}>
             {comment.profiles?.username?.[0]?.toUpperCase() || '?'}
           </div>
@@ -248,13 +278,28 @@ export default function CommunityPage() {
           onClick={() => handleUpvote(comment.id)}
           style={{
             background: 'none',
-            border: 'none',
+            border: '1px solid #333',
+            borderRadius: '20px',
+            padding: '6px 12px',
             color: '#888',
             cursor: 'pointer',
-            fontSize: '12px',
+            fontSize: '14px',
             display: 'flex',
             alignItems: 'center',
-            gap: '4px'
+            gap: '6px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.borderColor = '#00ff88'
+            e.target.style.color = '#00ff88'
+            e.target.style.backgroundColor = 'rgba(0, 255, 136, 0.1)'
+            e.target.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.borderColor = '#333'
+            e.target.style.color = '#888'
+            e.target.style.backgroundColor = 'transparent'
+            e.target.style.transform = 'scale(1)'
           }}
         >
           ⬆️ {comment.upvotes || 0}
@@ -263,10 +308,25 @@ export default function CommunityPage() {
           onClick={() => handleReaction(comment.id, 'like')}
           style={{
             background: 'none',
-            border: 'none',
+            border: '1px solid #333',
+            borderRadius: '20px',
+            padding: '6px 12px',
             color: '#888',
             cursor: 'pointer',
-            fontSize: '12px'
+            fontSize: '14px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.borderColor = '#0099ff'
+            e.target.style.color = '#0099ff'
+            e.target.style.backgroundColor = 'rgba(0, 153, 255, 0.1)'
+            e.target.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.borderColor = '#333'
+            e.target.style.color = '#888'
+            e.target.style.backgroundColor = 'transparent'
+            e.target.style.transform = 'scale(1)'
           }}
         >
           👍 {comment.reactions?.filter(r => r.reaction_type === 'like').length || 0}
@@ -275,10 +335,25 @@ export default function CommunityPage() {
           onClick={() => handleReaction(comment.id, 'fire')}
           style={{
             background: 'none',
-            border: 'none',
+            border: '1px solid #333',
+            borderRadius: '20px',
+            padding: '6px 12px',
             color: '#888',
             cursor: 'pointer',
-            fontSize: '12px'
+            fontSize: '14px',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.borderColor = '#ff6b35'
+            e.target.style.color = '#ff6b35'
+            e.target.style.backgroundColor = 'rgba(255, 107, 53, 0.1)'
+            e.target.style.transform = 'scale(1.05)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.borderColor = '#333'
+            e.target.style.color = '#888'
+            e.target.style.backgroundColor = 'transparent'
+            e.target.style.transform = 'scale(1)'
           }}
         >
           🔥 {comment.reactions?.filter(r => r.reaction_type === 'fire').length || 0}
@@ -314,44 +389,210 @@ export default function CommunityPage() {
       backgroundColor: '#0a0a0a',
       color: '#ffffff',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      position: 'relative',
+      overflow: 'hidden'
     }}>
+      <style jsx>{`
+        @keyframes floatReaction {
+          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.4; }
+          25% { transform: translateY(-30px) rotate(90deg); opacity: 0.8; }
+          50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+          75% { transform: translateY(-25px) rotate(270deg); opacity: 0.6; }
+        }
+        @keyframes slideInUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideInLeft {
+          from { opacity: 0; transform: translateX(-40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes slideInRight {
+          from { opacity: 0; transform: translateX(40px); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); opacity: 0.8; }
+          50% { transform: scale(1.05); opacity: 1; }
+        }
+        @keyframes glow {
+          0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3); }
+          50% { box-shadow: 0 0 35px rgba(0, 255, 136, 0.6); }
+        }
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+          40% { transform: translateY(-10px); }
+          60% { transform: translateY(-5px); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        
+        .floating-reaction {
+          position: absolute;
+          font-size: 24px;
+          pointer-events: none;
+          animation: floatReaction var(--duration) ease-in-out infinite;
+          animation-delay: var(--delay);
+          z-index: 1;
+        }
+        
+        .hero-bg {
+          background: linear-gradient(-45deg, #0a0a0a, #111111, #0f0f0f, #0a0a0a);
+          background-size: 400% 400%;
+          animation: gradientShift 15s ease infinite;
+        }
+        
+        .card-hover {
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .card-hover:hover {
+          transform: translateY(-8px) scale(1.02);
+          box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
+        }
+        
+        .card-hover::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+          transition: left 0.5s;
+        }
+        
+        .card-hover:hover::before {
+          left: 100%;
+        }
+        
+        .live-pulse {
+          animation: pulse 2s infinite;
+        }
+        
+        .match-shimmer {
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
+          animation: shimmer 3s infinite;
+        }
+      `}</style>
+
+      {/* Floating Reactions */}
+      {floatingReactions.map(reaction => (
+        <div
+          key={reaction.id}
+          className="floating-reaction"
+          style={{
+            '--duration': `${reaction.speed}s`,
+            '--delay': `${reaction.delay}s`,
+            top: `${reaction.y}%`,
+            left: `${reaction.x}%`
+          }}
+        >
+          {reaction.emoji}
+        </div>
+      ))}
       {/* Header */}
       <header style={{
         padding: '20px',
         borderBottom: '1px solid #333',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        backdropFilter: 'blur(15px)',
+        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
       }}>
         <div style={{
           fontSize: '24px',
           fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
-          Clutch Community
+          color: '#00ff88',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseEnter={(e) => {
+          e.target.style.transform = 'scale(1.15)'
+          e.target.style.textShadow = '0 0 25px #00ff88'
+          e.target.style.filter = 'brightness(1.2)'
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.transform = 'scale(1)'
+          e.target.style.textShadow = 'none'
+          e.target.style.filter = 'brightness(1)'
+        }}
+        >
+          Clutch Community 💬
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/community" style={{ color: '#ffffff', textDecoration: 'none' }}>Community</a>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players' },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/community', label: 'Community', active: true },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '8px 0'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateY(-3px)'
+                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.textShadow = 'none'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
         </nav>
       </header>
 
-      <main style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <main className="hero-bg" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* User Profile Section */}
         {userProfile && (
-          <div style={{
+          <div className="card-hover" style={{
             backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '12px',
-            padding: '20px',
-            marginBottom: '20px',
+            border: '2px solid #00ff88',
+            borderRadius: '16px',
+            padding: '25px',
+            marginBottom: '25px',
             display: 'flex',
             alignItems: 'center',
-            gap: '16px'
+            gap: '20px',
+            animation: isVisible ? 'slideInLeft 0.8s ease-out 0.2s both' : 'none',
+            position: 'relative'
           }}>
             <div style={{
               width: '48px',
@@ -395,14 +636,22 @@ export default function CommunityPage() {
         )}
 
         {/* Match Selection */}
-        <div style={{
+        <div className="card-hover" style={{
           backgroundColor: '#1a1a1a',
-          border: '1px solid #333',
-          borderRadius: '12px',
-          padding: '20px',
-          marginBottom: '20px'
+          border: '2px solid #0099ff',
+          borderRadius: '16px',
+          padding: '25px',
+          marginBottom: '25px',
+          animation: isVisible ? 'slideInUp 0.8s ease-out 0.4s both' : 'none',
+          position: 'relative'
         }}>
-          <h2 style={{ color: '#00ff88', marginBottom: '20px' }}>
+          <h2 style={{ 
+            color: '#00ff88', 
+            marginBottom: '25px',
+            fontSize: '28px',
+            fontWeight: 'bold',
+            animation: 'glow 3s ease-in-out infinite'
+          }}>
             🔥 Select a Match to Join the Discussion
           </h2>
           
@@ -411,17 +660,20 @@ export default function CommunityPage() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '16px'
           }}>
-            {matches.map(match => (
+            {matches.map((match, index) => (
               <div
                 key={match.id}
+                className="card-hover"
                 onClick={() => handleMatchSelect(match)}
                 style={{
                   backgroundColor: selectedMatch?.id === match.id ? '#2a2a2a' : '#111',
-                  border: `1px solid ${selectedMatch?.id === match.id ? '#00ff88' : '#333'}`,
-                  borderRadius: '8px',
-                  padding: '16px',
+                  border: `2px solid ${selectedMatch?.id === match.id ? '#00ff88' : '#333'}`,
+                  borderRadius: '12px',
+                  padding: '20px',
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  animation: isVisible ? `slideInRight 0.8s ease-out ${index * 0.1 + 0.6}s both` : 'none',
+                  position: 'relative'
                 }}
               >
                 <div style={{
@@ -433,15 +685,16 @@ export default function CommunityPage() {
                   <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
                     {match.home_team} vs {match.away_team}
                   </div>
-                  <div style={{
+                  <div className={match.status === 'live' ? 'live-pulse' : ''} style={{
                     fontSize: '14px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
+                    padding: '6px 12px',
+                    borderRadius: '20px',
                     backgroundColor: getMatchStatusColor(match.status),
                     color: '#000',
-                    fontWeight: 'bold'
+                    fontWeight: 'bold',
+                    animation: match.status === 'live' ? 'pulse 2s infinite' : 'none'
                   }}>
-                    {match.status}
+                    {match.status === 'live' ? '🔴 LIVE' : match.status}
                   </div>
                 </div>
                 <div style={{
@@ -454,12 +707,19 @@ export default function CommunityPage() {
                   </div>
                   {match.status === 'live' && (
                     <div style={{
-                      fontSize: '18px',
+                      fontSize: '20px',
                       fontWeight: 'bold',
-                      color: '#00ff88'
+                      color: '#00ff88',
+                      animation: 'glow 2s ease-in-out infinite',
+                      textShadow: '0 0 15px rgba(0, 255, 136, 0.5)'
                     }}>
                       {match.home_score} - {match.away_score}
                     </div>
+                  )}
+                  
+                  {/* Live Match Shimmer Effect */}
+                  {match.status === 'live' && (
+                    <div className="match-shimmer" />
                   )}
                 </div>
               </div>
@@ -469,19 +729,23 @@ export default function CommunityPage() {
 
         {/* Discussion Section */}
         {selectedMatch && (
-          <div style={{
+          <div className="card-hover" style={{
             backgroundColor: '#1a1a1a',
-            border: '1px solid #333',
-            borderRadius: '12px',
-            padding: '20px'
+            border: '2px solid #ff6b35',
+            borderRadius: '16px',
+            padding: '25px',
+            animation: isVisible ? 'slideInUp 0.8s ease-out 1s both' : 'none',
+            position: 'relative'
           }}>
             {/* Match Header */}
             <div style={{
               backgroundColor: '#2a2a2a',
-              border: '1px solid #333',
-              borderRadius: '8px',
-              padding: '16px',
-              marginBottom: '20px'
+              border: '2px solid #00ff88',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '25px',
+              animation: 'glow 4s ease-in-out infinite',
+              position: 'relative'
             }}>
               <div style={{
                 display: 'flex',
@@ -489,16 +753,23 @@ export default function CommunityPage() {
                 alignItems: 'center',
                 marginBottom: '8px'
               }}>
-                <h2 style={{ color: '#00ff88', margin: 0 }}>
-                  {selectedMatch.home_team} vs {selectedMatch.away_team}
+                <h2 style={{ 
+                  color: '#00ff88', 
+                  margin: 0,
+                  fontSize: '24px',
+                  animation: 'bounce 3s ease-in-out infinite'
+                }}>
+                  ⚽ {selectedMatch.home_team} vs {selectedMatch.away_team}
                 </h2>
                 <div style={{
-                  fontSize: '24px',
+                  fontSize: '28px',
                   fontWeight: 'bold',
-                  color: getMatchStatusColor(selectedMatch.status)
+                  color: getMatchStatusColor(selectedMatch.status),
+                  animation: selectedMatch.status === 'live' ? 'pulse 2s infinite' : 'none',
+                  textShadow: selectedMatch.status === 'live' ? '0 0 20px rgba(0, 255, 136, 0.6)' : 'none'
                 }}>
                   {selectedMatch.status === 'live' ? 
-                    `${selectedMatch.home_score} - ${selectedMatch.away_score}` : 
+                    `🔴 ${selectedMatch.home_score} - ${selectedMatch.away_score}` : 
                     selectedMatch.status}
                 </div>
               </div>
@@ -514,7 +785,12 @@ export default function CommunityPage() {
               alignItems: 'center',
               marginBottom: '20px'
             }}>
-              <h3 style={{ color: '#ffffff', margin: 0 }}>
+              <h3 style={{ 
+                color: '#ffffff', 
+                margin: 0,
+                fontSize: '22px',
+                animation: 'glow 3s ease-in-out infinite'
+              }}>
                 💬 Discussion ({comments.length})
               </h3>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -612,16 +888,50 @@ export default function CommunityPage() {
             {/* Comments List */}
             {loading ? (
               <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-                Loading comments...
+                <div style={{ 
+                  fontSize: '32px', 
+                  marginBottom: '15px',
+                  animation: 'bounce 1.5s infinite'
+                }}>💬</div>
+                <div style={{ 
+                  fontSize: '18px',
+                  animation: 'pulse 2s infinite'
+                }}>
+                  Loading comments...
+                </div>
               </div>
             ) : comments.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-                No comments yet. Be the first to share your thoughts!
+              <div style={{ 
+                textAlign: 'center', 
+                color: '#888', 
+                padding: '50px',
+                backgroundColor: '#111',
+                borderRadius: '12px',
+                border: '2px dashed #333'
+              }}>
+                <div style={{ 
+                  fontSize: '48px', 
+                  marginBottom: '20px',
+                  animation: 'bounce 2s infinite'
+                }}>🎯</div>
+                <div style={{ fontSize: '20px', marginBottom: '10px', color: '#fff' }}>
+                  No comments yet!
+                </div>
+                <div style={{ fontSize: '16px' }}>
+                  Be the first to share your thoughts on this match!
+                </div>
               </div>
             ) : (
               <div>
-                {comments.map(comment => (
-                  <CommentComponent key={comment.id} comment={comment} />
+                {comments.map((comment, index) => (
+                  <div
+                    key={comment.id}
+                    style={{
+                      animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`
+                    }}
+                  >
+                    <CommentComponent comment={comment} />
+                  </div>
                 ))}
               </div>
             )}
