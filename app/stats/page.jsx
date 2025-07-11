@@ -1,17 +1,16 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
 export default function Stats() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [floatingStats, setFloatingStats] = useState([])
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const [animatingCard, setAnimatingCard] = useState(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const [floatingStats, setFloatingStats] = useState([]);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const [animatingCard, setAnimatingCard] = useState(null);
 
   useEffect(() => {
-    setIsVisible(true)
+    setIsVisible(true);
     
-    // Floating stats animation
     const statsInterval = setInterval(() => {
       const newStat = {
         id: Date.now(),
@@ -20,25 +19,115 @@ export default function Stats() {
         y: Math.random() * 100,
         delay: Math.random() * 3,
         speed: 12 + Math.random() * 8
-      }
-      setFloatingStats(prev => [...prev.slice(-9), newStat])
-    }, 3000)
+      };
+      setFloatingStats(prev => [...prev.slice(-9), newStat]);
+    }, 3000);
 
-    // Update time every second for live feel
     const timeInterval = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
+      setCurrentTime(new Date());
+    }, 1000);
 
     return () => {
-      clearInterval(statsInterval)
-      clearInterval(timeInterval)
-    }
-  }, [])
+      clearInterval(statsInterval);
+      clearInterval(timeInterval);
+    };
+  }, []);
 
   const handleCardClick = (index) => {
-    setAnimatingCard(index)
-    setTimeout(() => setAnimatingCard(null), 600)
-  }
+    setAnimatingCard(index);
+    setTimeout(() => setAnimatingCard(null), 600);
+  };
+
+  const navItems = [
+    { href: '/', label: 'Home' },
+    { href: '/live', label: 'Live' },
+    { href: '/players', label: 'Players' },
+    { href: '/stats', label: 'Stats', active: true },
+    { href: '/teams', label: 'Teams' },
+    { href: '/community', label: 'Community' },
+    { href: '/about', label: 'About' },
+    { href: '/rewards', label: 'Rewards' }
+  ];
+
+  const liveMatches = [
+    { 
+      home: 'Real Madrid', 
+      away: 'Bayern München', 
+      homeScore: 1, 
+      awayScore: 2, 
+      time: '1st Half 38:42',
+      status: 'live'
+    },
+    { 
+      home: 'Chelsea', 
+      away: 'Arsenal', 
+      homeScore: 2, 
+      awayScore: 1, 
+      time: '2nd Half 67:23',
+      status: 'live'
+    }
+  ];
+
+  const topPlayers = [
+    { 
+      name: 'Lionel Messi', 
+      team: 'Inter Miami', 
+      goals: '8', 
+      assists: '12', 
+      games: '15',
+      position: '#1',
+      flag: '🇦🇷'
+    },
+    { 
+      name: 'Erling Haaland', 
+      team: 'Manchester City', 
+      goals: '12', 
+      assists: '3', 
+      games: '14',
+      position: '#2',
+      flag: '🇳🇴'
+    },
+    { 
+      name: 'Kylian Mbappé', 
+      team: 'Real Madrid', 
+      goals: '9', 
+      assists: '7', 
+      games: '16',
+      position: '#3',
+      flag: '🇫🇷'
+    }
+  ];
+
+  const liveUpdates = [
+    { 
+      time: '2 min ago', 
+      text: 'Goal by Bellingham, Real Madrid 1-2 Bayern München',
+      type: 'goal',
+      icon: '⚽',
+      color: '#00ff88'
+    },
+    { 
+      time: '5 min ago', 
+      text: 'Penalty goal by Havertz, Chelsea 2-1 Arsenal',
+      type: 'penalty',
+      icon: '🥅',
+      color: '#0099ff'
+    },
+    { 
+      time: '8 min ago', 
+      text: 'Substitution: Messi replaces Suárez, Inter Miami',
+      type: 'substitution',
+      icon: '🔄',
+      color: '#ff6b35'
+    },
+    { 
+      time: '12 min ago', 
+      text: 'Yellow card for Xhaka, Arsenal vs Chelsea',
+      type: 'card',
+      icon: '🟨',
+      color: '#ffdd00'
+    }
+  ];
 
   return (
     <div style={{
@@ -231,38 +320,30 @@ export default function Stats() {
         zIndex: 100,
         animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
       }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-        onClick={() => window.location.href = '/'}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.15)'
-          e.target.style.textShadow = '0 0 25px #00ff88'
-          e.target.style.filter = 'brightness(1.2)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(1)'
-          e.target.style.textShadow = 'none'
-          e.target.style.filter = 'brightness(1)'
-        }}
+        <div 
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+          onClick={() => window.location.href = '/'}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.15)';
+            e.target.style.textShadow = '0 0 25px #00ff88';
+            e.target.style.filter = 'brightness(1.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)';
+            e.target.style.textShadow = 'none';
+            e.target.style.filter = 'brightness(1)';
+          }}
         >
           Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
-          {[
-            { href: '/', label: 'Home' },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats', active: true },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
+          {navItems.map((item, index) => (
             <a 
               key={item.href}
               href={item.href} 
@@ -274,14 +355,14 @@ export default function Stats() {
                 padding: '8px 0'
               }}
               onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
+                e.target.style.color = '#00ff88';
+                e.target.style.transform = 'translateY(-3px)';
+                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
+                e.target.style.color = item.active ? '#ffffff' : '#888';
+                e.target.style.transform = 'translateY(0)';
+                e.target.style.textShadow = 'none';
               }}
             >
               {item.label}
@@ -290,8 +371,9 @@ export default function Stats() {
         </nav>
       </header>
 
-      {/* Stats Content */}
+      {/* Main Content */}
       <main className="hero-bg" style={{ padding: '60px 20px' }}>
+        {/* Hero Section */}
         <div style={{
           textAlign: 'center',
           marginBottom: '60px',
@@ -322,7 +404,6 @@ export default function Stats() {
             Real-time data and insights from the Club World Cup 2025
           </p>
           
-          {/* Live Time Display */}
           <div style={{
             marginTop: '30px',
             display: 'inline-block',
@@ -343,7 +424,7 @@ export default function Stats() {
           </div>
         </div>
 
-        {/* Live Games */}
+        {/* Live Matches */}
         <section style={{ 
           marginBottom: '60px',
           maxWidth: '1200px',
@@ -363,24 +444,7 @@ export default function Stats() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '30px'
           }}>
-            {[
-              { 
-                home: 'Real Madrid', 
-                away: 'Bayern München', 
-                homeScore: 1, 
-                awayScore: 2, 
-                time: '1st Half 38:42',
-                status: 'live'
-              },
-              { 
-                home: 'Chelsea', 
-                away: 'Arsenal', 
-                homeScore: 2, 
-                awayScore: 1, 
-                time: '2nd Half 67:23',
-                status: 'live'
-              }
-            ].map((match, index) => (
+            {liveMatches.map((match, index) => (
               <div 
                 key={index}
                 className={`card-hover stat-card ${animatingCard === index ? 'number-animate' : ''}`}
@@ -393,15 +457,14 @@ export default function Stats() {
                 }}
                 onClick={() => handleCardClick(index)}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#00ff88'
-                  e.currentTarget.style.backgroundColor = '#1a1a1a'
+                  e.currentTarget.style.borderColor = '#00ff88';
+                  e.currentTarget.style.backgroundColor = '#1a1a1a';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#333'
-                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.borderColor = '#333';
+                  e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                {/* Live indicator shimmer */}
                 <div style={{
                   position: 'absolute',
                   top: 0,
@@ -493,7 +556,7 @@ export default function Stats() {
               </div>
             ))}
           </div>
-        )}
+        </section>
 
         {/* Top Players */}
         <section style={{ 
@@ -517,53 +580,28 @@ export default function Stats() {
             overflow: 'hidden',
             animation: isVisible ? 'fadeInScale 0.8s ease-out 1.4s both' : 'none'
           }}>
-            {[
-              { 
-                name: 'Lionel Messi', 
-                team: 'Inter Miami', 
-                goals: '8', 
-                assists: '12', 
-                games: '15',
-                position: '#1',
-                flag: '🇦🇷'
-              },
-              { 
-                name: 'Erling Haaland', 
-                team: 'Manchester City', 
-                goals: '12', 
-                assists: '3', 
-                games: '14',
-                position: '#2',
-                flag: '🇳🇴'
-              },
-              { 
-                name: 'Kylian Mbappé', 
-                team: 'Real Madrid', 
-                goals: '9', 
-                assists: '7', 
-                games: '16',
-                position: '#3',
-                flag: '🇫🇷'
-              }
-            ].map((player, index) => (
-              <div key={index} className="card-hover" style={{
-                padding: '25px',
-                borderBottom: index < 2 ? '2px solid #333' : 'none',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                transition: 'all 0.3s ease',
-                position: 'relative'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.backgroundColor = 'rgba(0, 255, 136, 0.05)'
-                e.currentTarget.style.transform = 'translateX(10px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.transform = 'translateX(0)'
-              }}>
-                
+            {topPlayers.map((player, index) => (
+              <div 
+                key={index} 
+                className="card-hover" 
+                style={{
+                  padding: '25px',
+                  borderBottom: index < 2 ? '2px solid #333' : 'none',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  transition: 'all 0.3s ease',
+                  position: 'relative'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 255, 136, 0.05)';
+                  e.currentTarget.style.transform = 'translateX(10px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                   <div style={{
                     backgroundColor: index === 0 ? '#FFD700' : index === 1 ? '#C0C0C0' : '#CD7F32',
@@ -632,51 +670,12 @@ export default function Stats() {
                     <div style={{ color: '#888', fontSize: '14px' }}>🏃 Games</div>
                   </div>
                 </div>
-
-                {/* Team */}
-                <div style={{ fontSize: '14px', color: '#888' }}>
-                  {playerData.team?.name || 'N/A'}
-                </div>
-
-                {/* Goals */}
-                <div style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 'bold',
-                  color: '#00ff88'
-                }}>
-                  {playerData.statistics?.goals?.total || 0}
-                </div>
-
-                {/* Assists */}
-                <div style={{ 
-                  fontSize: '18px', 
-                  fontWeight: 'bold',
-                  color: '#0099ff'
-                }}>
-                  {playerData.statistics?.goals?.assists || 0}
-                </div>
-
-                {/* Games */}
-                <div style={{ 
-                  fontSize: '16px',
-                  color: '#ff6b35'
-                }}>
-                  {playerData.statistics?.games?.appearences || 0}
-                </div>
-
-                {/* Rating */}
-                <div style={{ 
-                  fontSize: '16px',
-                  color: '#ffffff'
-                }}>
-                  {playerData.statistics?.games?.rating || 'N/A'}
-                </div>
               </div>
             ))}
           </div>
-        )}
+        </section>
 
-        {/* Recent Updates */}
+        {/* Live Updates */}
         <section style={{
           maxWidth: '1200px',
           margin: '0 auto'
@@ -697,36 +696,7 @@ export default function Stats() {
             padding: '30px',
             animation: isVisible ? 'fadeInScale 0.8s ease-out 1.8s both' : 'none'
           }}>
-            {[
-              { 
-                time: '2 min ago', 
-                text: 'Goal by Bellingham, Real Madrid 1-2 Bayern München',
-                type: 'goal',
-                icon: '⚽',
-                color: '#00ff88'
-              },
-              { 
-                time: '5 min ago', 
-                text: 'Penalty goal by Havertz, Chelsea 2-1 Arsenal',
-                type: 'penalty',
-                icon: '🥅',
-                color: '#0099ff'
-              },
-              { 
-                time: '8 min ago', 
-                text: 'Substitution: Messi replaces Suárez, Inter Miami',
-                type: 'substitution',
-                icon: '🔄',
-                color: '#ff6b35'
-              },
-              { 
-                time: '12 min ago', 
-                text: 'Yellow card for Xhaka, Arsenal vs Chelsea',
-                type: 'card',
-                icon: '🟨',
-                color: '#ffdd00'
-              }
-            ].map((update, index) => (
+            {liveUpdates.map((update, index) => (
               <div key={index} className="update-item" style={{
                 padding: '20px 0',
                 borderBottom: index < 3 ? '1px solid #333' : 'none',
@@ -771,7 +741,6 @@ export default function Stats() {
             ))}
           </div>
           
-          {/* View More Button */}
           <div style={{
             textAlign: 'center',
             marginTop: '40px'
@@ -790,14 +759,14 @@ export default function Stats() {
                 animation: 'glow 4s ease-in-out infinite'
               }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#00cc6a'
-                e.target.style.transform = 'translateY(-5px) scale(1.05)'
-                e.target.style.boxShadow = '0 15px 35px rgba(0, 255, 136, 0.4)'
+                e.target.style.backgroundColor = '#00cc6a';
+                e.target.style.transform = 'translateY(-5px) scale(1.05)';
+                e.target.style.boxShadow = '0 15px 35px rgba(0, 255, 136, 0.4)';
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#00ff88'
-                e.target.style.transform = 'translateY(0) scale(1)'
-                e.target.style.boxShadow = 'none'
+                e.target.style.backgroundColor = '#00ff88';
+                e.target.style.transform = 'translateY(0) scale(1)';
+                e.target.style.boxShadow = 'none';
               }}
             >
               View All Updates 📈
@@ -806,5 +775,5 @@ export default function Stats() {
         </section>
       </main>
     </div>
-  )
+  );
 }
