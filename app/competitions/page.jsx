@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import Header from '../components/Header'
+import CompetitionBracket from '../components/CompetitionBracket'
 
 export default function Competitions() {
   const [competitions, setCompetitions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [selectedCompetition, setSelectedCompetition] = useState(null)
 
   useEffect(() => {
     fetchCompetitions()
@@ -409,8 +411,37 @@ export default function Competitions() {
                   display: 'flex',
                   gap: '10px'
                 }}>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setSelectedCompetition(competition)
+                    }}
+                    style={{
+                      backgroundColor: '#ff6b35',
+                      color: '#000',
+                      padding: '10px 16px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      fontSize: '14px',
+                      fontWeight: 'bold',
+                      flex: 1,
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'scale(1.05)'
+                      e.target.style.backgroundColor = '#e55a2b'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'scale(1)'
+                      e.target.style.backgroundColor = '#ff6b35'
+                    }}
+                  >
+                    🏆 View Bracket
+                  </button>
                   <a
                     href="/matches"
+                    onClick={(e) => e.stopPropagation()}
                     style={{
                       backgroundColor: getStatusColor(competition.status),
                       color: '#000',
@@ -434,6 +465,7 @@ export default function Competitions() {
                   </a>
                   <a
                     href="/stats"
+                    onClick={(e) => e.stopPropagation()}
                     style={{
                       backgroundColor: 'transparent',
                       color: '#ffffff',
@@ -489,6 +521,14 @@ export default function Competitions() {
             <div style={{ fontSize: '18px', marginBottom: '10px' }}>No competitions found</div>
             <div style={{ fontSize: '14px' }}>Check back later for upcoming tournaments</div>
           </div>
+        )}
+
+        {/* Competition Bracket Modal */}
+        {selectedCompetition && (
+          <CompetitionBracket 
+            competition={selectedCompetition}
+            onClose={() => setSelectedCompetition(null)}
+          />
         )}
       </main>
 

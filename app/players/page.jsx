@@ -14,6 +14,7 @@ export default function Players() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
+  const [sortBy, setSortBy] = useState('name')
   const [playersPerPage] = useState(25)
   const [currentPage, setCurrentPage] = useState(1)
   const [teams, setTeams] = useState([])
@@ -165,10 +166,41 @@ export default function Players() {
       filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
     }
 
+    // Apply sorting
+    filtered = sortPlayers(filtered, sortBy)
+
     setFilteredPlayers(filtered)
     setCurrentPage(1)
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
-  }, [searchTerm, selectedTeam, selectedPosition, allPlayers, loadedPlayers, playersPerPage])
+  }, [searchTerm, selectedTeam, selectedPosition, sortBy, allPlayers, loadedPlayers, playersPerPage])
+
+  const sortPlayers = (players, sortCriteria) => {
+    return [...players].sort((a, b) => {
+      const playerA = a.player
+      const playerB = b.player
+      const statsA = a.statistics
+      const statsB = b.statistics
+
+      switch (sortCriteria) {
+        case 'name':
+          return (playerA?.name || '').localeCompare(playerB?.name || '')
+        case 'age':
+          return (playerB?.age || 0) - (playerA?.age || 0)
+        case 'goals':
+          return (statsB?.goals || 0) - (statsA?.goals || 0)
+        case 'assists':
+          return (statsB?.assists || 0) - (statsA?.assists || 0)
+        case 'rating':
+          return (parseFloat(statsB?.rating) || 0) - (parseFloat(statsA?.rating) || 0)
+        case 'games':
+          return (statsB?.games || 0) - (statsA?.games || 0)
+        case 'team':
+          return (a.team?.name || '').localeCompare(b.team?.name || '')
+        default:
+          return 0
+      }
+    })
+  }
 
   // Load more players
   const handleLoadMore = async () => {
@@ -213,6 +245,9 @@ export default function Players() {
             if (selectedPosition) {
               filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
             }
+            
+            // Apply sorting to filtered results
+            filtered = sortPlayers(filtered, sortBy)
             
             setFilteredPlayers(filtered)
             setDisplayedPlayers(filtered.slice(0, displayedPlayers.length + playersPerPage))
@@ -643,6 +678,39 @@ export default function Players() {
               <option value="Attacker">⚽ Attacker</option>
             </select>
             
+            {/* Sort Filter */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '16px 20px',
+                borderRadius: '12px',
+                border: '2px solid #333',
+                backgroundColor: '#111',
+                color: '#fff',
+                fontSize: '16px',
+                minWidth: '180px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#ffdd00'
+                e.target.style.backgroundColor = '#1a1a1a'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#333'
+                e.target.style.backgroundColor = '#111'
+              }}
+            >
+              <option value="name">📝 Sort by Name</option>
+              <option value="goals">⚽ Sort by Goals</option>
+              <option value="assists">🎯 Sort by Assists</option>
+              <option value="rating">⭐ Sort by Rating</option>
+              <option value="games">🏃 Sort by Games</option>
+              <option value="age">🎂 Sort by Age</option>
+              <option value="team">🏟️ Sort by Team</option>
+            </select>
+            
             {/* Results Count */}
             <div style={{
               color: '#00ff88',
@@ -754,6 +822,7 @@ export default function Players() {
                 setSearchTerm('')
                 setSelectedTeam('')
                 setSelectedPosition('')
+                setSortBy('name')
               }}
               style={{
                 backgroundColor: '#00ff88',
