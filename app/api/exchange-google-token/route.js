@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '../../utils/supabase'
+import { createClient } from '@supabase/supabase-js'
+
+// Create admin client for server-side operations
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 export async function POST(request) {
   try {
@@ -58,7 +64,7 @@ export async function POST(request) {
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000))
 
     // Check if user already exists in profiles table
-    const { data: existingProfile, error: profileError } = await supabase
+    const { data: existingProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('google_id', googleProfile.id)
@@ -85,7 +91,7 @@ export async function POST(request) {
         bio: null
       }
 
-      const { data: createdProfile, error: createError } = await supabase
+      const { data: createdProfile, error: createError } = await supabaseAdmin
         .from('profiles')
         .insert([newProfile])
         .select()
@@ -102,7 +108,7 @@ export async function POST(request) {
       userProfile = createdProfile
     } else {
       // User exists, update tokens and profile data
-      const { data: updatedProfile, error: updateError } = await supabase
+      const { data: updatedProfile, error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
           google_access_token: tokens.access_token,
@@ -133,7 +139,7 @@ export async function POST(request) {
     const sessionToken = generateSessionToken()
 
     // Create OAuth session
-    const { error: sessionError } = await supabase
+    const { error: sessionError } = await supabaseAdmin
       .from('oauth_sessions')
       .insert([{
         user_id: userProfile.id,
