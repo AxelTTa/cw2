@@ -7,9 +7,14 @@ export default function Stats() {
   const [floatingStats, setFloatingStats] = useState([]);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [animatingCard, setAnimatingCard] = useState(null);
+  const [liveMatches, setLiveMatches] = useState([]);
+  const [topPlayers, setTopPlayers] = useState([]);
+  const [liveUpdates, setLiveUpdates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setIsVisible(true);
+    loadRealData();
     
     const statsInterval = setInterval(() => {
       const newStat = {
@@ -27,11 +32,165 @@ export default function Stats() {
       setCurrentTime(new Date());
     }, 1000);
 
+    // Refresh data every 30 seconds
+    const dataInterval = setInterval(() => {
+      loadRealData();
+    }, 30000);
+
     return () => {
       clearInterval(statsInterval);
       clearInterval(timeInterval);
+      clearInterval(dataInterval);
     };
   }, []);
+
+  const loadRealData = async () => {
+    setLoading(true);
+    await Promise.all([
+      loadLiveMatches(),
+      loadTopPlayers(), 
+      loadLiveUpdates()
+    ]);
+    setLoading(false);
+  };
+
+  const loadLiveMatches = async () => {
+    try {
+      const response = await fetch('/api/matches?status=live&limit=10');
+      const data = await response.json();
+      if (data.success && data.matches) {
+        // Filter for actual live matches and format them
+        const live = data.matches.filter(match => match.status === 'live').slice(0, 2);
+        setLiveMatches(live.map(match => ({
+          home: match.homeTeam?.name || 'Team A',
+          away: match.awayTeam?.name || 'Team B',
+          homeScore: match.score?.home || 0,
+          awayScore: match.score?.away || 0,
+          time: match.statusLong || 'Live',
+          status: 'live'
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading live matches:', error);
+      // Fallback to mock data if API fails
+      setLiveMatches([
+        { 
+          home: 'Real Madrid', 
+          away: 'Bayern München', 
+          homeScore: 1, 
+          awayScore: 2, 
+          time: '1st Half 38:42',
+          status: 'live'
+        }
+      ]);
+    }
+  };
+
+  const loadTopPlayers = async () => {
+    try {
+      const response = await fetch('/api/players?limit=3&sort=goals_desc');
+      const data = await response.json();
+      if (data.success && data.players) {
+        setTopPlayers(data.players.slice(0, 3).map((player, index) => ({
+          name: player.name || 'Unknown Player',
+          team: player.team?.name || 'Unknown Team',
+          goals: player.goals || '0',
+          assists: player.assists || '0',
+          games: player.games || '0',
+          position: `#${index + 1}`,
+          flag: player.nationality === 'Argentina' ? '🇦🇷' : 
+                player.nationality === 'Norway' ? '🇳🇴' : 
+                player.nationality === 'France' ? '🇫🇷' : '🌍'
+        })));
+      }
+    } catch (error) {
+      console.error('Error loading top players:', error);
+      // Fallback to mock data if API fails
+      setTopPlayers([
+        { 
+          name: 'Lionel Messi', 
+          team: 'Inter Miami', 
+          goals: '8', 
+          assists: '12', 
+          games: '15',
+          position: '#1',
+          flag: '🇦🇷'
+        },
+        { 
+          name: 'Erling Haaland', 
+          team: 'Manchester City', 
+          goals: '12', 
+          assists: '3', 
+          games: '14',
+          position: '#2',
+          flag: '🇳🇴'
+        },
+        { 
+          name: 'Kylian Mbappé', 
+          team: 'Real Madrid', 
+          goals: '9', 
+          assists: '7', 
+          games: '16',
+          position: '#3',
+          flag: '🇫🇷'
+        }
+      ]);
+    }
+  };
+
+  const loadLiveUpdates = async () => {
+    try {
+      const response = await fetch('/api/matches?status=recent&limit=10');
+      const data = await response.json();
+      if (data.success && data.matches) {
+        // Create live updates from recent match events
+        const updates = data.matches.slice(0, 4).map((match, index) => {
+          const timeAgo = `${2 + index * 3} min ago`;
+          return {
+            time: timeAgo,
+            text: `Match update: ${match.homeTeam?.name || 'Team A'} vs ${match.awayTeam?.name || 'Team B'}`,
+            type: 'match',
+            icon: '⚽',
+            color: '#00ff88'
+          };
+        });
+        setLiveUpdates(updates);
+      }
+    } catch (error) {
+      console.error('Error loading live updates:', error);
+      // Fallback to mock data if API fails
+      setLiveUpdates([
+        { 
+          time: '2 min ago', 
+          text: 'Goal by Bellingham, Real Madrid 1-2 Bayern München',
+          type: 'goal',
+          icon: '⚽',
+          color: '#00ff88'
+        },
+        { 
+          time: '5 min ago', 
+          text: 'Penalty goal by Havertz, Chelsea 2-1 Arsenal',
+          type: 'penalty',
+          icon: '🥅',
+          color: '#0099ff'
+        },
+        { 
+          time: '8 min ago', 
+          text: 'Substitution: Messi replaces Suárez, Inter Miami',
+          type: 'substitution',
+          icon: '🔄',
+          color: '#ff6b35'
+        },
+        { 
+          time: '12 min ago', 
+          text: 'Yellow card for Xhaka, Arsenal vs Chelsea',
+          type: 'card',
+          icon: '🟨',
+          color: '#ffdd00'
+        }
+      ]);
+    }
+  };
 
   const handleCardClick = (index) => {
     setAnimatingCard(index);
@@ -49,85 +208,6 @@ export default function Stats() {
     { href: '/rewards', label: 'Rewards' }
   ];
 
-  const liveMatches = [
-    { 
-      home: 'Real Madrid', 
-      away: 'Bayern München', 
-      homeScore: 1, 
-      awayScore: 2, 
-      time: '1st Half 38:42',
-      status: 'live'
-    },
-    { 
-      home: 'Chelsea', 
-      away: 'Arsenal', 
-      homeScore: 2, 
-      awayScore: 1, 
-      time: '2nd Half 67:23',
-      status: 'live'
-    }
-  ];
-
-  const topPlayers = [
-    { 
-      name: 'Lionel Messi', 
-      team: 'Inter Miami', 
-      goals: '8', 
-      assists: '12', 
-      games: '15',
-      position: '#1',
-      flag: '🇦🇷'
-    },
-    { 
-      name: 'Erling Haaland', 
-      team: 'Manchester City', 
-      goals: '12', 
-      assists: '3', 
-      games: '14',
-      position: '#2',
-      flag: '🇳🇴'
-    },
-    { 
-      name: 'Kylian Mbappé', 
-      team: 'Real Madrid', 
-      goals: '9', 
-      assists: '7', 
-      games: '16',
-      position: '#3',
-      flag: '🇫🇷'
-    }
-  ];
-
-  const liveUpdates = [
-    { 
-      time: '2 min ago', 
-      text: 'Goal by Bellingham, Real Madrid 1-2 Bayern München',
-      type: 'goal',
-      icon: '⚽',
-      color: '#00ff88'
-    },
-    { 
-      time: '5 min ago', 
-      text: 'Penalty goal by Havertz, Chelsea 2-1 Arsenal',
-      type: 'penalty',
-      icon: '🥅',
-      color: '#0099ff'
-    },
-    { 
-      time: '8 min ago', 
-      text: 'Substitution: Messi replaces Suárez, Inter Miami',
-      type: 'substitution',
-      icon: '🔄',
-      color: '#ff6b35'
-    },
-    { 
-      time: '12 min ago', 
-      text: 'Yellow card for Xhaka, Arsenal vs Chelsea',
-      type: 'card',
-      icon: '🟨',
-      color: '#ffdd00'
-    }
-  ];
 
   return (
     <div style={{
@@ -439,12 +519,40 @@ export default function Stats() {
           }}>
             🔥 Live Matches
           </h2>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-            gap: '30px'
-          }}>
-            {liveMatches.map((match, index) => (
+          {loading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px',
+              color: '#888'
+            }}>
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '20px',
+                animation: 'bounce 1.5s infinite'
+              }}>⚽</div>
+              <div style={{ 
+                fontSize: '20px',
+                animation: 'pulse 2s infinite'
+              }}>
+                Loading live matches...
+              </div>
+            </div>
+          ) : liveMatches.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px',
+              color: '#888'
+            }}>
+              <div style={{ fontSize: '48px', marginBottom: '20px' }}>📺</div>
+              <div style={{ fontSize: '18px' }}>No live matches at the moment</div>
+            </div>
+          ) : (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+              gap: '30px'
+            }}>
+              {liveMatches.map((match, index) => (
               <div 
                 key={index}
                 className={`card-hover stat-card ${animatingCard === index ? 'number-animate' : ''}`}
@@ -554,8 +662,9 @@ export default function Stats() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Top Players */}
@@ -574,13 +683,32 @@ export default function Stats() {
             ⭐ Top Performers This Week
           </h2>
           
-          <div className="card-hover stat-card" style={{
-            border: '2px solid #333',
-            borderRadius: '16px',
-            overflow: 'hidden',
-            animation: isVisible ? 'fadeInScale 0.8s ease-out 1.4s both' : 'none'
-          }}>
-            {topPlayers.map((player, index) => (
+          {loading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px',
+              color: '#888'
+            }}>
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '20px',
+                animation: 'bounce 1.5s infinite'
+              }}>⭐</div>
+              <div style={{ 
+                fontSize: '20px',
+                animation: 'pulse 2s infinite'
+              }}>
+                Loading top players...
+              </div>
+            </div>
+          ) : (
+            <div className="card-hover stat-card" style={{
+              border: '2px solid #333',
+              borderRadius: '16px',
+              overflow: 'hidden',
+              animation: isVisible ? 'fadeInScale 0.8s ease-out 1.4s both' : 'none'
+            }}>
+              {topPlayers.map((player, index) => (
               <div 
                 key={index} 
                 className="card-hover" 
@@ -671,8 +799,9 @@ export default function Stats() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Live Updates */}
@@ -690,13 +819,32 @@ export default function Stats() {
             ⚡ Live Updates Feed
           </h2>
           
-          <div className="card-hover stat-card" style={{
-            border: '2px solid #333',
-            borderRadius: '16px',
-            padding: '30px',
-            animation: isVisible ? 'fadeInScale 0.8s ease-out 1.8s both' : 'none'
-          }}>
-            {liveUpdates.map((update, index) => (
+          {loading ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '60px',
+              color: '#888'
+            }}>
+              <div style={{ 
+                fontSize: '48px', 
+                marginBottom: '20px',
+                animation: 'bounce 1.5s infinite'
+              }}>⚡</div>
+              <div style={{ 
+                fontSize: '20px',
+                animation: 'pulse 2s infinite'
+              }}>
+                Loading live updates...
+              </div>
+            </div>
+          ) : (
+            <div className="card-hover stat-card" style={{
+              border: '2px solid #333',
+              borderRadius: '16px',
+              padding: '30px',
+              animation: isVisible ? 'fadeInScale 0.8s ease-out 1.8s both' : 'none'
+            }}>
+              {liveUpdates.map((update, index) => (
               <div key={index} className="update-item" style={{
                 padding: '20px 0',
                 borderBottom: index < 3 ? '1px solid #333' : 'none',
@@ -738,8 +886,9 @@ export default function Stats() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
           
           <div style={{
             textAlign: 'center',

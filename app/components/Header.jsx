@@ -116,26 +116,35 @@ export default function Header() {
         })}
       </nav>
 
-      {/* User Actions (placeholder for future) */}
+      {/* User Actions */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '15px'
       }}>
-        <div style={{
-          width: '8px',
-          height: '8px',
-          background: '#00ff88',
-          borderRadius: '50%',
-          animation: 'pulse 2s infinite'
-        }} />
-        <span style={{
-          color: '#888',
-          fontSize: '12px',
-          fontWeight: '500'
-        }}>
-          LIVE
-        </span>
+        <a
+          href="/login"
+          style={{
+            backgroundColor: '#00ff88',
+            color: '#000',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            textDecoration: 'none',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            transition: 'all 0.3s ease'
+          }}
+          onMouseEnter={(e) => {
+            e.target.style.backgroundColor = '#00cc6a'
+            e.target.style.transform = 'translateY(-2px)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.backgroundColor = '#00ff88'
+            e.target.style.transform = 'translateY(0)'
+          }}
+        >
+          Login
+        </a>
       </div>
 
       <style jsx>{`

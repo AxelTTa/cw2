@@ -1,11 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { MatchService } from '../../backend/services/matchService'
-import { CommentService } from '../../backend/services/commentService'
-import { ReactionService } from '../../backend/services/reactionService'
-import { ProfileService } from '../../backend/services/profileService'
-import { AuthService } from '../../backend/services/authService'
 import GoogleAuth from '../components/GoogleAuth'
 import PublicComments from '../components/PublicComments'
 import { supabase } from '../utils/supabase'
@@ -56,38 +51,32 @@ export default function CommunityPage() {
   }
 
   const getCurrentUser = async () => {
-    // First check localStorage for user data
-    const storedUserData = AuthService.getUserFromStorage()
-    
-    if (storedUserData) {
-      // Validate session
-      const validationResult = await AuthService.validateSession(storedUserData.session_token)
-      
-      if (validationResult.success && validationResult.valid) {
-        setUser(storedUserData.user)
-        setUserProfile(storedUserData.user)
-        return
-      } else {
-        // Session invalid, clear stored data
-        AuthService.clearUserData()
-      }
+    // Check localStorage for user data
+    const userData = localStorage.getItem('user_profile')
+    if (userData) {
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      setUserProfile(parsedUser)
+      return
     }
     
     // Fallback to Supabase auth (for existing users)
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUser(user)
-      const profileResult = await ProfileService.getProfile(user.id)
-      if (profileResult.success) {
-        setUserProfile(profileResult.data)
-      }
+      setUserProfile(user)
     }
   }
 
   const loadMatches = async () => {
-    const result = await MatchService.getAllMatches()
-    if (result.success) {
-      setMatches(result.data)
+    try {
+      const response = await fetch('/api/matches')
+      const data = await response.json()
+      if (data.success) {
+        setMatches(data.matches || [])
+      }
+    } catch (error) {
+      console.error('Error loading matches:', error)
     }
   }
 
@@ -95,9 +84,14 @@ export default function CommunityPage() {
     if (!selectedMatch) return
     
     setLoading(true)
-    const result = await CommentService.getCommentsByMatchId(selectedMatch.id, sortBy)
-    if (result.success) {
-      setComments(result.data)
+    try {
+      const response = await fetch(`/api/comments?match_id=${selectedMatch.id}&limit=100`)
+      const data = await response.json()
+      if (data.success) {
+        setComments(data.comments || [])
+      }
+    } catch (error) {
+      console.error('Error loading comments:', error)
     }
     setLoading(false)
   }
@@ -112,42 +106,80 @@ export default function CommunityPage() {
     e.preventDefault()
     if (!user || !newComment.trim() || !selectedMatch) return
 
-    const commentData = {
-      user_id: user.id,
-      match_id: selectedMatch.id,
-      parent_id: replyTo,
-      content: newComment.trim(),
-      comment_type: 'text'
-    }
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          match_id: selectedMatch.id,
+          parent_id: replyTo,
+          content: newComment.trim(),
+          comment_type: 'text'
+        })
+      })
 
-    const result = await CommentService.createComment(commentData)
-    if (result.success) {
-      setNewComment('')
-      setReplyTo(null)
-      await loadComments()
-      
-      // Award XP for posting comment
-      if (userProfile) {
-        await ProfileService.addXP(user.id, 10)
+      const data = await response.json()
+      if (data.success) {
+        setNewComment('')
+        setReplyTo(null)
+        await loadComments()
       }
+    } catch (error) {
+      console.error('Error submitting comment:', error)
     }
   }
 
   const handleUpvote = async (commentId) => {
     if (!user) return
     
-    const result = await CommentService.upvoteComment(commentId)
-    if (result.success) {
-      await loadComments()
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          comment_id: commentId,
+          action: 'upvote',
+          user_id: user.id
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await loadComments()
+      }
+    } catch (error) {
+      console.error('Error upvoting comment:', error)
     }
   }
 
   const handleReaction = async (commentId, reactionType) => {
     if (!user) return
 
-    const result = await ReactionService.addReaction(user.id, commentId, reactionType)
-    if (result.success) {
-      await loadComments()
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          comment_id: commentId,
+          action: 'reaction',
+          user_id: user.id,
+          reaction_type: reactionType
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await loadComments()
+      }
+    } catch (error) {
+      console.error('Error adding reaction:', error)
     }
   }
 
@@ -161,9 +193,9 @@ export default function CommunityPage() {
   }
 
   const handleAuthSuccess = (userData) => {
-    setUser(userData.user)
-    setUserProfile(userData.user)
-    AuthService.storeUserData(userData)
+    setUser(userData)
+    setUserProfile(userData)
+    localStorage.setItem('user_profile', JSON.stringify(userData))
   }
 
   const handleAuthError = (error) => {
@@ -173,7 +205,7 @@ export default function CommunityPage() {
 
   const signOut = async () => {
     // Clear localStorage
-    AuthService.clearUserData()
+    localStorage.removeItem('user_profile')
     
     // Also clear Supabase auth if applicable
     await supabase.auth.signOut()
@@ -684,7 +716,7 @@ export default function CommunityPage() {
                   marginBottom: '8px'
                 }}>
                   <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    {match.home_team} vs {match.away_team}
+                    {match.homeTeam?.name || match.home_team} vs {match.awayTeam?.name || match.away_team}
                   </div>
                   <div className={match.status === 'live' ? 'live-pulse' : ''} style={{
                     fontSize: '14px',
@@ -704,7 +736,7 @@ export default function CommunityPage() {
                   alignItems: 'center'
                 }}>
                   <div style={{ fontSize: '12px', color: '#888' }}>
-                    {match.league} • {formatTime(match.match_date)}
+                    {match.league || match.round} • {formatTime(match.date || match.match_date)}
                   </div>
                   {match.status === 'live' && (
                     <div style={{
@@ -714,7 +746,7 @@ export default function CommunityPage() {
                       animation: 'glow 2s ease-in-out infinite',
                       textShadow: '0 0 15px rgba(0, 255, 136, 0.5)'
                     }}>
-                      {match.home_score} - {match.away_score}
+                      {match.score?.home || match.home_score} - {match.score?.away || match.away_score}
                     </div>
                   )}
                   
@@ -760,7 +792,7 @@ export default function CommunityPage() {
                   fontSize: '24px',
                   animation: 'bounce 3s ease-in-out infinite'
                 }}>
-                  ⚽ {selectedMatch.home_team} vs {selectedMatch.away_team}
+                  ⚽ {selectedMatch.homeTeam?.name || selectedMatch.home_team} vs {selectedMatch.awayTeam?.name || selectedMatch.away_team}
                 </h2>
                 <div style={{
                   fontSize: '28px',
@@ -770,12 +802,12 @@ export default function CommunityPage() {
                   textShadow: selectedMatch.status === 'live' ? '0 0 20px rgba(0, 255, 136, 0.6)' : 'none'
                 }}>
                   {selectedMatch.status === 'live' ? 
-                    `🔴 ${selectedMatch.home_score} - ${selectedMatch.away_score}` : 
+                    `🔴 ${selectedMatch.score?.home || selectedMatch.home_score} - ${selectedMatch.score?.away || selectedMatch.away_score}` : 
                     selectedMatch.status}
                 </div>
               </div>
               <div style={{ fontSize: '14px', color: '#888' }}>
-                {selectedMatch.league} • {formatTime(selectedMatch.match_date)}
+                {selectedMatch.league || selectedMatch.round} • {formatTime(selectedMatch.date || selectedMatch.match_date)}
               </div>
             </div>
 
