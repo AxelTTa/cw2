@@ -19,7 +19,7 @@ export default function Stats() {
           fontWeight: 'bold',
           color: '#00ff88'
         }}>
-          ChilizWinner
+          Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>

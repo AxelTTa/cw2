@@ -217,19 +217,26 @@ export default function Players() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
-          ChilizWinner
+        <div 
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer'
+          }}
+          onClick={() => window.location.href = '/'}
+        >
+          Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
+          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
           <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
+          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
+          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
         </nav>
       </header>
 
