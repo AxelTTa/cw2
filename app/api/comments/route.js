@@ -85,6 +85,39 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
+    // Ensure user profile exists before creating comment
+    try {
+      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('id', user_id)
+        .single()
+
+      if (profileCheckError || !existingProfile) {
+        // Create profile if it doesn't exist
+        const { error: profileCreateError } = await supabaseAdmin
+          .from('profiles')
+          .insert([{
+            id: user_id,
+            email: `${user_id}@tempuser.com`,
+            username: `user_${user_id.substring(0, 8)}`,
+            display_name: `User ${user_id.substring(0, 8)}`,
+            level: 1,
+            xp: 0,
+            fan_tokens: 0,
+            total_chz_earned: 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }])
+
+        if (profileCreateError) {
+          console.error('Error creating profile:', profileCreateError)
+        }
+      }
+    } catch (profileError) {
+      console.error('Profile check/creation error:', profileError)
+    }
+
     // Convert match_id to string to handle both integers and UUIDs
     const matchIdString = match_id ? match_id.toString() : null
 

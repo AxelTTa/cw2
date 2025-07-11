@@ -464,7 +464,7 @@ export default function Competitions() {
                     View Matches
                   </a>
                   <a
-                    href="/stats"
+                    href="/live"
                     onClick={(e) => e.stopPropagation()}
                     style={{
                       backgroundColor: 'transparent',
@@ -487,7 +487,7 @@ export default function Competitions() {
                       e.target.style.backgroundColor = 'transparent'
                     }}
                   >
-                    Statistics
+                    Live Matches
                   </a>
                 </div>
 

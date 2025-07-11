@@ -329,11 +329,12 @@ export default function CompetitionBracket({ competition, onClose }) {
             display: 'flex',
             gap: '30px',
             overflowX: 'auto',
-            paddingBottom: '20px'
+            paddingBottom: '20px',
+            minHeight: '400px'
           }}>
             {Object.entries(bracketData.knockout).map(([roundName, matches], roundIndex) => (
               <div key={roundIndex} style={{
-                minWidth: '200px',
+                minWidth: '220px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '15px'
@@ -344,9 +345,10 @@ export default function CompetitionBracket({ competition, onClose }) {
                   fontWeight: 'bold',
                   textAlign: 'center',
                   marginBottom: '15px',
-                  padding: '10px',
+                  padding: '12px',
                   backgroundColor: '#2a2a2a',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  border: '2px solid #ff6b35'
                 }}>
                   {roundName}
                 </h4>
@@ -354,40 +356,60 @@ export default function CompetitionBracket({ competition, onClose }) {
                   <div key={matchIndex} style={{
                     backgroundColor: '#1a1a1a',
                     border: '2px solid #333',
-                    borderRadius: '8px',
-                    padding: '15px',
-                    position: 'relative'
-                  }}>
+                    borderRadius: '12px',
+                    padding: '18px',
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = '#ff6b35'
+                    e.currentTarget.style.transform = 'scale(1.02)'
+                    e.currentTarget.style.backgroundColor = '#222'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = '#333'
+                    e.currentTarget.style.transform = 'scale(1)'
+                    e.currentTarget.style.backgroundColor = '#1a1a1a'
+                  }}
+                  >
                     <div style={{
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '8px'
+                      gap: '10px'
                     }}>
                       <div style={{
                         backgroundColor: '#2a2a2a',
-                        padding: '8px',
-                        borderRadius: '4px',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
                         color: '#fff',
-                        fontSize: '12px',
-                        textAlign: 'center'
+                        fontSize: '13px',
+                        textAlign: 'center',
+                        fontWeight: '500',
+                        border: '1px solid #444'
                       }}>
                         {match.team1}
                       </div>
                       <div style={{
-                        color: '#888',
-                        fontSize: '10px',
+                        color: '#ff6b35',
+                        fontSize: '12px',
                         textAlign: 'center',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        backgroundColor: '#333',
+                        padding: '4px',
+                        borderRadius: '4px'
                       }}>
                         VS
                       </div>
                       <div style={{
                         backgroundColor: '#2a2a2a',
-                        padding: '8px',
-                        borderRadius: '4px',
+                        padding: '10px 12px',
+                        borderRadius: '6px',
                         color: '#fff',
-                        fontSize: '12px',
-                        textAlign: 'center'
+                        fontSize: '13px',
+                        textAlign: 'center',
+                        fontWeight: '500',
+                        border: '1px solid #444'
                       }}>
                         {match.team2}
                       </div>
@@ -395,34 +417,47 @@ export default function CompetitionBracket({ competition, onClose }) {
                     {match.winner && (
                       <div style={{
                         position: 'absolute',
-                        top: '-8px',
-                        right: '-8px',
+                        top: '-10px',
+                        right: '-10px',
                         backgroundColor: '#00ff88',
                         color: '#000',
                         borderRadius: '50%',
-                        width: '20px',
-                        height: '20px',
+                        width: '24px',
+                        height: '24px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                         fontSize: '12px',
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        border: '2px solid #111'
                       }}>
                         ✓
                       </div>
                     )}
                     
-                    {/* Connection line to next round */}
+                    {/* Enhanced connection line to next round */}
                     {roundIndex < Object.keys(bracketData.knockout).length - 1 && (
-                      <div style={{
-                        position: 'absolute',
-                        right: '-15px',
-                        top: '50%',
-                        transform: 'translateY(-50%)',
-                        width: '30px',
-                        height: '2px',
-                        backgroundColor: '#333'
-                      }} />
+                      <>
+                        <div style={{
+                          position: 'absolute',
+                          right: '-15px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '30px',
+                          height: '2px',
+                          backgroundColor: '#ff6b35'
+                        }} />
+                        <div style={{
+                          position: 'absolute',
+                          right: '-18px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          width: '6px',
+                          height: '6px',
+                          backgroundColor: '#ff6b35',
+                          borderRadius: '50%'
+                        }} />
+                      </>
                     )}
                   </div>
                 ))}

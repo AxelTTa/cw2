@@ -69,7 +69,9 @@ export default function Header() {
       position: 'sticky',
       top: 0,
       zIndex: 1000,
-      backdropFilter: 'blur(10px)'
+      backdropFilter: 'blur(10px)',
+      willChange: 'transform',
+      transform: 'translateZ(0)'
     }}>
       {/* Logo */}
       <a 

@@ -231,77 +231,7 @@ export default function Home() {
         </div>
       ))}
 
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(15px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => window.location.href = '/'}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.15)'
-            e.target.style.textShadow = '0 0 25px #00ff88'
-            e.target.style.filter = 'brightness(1.2)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1)'
-            e.target.style.textShadow = 'none'
-            e.target.style.filter = 'brightness(1)'
-          }}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          {[
-            { href: '/', label: 'Home', active: true },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '8px 0'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main className="hero-bg" style={{ 
@@ -340,6 +270,97 @@ export default function Home() {
             Follow the expanded Club World Cup with 32 teams from around the world. 
             Real-time match results, player stats, and community discussions.
           </p>
+        </div>
+
+        {/* Top Goal Scorers - Compact Section */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '60px auto 40px',
+          padding: '0 20px'
+        }}>
+          <div style={{
+            backgroundColor: '#111',
+            borderRadius: '12px',
+            border: '2px solid #333',
+            padding: '20px',
+            marginBottom: '40px'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              marginBottom: '15px',
+              color: '#00ff88',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              ⚽ Top Goal Scorers
+            </h3>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              overflowX: 'auto',
+              paddingBottom: '5px'
+            }}>
+              {[
+                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴' },
+                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷' },
+                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷' },
+                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷' },
+                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷' }
+              ].map((player, index) => (
+                <div key={index} style={{
+                  minWidth: '120px',
+                  backgroundColor: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  padding: '12px 8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#00ff88'
+                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 255, 136, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+                >
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: '#00ff88',
+                    marginBottom: '4px'
+                  }}>
+                    {player.goals}
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    marginBottom: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{player.flag}</span>
+                    {player.name}
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#888'
+                  }}>
+                    {player.team}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Recent Matches Section */}
