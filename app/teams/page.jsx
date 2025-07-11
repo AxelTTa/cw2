@@ -4,8 +4,11 @@ import { useState, useEffect } from 'react'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
+  const [filteredTeams, setFilteredTeams] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedConfederation, setSelectedConfederation] = useState('')
 
   useEffect(() => {
     async function fetchTeams() {
@@ -63,6 +66,7 @@ export default function Teams() {
         }
         
         setTeams(teamsData)
+        setFilteredTeams(teamsData)
       } catch (err) {
         console.error('❌ Frontend: Error loading teams:', {
           error: err.message,
@@ -92,6 +96,73 @@ export default function Teams() {
 
     fetchTeams()
   }, [])
+
+  // Filter teams based on search term and confederation
+  useEffect(() => {
+    let filtered = teams
+
+    if (searchTerm) {
+      filtered = filtered.filter(teamData => 
+        teamData.team.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        teamData.team.country.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+
+    if (selectedConfederation) {
+      filtered = filtered.filter(teamData => {
+        const confederation = getConfederation(teamData.team.country)
+        return confederation === selectedConfederation
+      })
+    }
+
+    setFilteredTeams(filtered)
+  }, [teams, searchTerm, selectedConfederation])
+
+  const getConfederation = (country) => {
+    const confederations = {
+      'England': 'UEFA',
+      'Spain': 'UEFA',
+      'Germany': 'UEFA',
+      'France': 'UEFA',
+      'Italy': 'UEFA',
+      'Portugal': 'UEFA',
+      'Netherlands': 'UEFA',
+      'Belgium': 'UEFA',
+      'Austria': 'UEFA',
+      'Norway': 'UEFA',
+      'Switzerland': 'UEFA',
+      'Turkey': 'UEFA',
+      
+      'Brazil': 'CONMEBOL',
+      'Argentina': 'CONMEBOL',
+      'Uruguay': 'CONMEBOL',
+      'Colombia': 'CONMEBOL',
+      'Chile': 'CONMEBOL',
+      'Peru': 'CONMEBOL',
+      'Ecuador': 'CONMEBOL',
+      
+      'USA': 'CONCACAF',
+      'Mexico': 'CONCACAF',
+      
+      'Japan': 'AFC',
+      'South Korea': 'AFC',
+      'South-Korea': 'AFC',
+      'Saudi Arabia': 'AFC',
+      'Saudi-Arabia': 'AFC',
+      'UAE': 'AFC',
+      'United-Arab-Emirates': 'AFC',
+      
+      'Morocco': 'CAF',
+      'Egypt': 'CAF',
+      'Tunisia': 'CAF',
+      'Algeria': 'CAF',
+      'South-Africa': 'CAF',
+      
+      'Australia': 'OFC',
+      'New-Zealand': 'OFC'
+    }
+    return confederations[country] || 'Other'
+  }
 
   const getCountryFlag = (country) => {
     const flagMap = {
@@ -194,19 +265,26 @@ export default function Teams() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
-          ChilizWinner
+        <div 
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer'
+          }}
+          onClick={() => window.location.href = '/'}
+        >
+          Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
+          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
+          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#ffffff', textDecoration: 'none' }}>Teams</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
+          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
+          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
         </nav>
       </header>
 
@@ -236,6 +314,102 @@ export default function Teams() {
             All 32 teams competing in the expanded Club World Cup tournament in the USA
           </p>
         </div>
+
+        {/* Search and Filter Controls */}
+        {!loading && !error && teams.length > 0 && (
+          <div style={{
+            maxWidth: '1200px',
+            margin: '0 auto 40px',
+            padding: '20px',
+            backgroundColor: '#111',
+            border: '1px solid #333',
+            borderRadius: '12px'
+          }}>
+            <div style={{
+              display: 'flex',
+              gap: '20px',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {/* Search Input */}
+              <div style={{ flex: '1', minWidth: '300px', maxWidth: '400px' }}>
+                <input
+                  type="text"
+                  placeholder="Search teams or countries..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #333',
+                    backgroundColor: '#0a0a0a',
+                    color: '#fff',
+                    fontSize: '16px'
+                  }}
+                />
+              </div>
+
+              {/* Confederation Filter */}
+              <div style={{ minWidth: '200px' }}>
+                <select
+                  value={selectedConfederation}
+                  onChange={(e) => setSelectedConfederation(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '1px solid #333',
+                    backgroundColor: '#0a0a0a',
+                    color: '#fff',
+                    fontSize: '16px'
+                  }}
+                >
+                  <option value="">All Confederations</option>
+                  <option value="UEFA">🇪🇺 UEFA (Europe)</option>
+                  <option value="CONMEBOL">🌎 CONMEBOL (South America)</option>
+                  <option value="CONCACAF">🌎 CONCACAF (North America)</option>
+                  <option value="AFC">🌏 AFC (Asia)</option>
+                  <option value="CAF">🌍 CAF (Africa)</option>
+                  <option value="OFC">🌊 OFC (Oceania)</option>
+                </select>
+              </div>
+
+              {/* Clear Filters */}
+              {(searchTerm || selectedConfederation) && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('')
+                    setSelectedConfederation('')
+                  }}
+                  style={{
+                    padding: '12px 20px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#ef4444',
+                    color: '#fff',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+
+            {/* Results Count */}
+            <div style={{
+              marginTop: '15px',
+              textAlign: 'center',
+              fontSize: '14px',
+              color: '#888'
+            }}>
+              Showing {filteredTeams.length} of {teams.length} teams
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div style={{
@@ -285,6 +459,41 @@ export default function Teams() {
           </div>
         )}
 
+        {!loading && !error && filteredTeams.length === 0 && teams.length > 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px'
+          }}>
+            <div style={{
+              fontSize: '48px',
+              marginBottom: '20px'
+            }}>🔍</div>
+            <div style={{
+              fontSize: '18px',
+              color: '#888'
+            }}>No teams match your search criteria</div>
+            <button 
+              onClick={() => {
+                setSearchTerm('')
+                setSelectedConfederation('')
+              }}
+              style={{
+                marginTop: '20px',
+                backgroundColor: '#00ff88',
+                color: '#000',
+                border: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+              }}
+            >
+              Clear Filters
+            </button>
+          </div>
+        )}
+
         {!loading && !error && teams.length === 0 && (
           <div style={{
             textAlign: 'center',
@@ -301,7 +510,7 @@ export default function Teams() {
           </div>
         )}
 
-        {!loading && !error && teams.length > 0 && (
+        {!loading && !error && filteredTeams.length > 0 && (
           <>
             <div style={{
               display: 'grid',
@@ -310,7 +519,7 @@ export default function Teams() {
               maxWidth: '1400px',
               margin: '0 auto'
             }}>
-              {teams.map((teamData, index) => {
+              {filteredTeams.map((teamData, index) => {
                 const team = teamData.team
                 const venue = teamData.venue
                 return (
@@ -322,6 +531,7 @@ export default function Teams() {
                     transition: 'transform 0.2s ease, border-color 0.2s ease',
                     cursor: 'pointer'
                   }}
+                  onClick={() => window.location.href = `/teams/${team.id}`}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)'
                     e.currentTarget.style.borderColor = getConfederationColor(team.country)

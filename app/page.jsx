@@ -76,15 +76,20 @@ export default function Home() {
         justifyContent: 'space-between',
         alignItems: 'center'
       }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
+        <div 
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer'
+          }}
+          onClick={() => window.location.href = '/'}
+        >
           Clutch
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#ffffff', textDecoration: 'none' }}>Home</a>
+          <a href="/live" style={{ color: '#888', textDecoration: 'none' }}>Live</a>
           <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>

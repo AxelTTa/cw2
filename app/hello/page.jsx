@@ -27,7 +27,7 @@ export default function Hello() {
           color: '#888',
           marginBottom: '40px'
         }}>
-          Welcome to ChilizWinner - Your crypto-powered sports community
+          Welcome to Clutch - Your crypto-powered sports community
         </p>
         <a href="/" style={{
           display: 'inline-block',

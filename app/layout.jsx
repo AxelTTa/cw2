@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'ChilizWinner',
+  title: 'Clutch',
   description: 'Sports stats and crypto rewards app',
 }
 

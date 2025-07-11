@@ -4,8 +4,8 @@ const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
 const POTENTIAL_LEAGUE_IDS = [
-  537,  // Current ID being used
-  15,   // FIFA Club World Cup (historical)
+  15,   // FIFA Club World Cup - WORKING ✅
+  537,  // Alternative ID
   960,  // Alternative Club World Cup ID
   1    // World Cup ID (different tournament but similar format)
 ]
