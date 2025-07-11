@@ -24,6 +24,7 @@ export default function Stats() {
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
           <a href="/stats" style={{ color: '#ffffff', textDecoration: 'none' }}>Stats</a>
+          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
         </nav>
       </header>
