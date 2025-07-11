@@ -5,6 +5,8 @@ import { MatchService } from '../../backend/services/matchService'
 import { CommentService } from '../../backend/services/commentService'
 import { ReactionService } from '../../backend/services/reactionService'
 import { ProfileService } from '../../backend/services/profileService'
+import { AuthService } from '../../backend/services/authService'
+import GoogleAuth from '../components/GoogleAuth'
 import { supabase } from '../utils/supabase'
 
 export default function CommunityPage() {
@@ -35,10 +37,27 @@ export default function CommunityPage() {
   }
 
   const getCurrentUser = async () => {
-    const { data: { user } } = await supabase.auth.getUser()
-    setUser(user)
+    // First check localStorage for user data
+    const storedUserData = AuthService.getUserFromStorage()
     
+    if (storedUserData) {
+      // Validate session
+      const validationResult = await AuthService.validateSession(storedUserData.session_token)
+      
+      if (validationResult.success && validationResult.valid) {
+        setUser(storedUserData.user)
+        setUserProfile(storedUserData.user)
+        return
+      } else {
+        // Session invalid, clear stored data
+        AuthService.clearUserData()
+      }
+    }
+    
+    // Fallback to Supabase auth (for existing users)
+    const { data: { user } } = await supabase.auth.getUser()
     if (user) {
+      setUser(user)
       const profileResult = await ProfileService.getProfile(user.id)
       if (profileResult.success) {
         setUserProfile(profileResult.data)
@@ -122,8 +141,24 @@ export default function CommunityPage() {
     })
   }
 
+  const handleAuthSuccess = (userData) => {
+    setUser(userData.user)
+    setUserProfile(userData.user)
+    AuthService.storeUserData(userData)
+  }
+
+  const handleAuthError = (error) => {
+    console.error('Auth error:', error)
+    // Could show a toast notification here
+  }
+
   const signOut = async () => {
+    // Clear localStorage
+    AuthService.clearUserData()
+    
+    // Also clear Supabase auth if applicable
     await supabase.auth.signOut()
+    
     setUser(null)
     setUserProfile(null)
   }
@@ -500,21 +535,10 @@ export default function CommunityPage() {
                   <option value="popular">Most Popular</option>
                 </select>
                 {!user && (
-                  <button
-                    onClick={signIn}
-                    style={{
-                      backgroundColor: '#00ff88',
-                      border: 'none',
-                      borderRadius: '4px',
-                      padding: '6px 12px',
-                      color: '#000',
-                      fontSize: '12px',
-                      cursor: 'pointer',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Sign In to Comment
-                  </button>
+                  <GoogleAuth 
+                    onAuthSuccess={handleAuthSuccess}
+                    onAuthError={handleAuthError}
+                  />
                 )}
               </div>
             </div>
