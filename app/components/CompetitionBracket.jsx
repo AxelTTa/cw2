@@ -200,69 +200,24 @@ export default function CompetitionBracket({ competition, onClose }) {
 
   return (
     <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.95)',
-      zIndex: 1000,
-      overflow: 'auto',
-      padding: '20px'
+      width: '100%'
     }}>
+      {/* Competition Info */}
       <div style={{
-        maxWidth: '1400px',
-        margin: '0 auto',
-        backgroundColor: '#111',
-        borderRadius: '16px',
-        padding: '30px',
-        border: '2px solid #333'
+        marginBottom: '30px',
+        paddingBottom: '20px',
+        borderBottom: '2px solid #333'
       }}>
-        {/* Header */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '30px',
-          paddingBottom: '20px',
-          borderBottom: '2px solid #333'
+        <p style={{
+          color: '#888',
+          fontSize: '16px',
+          margin: 0
         }}>
-          <div>
-            <h2 style={{
-              color: '#fff',
-              fontSize: '28px',
-              fontWeight: 'bold',
-              margin: 0,
-              marginBottom: '8px'
-            }}>
-              {competition.name} - Tournament Bracket
-            </h2>
-            <p style={{
-              color: '#888',
-              fontSize: '16px',
-              margin: 0
-            }}>
-              {bracketData.type === 'group_stage_plus_knockout' && 'Group Stage + Knockout Format'}
-              {bracketData.type === 'league_phase_plus_knockout' && 'League Phase + Knockout Format'}
-              {bracketData.type === 'knockout_only' && 'Single Elimination Format'}
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            style={{
-              backgroundColor: '#ff4444',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '12px 24px',
-              color: '#fff',
-              fontSize: '16px',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
-          >
-            ✕ Close
-          </button>
-        </div>
+          {bracketData.type === 'group_stage_plus_knockout' && 'Group Stage + Knockout Format'}
+          {bracketData.type === 'league_phase_plus_knockout' && 'League Phase + Knockout Format'}
+          {bracketData.type === 'knockout_only' && 'Single Elimination Format'}
+        </p>
+      </div>
 
         {/* Groups (if applicable) */}
         {bracketData.groups && (

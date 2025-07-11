@@ -114,7 +114,7 @@ export async function POST(request) {
 
     console.log('Creating comment with data:', {
       content,
-      match_id: matchIdInt,
+      match_id,
       user_id,
       parent_id,
       is_meme,

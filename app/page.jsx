@@ -271,7 +271,6 @@ export default function Home() {
             { href: '/', label: 'Home', active: true },
             { href: '/live', label: 'Live' },
             { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
             { href: '/teams', label: 'Teams' },
             { href: '/community', label: 'Community' },
             { href: '/about', label: 'About' },
@@ -357,7 +356,7 @@ export default function Home() {
             color: '#ffffff',
             animation: 'slideInUp 1s ease-out 0.5s both'
           }}>
-            🏆 Recent Club World Cup Results
+            🏆 Recent Match Results
           </h2>
           
           {loading ? (
@@ -816,8 +815,8 @@ export default function Home() {
         }}>
           {[
             {
-              title: 'Live Statistics 📊',
-              desc: 'Real-time player and team stats from all 32 Club World Cup teams. Track goals, assists, and performances.',
+              title: 'Match Analytics 📊',
+              desc: 'Real-time match data and insights from top competitions worldwide. Track scores, goals, and key moments.',
               color: '#00ff88',
               delay: '0.2s'
             },
@@ -829,7 +828,7 @@ export default function Home() {
             },
             {
               title: 'Player Profiles 👤',
-              desc: 'Explore detailed profiles of all Club World Cup players. View stats, photos, and career highlights.',
+              desc: 'Explore detailed profiles of players from top competitions worldwide. View career highlights and achievements.',
               color: '#ff6b35',
               delay: '0.6s'
             }
