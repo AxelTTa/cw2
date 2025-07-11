@@ -106,6 +106,8 @@ export async function POST(request) {
             xp: 0,
             fan_tokens: 0,
             total_chz_earned: 0,
+            google_id: null,
+            auth_provider: 'email',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           }])

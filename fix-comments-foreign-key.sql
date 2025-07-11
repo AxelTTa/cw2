@@ -16,7 +16,9 @@ BEGIN
         fan_tokens,
         total_chz_earned,
         created_at,
-        updated_at
+        updated_at,
+        google_id,
+        auth_provider
     ) VALUES (
         p_user_id,
         COALESCE(p_email, p_user_id::text || '@tempuser.com'),
@@ -27,7 +29,9 @@ BEGIN
         0,
         0,
         NOW(),
-        NOW()
+        NOW(),
+        NULL,
+        'email'
     )
     ON CONFLICT (id) DO NOTHING;
 END;
@@ -62,7 +66,9 @@ INSERT INTO profiles (
     fan_tokens,
     total_chz_earned,
     created_at,
-    updated_at
+    updated_at,
+    google_id,
+    auth_provider
 )
 SELECT DISTINCT
     c.user_id,
@@ -74,7 +80,9 @@ SELECT DISTINCT
     0,
     0,
     NOW(),
-    NOW()
+    NOW(),
+    NULL,
+    'email'
 FROM comments c
 LEFT JOIN profiles p ON p.id = c.user_id
 WHERE p.id IS NULL
@@ -91,7 +99,9 @@ INSERT INTO profiles (
     fan_tokens,
     total_chz_earned,
     created_at,
-    updated_at
+    updated_at,
+    google_id,
+    auth_provider
 )
 SELECT DISTINCT
     r.user_id,
@@ -103,11 +113,37 @@ SELECT DISTINCT
     0,
     0,
     NOW(),
-    NOW()
+    NOW(),
+    NULL,
+    'email'
 FROM reactions r
 LEFT JOIN profiles p ON p.id = r.user_id
 WHERE p.id IS NULL
 ON CONFLICT (id) DO NOTHING;
+
+-- First, let's check what columns exist and their constraints
+DO $$ 
+BEGIN
+    -- Make google_id nullable if it exists and is not null
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name='profiles' AND column_name='google_id' 
+               AND is_nullable='NO') THEN
+        ALTER TABLE profiles ALTER COLUMN google_id DROP NOT NULL;
+    END IF;
+    
+    -- Make other potentially problematic columns nullable
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name='profiles' AND column_name='auth_provider' 
+               AND is_nullable='NO') THEN
+        ALTER TABLE profiles ALTER COLUMN auth_provider DROP NOT NULL;
+    END IF;
+    
+    IF EXISTS (SELECT 1 FROM information_schema.columns 
+               WHERE table_name='profiles' AND column_name='google_access_token' 
+               AND is_nullable='NO') THEN
+        ALTER TABLE profiles ALTER COLUMN google_access_token DROP NOT NULL;
+    END IF;
+END $$;
 
 -- Create the specific user that was failing
 INSERT INTO profiles (
@@ -120,7 +156,9 @@ INSERT INTO profiles (
     fan_tokens,
     total_chz_earned,
     created_at,
-    updated_at
+    updated_at,
+    google_id,
+    auth_provider
 ) VALUES (
     '8a3fdcd8-51e8-4643-8611-0855f425ff2c',
     '8a3fdcd8-51e8-4643-8611-0855f425ff2c@tempuser.com',
@@ -131,7 +169,9 @@ INSERT INTO profiles (
     0,
     0,
     NOW(),
-    NOW()
+    NOW(),
+    NULL,
+    'email'
 )
 ON CONFLICT (id) DO NOTHING;
 
