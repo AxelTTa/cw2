@@ -1,8 +1,7 @@
 {
   "name": "chilizwinner",
   "version": "1.0.0",
-  "description": "Sports stats and crypto rewards app",
-  "main": "index.js",
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,15 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "next": "^14.0.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
-  },
-  "engines": {
-    "node": ">=18"
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
-    "eslint": "^8.0.0",
-    "eslint-config-next": "^14.0.0"
+    "eslint": "8.57.1",
+    "eslint-config-next": "14.2.15"
   }
 }
