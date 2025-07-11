@@ -16,7 +16,10 @@ export default function PublicComments({ matchId = null, showForm = true }) {
     // Check if user is logged in
     const userData = localStorage.getItem('user_profile')
     if (userData) {
-      setUser(JSON.parse(userData))
+      const parsedUser = JSON.parse(userData)
+      console.log('Loaded user from localStorage:', parsedUser)
+      console.log('User ID type:', typeof parsedUser.id, 'Value:', parsedUser.id)
+      setUser(parsedUser)
     }
   }, [matchId])
 
@@ -50,6 +53,12 @@ export default function PublicComments({ matchId = null, showForm = true }) {
     }
 
     try {
+      console.log('Submitting comment with data:', {
+        user_id: user.id,
+        match_id: matchId,
+        user_object: user
+      })
+      
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {

@@ -92,6 +92,16 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
+    // Validate user_id is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(user_id)) {
+      console.error('Invalid user_id format:', user_id)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid user ID format. Expected UUID.' 
+      }, { status: 400 })
+    }
+
     // Convert match_id to integer for proper database storage
     const matchIdInt = match_id ? parseInt(match_id) : null
     
@@ -169,6 +179,16 @@ export async function PATCH(request) {
       return NextResponse.json({ 
         success: false, 
         error: 'Comment ID and action are required' 
+      }, { status: 400 })
+    }
+
+    // Validate comment_id is a proper UUID format
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(comment_id)) {
+      console.error('Invalid comment_id format:', comment_id)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid comment ID format. Expected UUID.' 
       }, { status: 400 })
     }
 
