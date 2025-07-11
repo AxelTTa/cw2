@@ -7,6 +7,7 @@ import { ReactionService } from '../../backend/services/reactionService'
 import { ProfileService } from '../../backend/services/profileService'
 import { AuthService } from '../../backend/services/authService'
 import GoogleAuth from '../components/GoogleAuth'
+import PublicComments from '../components/PublicComments'
 import { supabase } from '../utils/supabase'
 
 export default function CommunityPage() {
@@ -507,124 +508,8 @@ export default function CommunityPage() {
               </div>
             </div>
 
-            {/* Discussion Controls */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px'
-            }}>
-              <h3 style={{ color: '#ffffff', margin: 0 }}>
-                💬 Discussion ({comments.length})
-              </h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  style={{
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    padding: '6px 12px',
-                    color: '#ffffff',
-                    fontSize: '12px'
-                  }}
-                >
-                  <option value="newest">Newest</option>
-                  <option value="oldest">Oldest</option>
-                  <option value="popular">Most Popular</option>
-                </select>
-                {!user && (
-                  <GoogleAuth 
-                    onAuthSuccess={handleAuthSuccess}
-                    onAuthError={handleAuthError}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Comment Form */}
-            {user && (
-              <form onSubmit={handleSubmitComment} style={{ marginBottom: '20px' }}>
-                {replyTo && (
-                  <div style={{
-                    backgroundColor: '#2a2a2a',
-                    border: '1px solid #333',
-                    borderRadius: '4px',
-                    padding: '8px',
-                    marginBottom: '8px',
-                    fontSize: '12px',
-                    color: '#888'
-                  }}>
-                    Replying to comment...{' '}
-                    <button
-                      type="button"
-                      onClick={() => setReplyTo(null)}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#ff4444',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Share your thoughts on the match..."
-                    style={{
-                      flex: 1,
-                      backgroundColor: '#2a2a2a',
-                      border: '1px solid #333',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      color: '#ffffff',
-                      fontSize: '14px',
-                      resize: 'vertical',
-                      minHeight: '80px'
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={!newComment.trim()}
-                    style={{
-                      backgroundColor: newComment.trim() ? '#00ff88' : '#333',
-                      border: 'none',
-                      borderRadius: '8px',
-                      padding: '12px 20px',
-                      color: newComment.trim() ? '#000' : '#666',
-                      fontSize: '14px',
-                      cursor: newComment.trim() ? 'pointer' : 'not-allowed',
-                      fontWeight: 'bold'
-                    }}
-                  >
-                    Post (+10 XP)
-                  </button>
-                </div>
-              </form>
-            )}
-
-            {/* Comments List */}
-            {loading ? (
-              <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-                Loading comments...
-              </div>
-            ) : comments.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#888', padding: '40px' }}>
-                No comments yet. Be the first to share your thoughts!
-              </div>
-            ) : (
-              <div>
-                {comments.map(comment => (
-                  <CommentComponent key={comment.id} comment={comment} />
-                ))}
-              </div>
-            )}
+            {/* Public Comments Component */}
+            <PublicComments matchId={selectedMatch.id} />
           </div>
         )}
       </main>

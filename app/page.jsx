@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import MatchDiscussion from './community/page'
+import PublicComments from './components/PublicComments'
 
 export default function Home() {
   const [recentMatches, setRecentMatches] = useState([])
@@ -398,13 +399,13 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Match Discussion Section */}
+        {/* Public Comments Section */}
         <div style={{
           marginTop: '60px',
           maxWidth: '1200px',
           margin: '60px auto 0'
         }}>
-          <MatchDiscussion />
+          <PublicComments showForm={true} />
         </div>
       </main>
     </div>
