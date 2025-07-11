@@ -439,22 +439,25 @@ export default function Players() {
                 const team = playerData.team
                 const statistics = playerData.statistics
                 return (
-                  <div key={player.id || index} style={{
-                    backgroundColor: '#111',
-                    border: '1px solid #333',
-                    borderRadius: '12px',
-                    padding: '20px',
-                    transition: 'transform 0.2s ease, border-color 0.2s ease',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)'
-                    e.currentTarget.style.borderColor = getPositionColor(player.position)
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.borderColor = '#333'
-                  }}>
+                  <div 
+                    key={player.id || index} 
+                    style={{
+                      backgroundColor: '#111',
+                      border: '1px solid #333',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      transition: 'transform 0.2s ease, border-color 0.2s ease',
+                      cursor: 'pointer'
+                    }}
+                    onClick={() => window.location.href = `/players/${player.id}`}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-4px)'
+                      e.currentTarget.style.borderColor = getPositionColor(player.position)
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)'
+                      e.currentTarget.style.borderColor = '#333'
+                    }}>
                     <div style={{
                       display: 'flex',
                       alignItems: 'center',

@@ -300,6 +300,7 @@ export default function CommunityPage() {
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
+          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/community" style={{ color: '#ffffff', textDecoration: 'none' }}>Community</a>
         </nav>
       </header>
