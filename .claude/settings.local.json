@@ -5,7 +5,9 @@
       "Bash(rm:*)",
       "Bash(mv:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:www.realapp.link)",
+      "Bash(npx create-react-app:*)"
     ],
     "deny": []
   }
