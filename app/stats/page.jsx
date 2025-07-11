@@ -809,7 +809,7 @@ export default function Stats() {
           maxWidth: '1200px',
           margin: '0 auto'
         }}>
-          <h2 style={{ 
+          <h2 style={{  
             color: '#ffffff', 
             marginBottom: '30px', 
             fontSize: '32px',
