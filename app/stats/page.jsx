@@ -57,17 +57,17 @@ export default function Stats() {
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
                 <span style={{ color: '#00ff88', fontSize: '12px', fontWeight: 'bold' }}>LIVE</span>
-                <span style={{ color: '#888', fontSize: '14px' }}>Q3 8:42</span>
+                <span style={{ color: '#888', fontSize: '14px' }}>1st Half 38:42</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>Lakers</div>
-                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0099ff' }}>98</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>Real Madrid</div>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0099ff' }}>1</div>
                 </div>
                 <div style={{ color: '#888', fontSize: '14px' }}>vs</div>
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>Warriors</div>
-                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0099ff' }}>102</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '5px' }}>Bayern München</div>
+                  <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#0099ff' }}>2</div>
                 </div>
               </div>
             </div>
@@ -107,9 +107,9 @@ export default function Stats() {
             overflow: 'hidden'
           }}>
             {[
-              { name: 'LeBron James', team: 'Lakers', points: '28.5', assists: '7.2', rebounds: '8.1' },
-              { name: 'Luka Dončić', team: 'Mavericks', points: '32.1', assists: '8.9', rebounds: '8.3' },
-              { name: 'Jayson Tatum', team: 'Celtics', points: '27.8', assists: '4.2', rebounds: '8.7' }
+              { name: 'Lionel Messi', team: 'Inter Miami', goals: '8', assists: '12', games: '15' },
+              { name: 'Erling Haaland', team: 'Manchester City', goals: '12', assists: '3', games: '14' },
+              { name: 'Kylian Mbappé', team: 'Real Madrid', goals: '9', assists: '7', games: '16' }
             ].map((player, index) => (
               <div key={index} style={{
                 padding: '20px',
@@ -124,16 +124,16 @@ export default function Stats() {
                 </div>
                 <div style={{ display: 'flex', gap: '30px', textAlign: 'center' }}>
                   <div>
-                    <div style={{ color: '#00ff88', fontSize: '20px', fontWeight: 'bold' }}>{player.points}</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>PPG</div>
+                    <div style={{ color: '#00ff88', fontSize: '20px', fontWeight: 'bold' }}>{player.goals}</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>Goals</div>
                   </div>
                   <div>
                     <div style={{ color: '#0099ff', fontSize: '20px', fontWeight: 'bold' }}>{player.assists}</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>APG</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>Assists</div>
                   </div>
                   <div>
-                    <div style={{ color: '#ff6b35', fontSize: '20px', fontWeight: 'bold' }}>{player.rebounds}</div>
-                    <div style={{ color: '#888', fontSize: '12px' }}>RPG</div>
+                    <div style={{ color: '#ff6b35', fontSize: '20px', fontWeight: 'bold' }}>{player.games}</div>
+                    <div style={{ color: '#888', fontSize: '12px' }}>Games</div>
                   </div>
                 </div>
               </div>
@@ -151,9 +151,9 @@ export default function Stats() {
             padding: '20px'
           }}>
             {[
-              { time: '2 min ago', text: 'LeBron James scores 3-pointer, Lakers 98-102 Warriors' },
+              { time: '2 min ago', text: 'Goal by Bellingham, Real Madrid 1-2 Bayern München' },
               { time: '5 min ago', text: 'Penalty goal by Havertz, Chelsea 2-1 Arsenal' },
-              { time: '8 min ago', text: 'Timeout called by Warriors coach Steve Kerr' },
+              { time: '8 min ago', text: 'Substitution: Messi replaces Suárez, Inter Miami' },
               { time: '12 min ago', text: 'Yellow card for Xhaka, Arsenal vs Chelsea' }
             ].map((update, index) => (
               <div key={index} style={{

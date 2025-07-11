@@ -4,8 +4,8 @@ const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
 const POTENTIAL_LEAGUE_IDS = [
-  537,  // Current ID being used
-  15,   // FIFA Club World Cup (historical)
+  15,   // FIFA Club World Cup - WORKING ✅
+  537,  // Alternative ID
   960,  // Alternative Club World Cup ID
   1    // World Cup ID (different tournament but similar format)
 ]
@@ -225,24 +225,10 @@ export async function GET(request) {
       timestamp: new Date().toISOString()
     })
     
-    // Transform teams data for consistency
-    const transformedTeams = teams.map(teamData => ({
-      id: teamData.team.id,
-      name: teamData.team.name,
-      logo: teamData.team.logo,
-      country: teamData.team.country,
-      founded: teamData.team.founded,
-      venue: teamData.venue ? {
-        name: teamData.venue.name,
-        capacity: teamData.venue.capacity,
-        city: teamData.venue.city
-      } : null
-    }))
-    
     return NextResponse.json({
       success: true,
-      teams: transformedTeams,
-      count: transformedTeams?.length || 0,
+      teams: teams,
+      count: teams?.length || 0,
       timestamp: new Date().toISOString()
     })
     

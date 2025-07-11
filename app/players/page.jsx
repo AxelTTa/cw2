@@ -24,7 +24,7 @@ export default function Players() {
         console.log('🚀 Frontend: Starting players fetch from API...')
         console.log('📅 Frontend: Current time:', new Date().toISOString())
         
-        const response = await fetch('/api/players?limit=25&offset=0', {
+        const response = await fetch('/api/players', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -138,46 +138,15 @@ export default function Players() {
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
   }, [searchTerm, selectedTeam, selectedPosition, allPlayers, playersPerPage])
 
-  const loadMorePlayers = async () => {
-    try {
-      console.log('🔄 Frontend: Loading more players...')
-      const offset = displayedPlayers.length
-      
-      const response = await fetch(`/api/players?limit=25&offset=${offset}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to load more players: ${response.status}`)
-      }
-      
-      const apiData = await response.json()
-      const newPlayers = apiData.players
-      
-      console.log('✅ Frontend: Loaded more players:', {
-        newPlayersCount: newPlayers.length,
-        totalDisplayed: displayedPlayers.length + newPlayers.length
-      })
-      
-      setAllPlayers(prev => [...prev, ...newPlayers])
-      setDisplayedPlayers(prev => [...prev, ...newPlayers])
-      
-      // Update filtered players if no filters are active
-      if (!searchTerm && !selectedTeam && !selectedPosition) {
-        setFilteredPlayers(prev => [...prev, ...newPlayers])
-      }
-      
-    } catch (error) {
-      console.error('❌ Frontend: Error loading more players:', error)
-      setError('Failed to load more players. Please try again.')
-    }
+  // Pagination for display
+  const handleNextPage = () => {
+    const startIndex = currentPage * playersPerPage
+    const endIndex = startIndex + playersPerPage
+    setDisplayedPlayers(filteredPlayers.slice(0, endIndex))
+    setCurrentPage(currentPage + 1)
   }
 
-  const hasMorePlayers = displayedPlayers.length < filteredPlayers.length || 
-    (filteredPlayers.length === displayedPlayers.length && displayedPlayers.length % 25 === 0 && displayedPlayers.length > 0)
+  const hasMorePlayers = displayedPlayers.length < filteredPlayers.length
 
   const getCountryFlag = (country) => {
     const flagMap = {
@@ -605,7 +574,7 @@ export default function Players() {
                 marginTop: '40px'
               }}>
                 <button 
-                  onClick={loadMorePlayers}
+                  onClick={handleNextPage}
                   style={{
                     backgroundColor: '#00ff88',
                     color: '#000',
