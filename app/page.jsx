@@ -89,6 +89,8 @@ export default function Home() {
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
+          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
+          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
         </nav>
       </header>
 
