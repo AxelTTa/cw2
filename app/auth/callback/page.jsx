@@ -1,17 +1,19 @@
 'use client'
 
 import { useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { supabase } from '../../utils/supabase'
+import { Suspense } from 'react'
 
-export default function AuthCallback() {
+function AuthCallbackContent() {
   const router = useRouter()
-  const searchParams = useSearchParams()
 
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        const code = searchParams.get('code')
+        // Get URL parameters manually
+        const urlParams = new URLSearchParams(window.location.search)
+        const code = urlParams.get('code')
         
         if (code) {
           const { error } = await supabase.auth.exchangeCodeForSession(code)
@@ -34,7 +36,7 @@ export default function AuthCallback() {
     }
 
     handleAuthCallback()
-  }, [router, searchParams])
+  }, [router])
 
   return (
     <div style={{
@@ -74,5 +76,24 @@ export default function AuthCallback() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function AuthCallback() {
+  return (
+    <Suspense fallback={
+      <div style={{
+        backgroundColor: '#0a0a0a',
+        color: '#ffffff',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        <div>Loading...</div>
+      </div>
+    }>
+      <AuthCallbackContent />
+    </Suspense>
   )
 }
