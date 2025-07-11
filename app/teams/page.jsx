@@ -106,15 +106,23 @@ export default function Teams() {
       'Mexico': '🇲🇽',
       'Japan': '🇯🇵',
       'South Korea': '🇰🇷',
+      'South-Korea': '🇰🇷',
       'Morocco': '🇲🇦',
       'Egypt': '🇪🇬',
       'Australia': '🇦🇺',
       'Saudi Arabia': '🇸🇦',
+      'Saudi-Arabia': '🇸🇦',
       'Uruguay': '🇺🇾',
       'Colombia': '🇨🇴',
       'Chile': '🇨🇱',
       'Peru': '🇵🇪',
-      'Ecuador': '🇪🇨'
+      'Ecuador': '🇪🇨',
+      'Portugal': '🇵🇹',
+      'Austria': '🇦🇹',
+      'Tunisia': '🇹🇳',
+      'New-Zealand': '🇳🇿',
+      'South-Africa': '🇿🇦',
+      'United-Arab-Emirates': '🇦🇪'
     }
     return flagMap[country] || '🏳️'
   }
@@ -151,17 +159,22 @@ export default function Teams() {
       // AFC (Asia) - Purple
       'Japan': '#8b5cf6',
       'South Korea': '#8b5cf6',
+      'South-Korea': '#8b5cf6',
       'Saudi Arabia': '#8b5cf6',
+      'Saudi-Arabia': '#8b5cf6',
       'UAE': '#8b5cf6',
+      'United-Arab-Emirates': '#8b5cf6',
       
       // CAF (Africa) - Red
       'Morocco': '#ef4444',
       'Egypt': '#ef4444',
       'Tunisia': '#ef4444',
       'Algeria': '#ef4444',
+      'South-Africa': '#ef4444',
       
       // OFC (Oceania) - Yellow
-      'Australia': '#fbbf24'
+      'Australia': '#fbbf24',
+      'New-Zealand': '#fbbf24'
     }
     return confederations[country] || '#888'
   }
