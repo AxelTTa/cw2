@@ -74,6 +74,7 @@ export async function POST(request) {
 
     if (profileError && profileError.code === 'PGRST116') {
       // User doesn't exist, create new profile
+      // Let the database generate the UUID automatically
       const newProfile = {
         google_id: googleProfile.id,
         username: googleProfile.email.split('@')[0],
