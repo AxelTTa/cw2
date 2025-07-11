@@ -7,6 +7,7 @@ import { ReactionService } from '../../backend/services/reactionService'
 import { ProfileService } from '../../backend/services/profileService'
 import { AuthService } from '../../backend/services/authService'
 import GoogleAuth from '../components/GoogleAuth'
+import PublicComments from '../components/PublicComments'
 import { supabase } from '../utils/supabase'
 
 export default function CommunityPage() {
