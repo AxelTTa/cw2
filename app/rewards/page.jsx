@@ -1,38 +1,163 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Web3WalletConnect from '../components/Web3WalletConnect'
 
 export default function Rewards() {
   const [isVisible, setIsVisible] = useState(false)
   const [celebratingTier, setCelebratingTier] = useState(null)
   const [animatingReward, setAnimatingReward] = useState(null)
   const [floatingCoins, setFloatingCoins] = useState([])
+  const [user, setUser] = useState(null)
+  const [userRewards, setUserRewards] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [walletConnected, setWalletConnected] = useState(false)
+  const [claiming, setClaiming] = useState(false)
+  const [claimingReward, setClaimingReward] = useState(null)
 
-  // Mock user data - in real app this would come from your backend/database
-  const userStats = {
-    totalLikes: 847,
-    totalComments: 156,
-    tokensEarned: 2340,
-    currentStreak: 7,
-    level: 'Gold Commentator',
-    availableTokens: 450,
-    nextMilestone: 1000,
-    progress: 84
+  // Load user data and rewards
+  useEffect(() => {
+    loadUserData()
+  }, [])
+
+  const loadUserData = async () => {
+    try {
+      setLoading(true)
+      
+      // Get user from localStorage
+      const userData = localStorage.getItem('user_profile')
+      if (!userData) {
+        setError('Please log in to view your rewards')
+        setLoading(false)
+        return
+      }
+
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+
+      // Fetch user rewards data
+      const response = await fetch(`/api/rewards?user_id=${parsedUser.id}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setUserRewards(data.data)
+      } else {
+        setError(data.error || 'Failed to load rewards data')
+      }
+
+    } catch (error) {
+      console.error('Error loading user data:', error)
+      setError('Failed to load rewards data')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const rewardTiers = [
-    { threshold: 10, reward: 50, icon: '🔥', name: 'Fire Comment', description: 'First viral comment!', color: '#ff6b35', unlocked: true },
-    { threshold: 25, reward: 100, icon: '💎', name: 'Diamond Take', description: 'Quality insights recognized', color: '#0099ff', unlocked: true },
-    { threshold: 50, reward: 200, icon: '⚡', name: 'Lightning Strike', description: 'Community favorite', color: '#00ff88', unlocked: true },
-    { threshold: 100, reward: 500, icon: '🚀', name: 'Rocket Fuel', description: 'Top tier commentary', color: '#ff6b35', unlocked: false },
-    { threshold: 250, reward: 1000, icon: '👑', name: 'King Comment', description: 'Legendary status', color: '#0099ff', unlocked: false }
-  ]
+  const handleWalletConnected = (connection) => {
+    setWalletConnected(true)
+    console.log('Wallet connected:', connection)
+  }
 
-  const recentRewards = [
-    { comment: 'Haaland is absolutely unstoppable this season! 🔥', likes: 156, tokens: 500, time: '2 hours ago', tier: 'Rocket Fuel', new: true },
-    { comment: 'That VAR decision was questionable at best...', likes: 89, tokens: 200, time: '1 day ago', tier: 'Lightning Strike', new: false },
-    { comment: 'Best Champions League final in years!', likes: 234, tokens: 1000, time: '3 days ago', tier: 'King Comment', new: false }
-  ]
+  const handleWalletDisconnected = () => {
+    setWalletConnected(false)
+    console.log('Wallet disconnected')
+  }
+
+  const handleClaimReward = async (reward) => {
+    if (!walletConnected || !user) {
+      alert('Please connect your wallet first')
+      return
+    }
+
+    setClaiming(true)
+    setClaimingReward(reward.milestone_id)
+
+    try {
+      const walletConnection = JSON.parse(localStorage.getItem('wallet_connection'))
+      
+      const response = await fetch('/api/rewards/claim', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          milestone_id: reward.milestone_id,
+          wallet_address: walletConnection.address
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        // Show success animation
+        setCelebratingTier(reward.milestone_id)
+        setTimeout(() => setCelebratingTier(null), 3000)
+        
+        // Reload rewards data
+        await loadUserData()
+        
+        alert(`Successfully claimed ${data.data.chz_amount} CHZ tokens!`)
+      } else {
+        alert(`Failed to claim reward: ${data.error}`)
+      }
+
+    } catch (error) {
+      console.error('Error claiming reward:', error)
+      alert('Failed to claim reward')
+    } finally {
+      setClaiming(false)
+      setClaimingReward(null)
+    }
+  }
+
+  // Calculate derived stats from real data
+  const userStats = userRewards ? {
+    totalLikes: userRewards.stats.total_upvotes,
+    totalComments: userRewards.stats.total_comments,
+    tokensEarned: userRewards.stats.total_claimed_chz,
+    currentStreak: userRewards.user.streak_count,
+    level: `Level ${userRewards.user.level}`,
+    availableTokens: userRewards.stats.total_unclaimed_chz,
+    nextMilestone: userRewards.milestones.next_milestones.level ? userRewards.milestones.next_milestones.level.threshold_value : 'Max Level',
+    progress: userRewards.milestones.next_milestones.level ? userRewards.milestones.next_milestones.level.progress : 100
+  } : {
+    totalLikes: 0,
+    totalComments: 0,
+    tokensEarned: 0,
+    currentStreak: 0,
+    level: 'Level 1',
+    availableTokens: 0,
+    nextMilestone: 'Loading...',
+    progress: 0
+  }
+
+  // Convert real rewards data to display format
+  const rewardTiers = userRewards ? userRewards.eligible_rewards.map(reward => ({
+    milestone_id: reward.milestone_id,
+    threshold: reward.threshold_value,
+    reward: parseFloat(reward.chz_reward),
+    icon: reward.icon,
+    name: reward.title,
+    description: reward.description,
+    color: reward.milestone_type === 'level' ? '#00ff88' : 
+           reward.milestone_type === 'comments' ? '#0099ff' :
+           reward.milestone_type === 'upvotes' ? '#ff6b35' : '#ff6b35',
+    unlocked: reward.user_current_value >= reward.threshold_value,
+    already_claimed: reward.already_claimed,
+    milestone_type: reward.milestone_type
+  })) : []
+
+  const recentRewards = userRewards ? userRewards.claim_history.slice(0, 3).map(claim => ({
+    milestone_type: claim.claim_type,
+    chz_amount: parseFloat(claim.chz_amount),
+    time: new Date(claim.claimed_at).toLocaleDateString(),
+    tier: `${claim.claim_type} milestone`,
+    new: new Date(claim.claimed_at) > new Date(Date.now() - 24 * 60 * 60 * 1000),
+    transaction_hash: claim.transaction_hash,
+    wallet_address: claim.wallet_address
+  })) : []
 
   useEffect(() => {
     setIsVisible(true)
@@ -62,6 +187,61 @@ export default function Rewards() {
   const handleRewardClick = (index) => {
     setAnimatingReward(index)
     setTimeout(() => setAnimatingReward(null), 1000)
+  }
+
+  if (loading) {
+    return (
+      <div style={{
+        backgroundColor: '#0a0a0a',
+        color: '#ffffff',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div>
+          <div style={{ fontSize: '24px', marginBottom: '10px' }}>Loading your rewards...</div>
+          <div style={{ color: '#888' }}>Please wait while we calculate your achievements</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        backgroundColor: '#0a0a0a',
+        color: '#ffffff',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
+          <div style={{ fontSize: '24px', marginBottom: '10px', color: '#ff4444' }}>Error loading rewards</div>
+          <div style={{ color: '#888', marginBottom: '20px' }}>{error}</div>
+          <button
+            onClick={() => window.location.href = '/login'}
+            style={{
+              backgroundColor: '#00ff88',
+              color: '#000',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Go to Login
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -283,6 +463,27 @@ export default function Rewards() {
         </div>
       </section>
 
+      {/* Wallet Connection */}
+      <section style={{
+        padding: '40px 20px',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <h2 style={{
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '30px',
+          color: '#ffffff'
+        }}>
+          💳 Connect Your Wallet
+        </h2>
+        <Web3WalletConnect
+          onWalletConnected={handleWalletConnected}
+          onWalletDisconnected={handleWalletDisconnected}
+          currentUser={user}
+        />
+      </section>
+
       {/* Stats Overview */}
       <section style={{
         padding: '40px 20px',
@@ -402,7 +603,7 @@ export default function Rewards() {
           {rewardTiers.map((tier, index) => (
             <div
               key={index}
-              className={`reward-card ${tier.unlocked ? 'tier-unlocked' : ''} ${celebratingTier === index ? 'celebrate-animation' : ''}`}
+              className={`reward-card ${tier.unlocked ? 'tier-unlocked' : ''} ${celebratingTier === tier.milestone_id ? 'celebrate-animation' : ''}`}
               style={{
                 backgroundColor: tier.unlocked ? '#1a1a1a' : '#0f0f0f',
                 border: `2px solid ${tier.unlocked ? tier.color : '#333'}`,
@@ -470,18 +671,52 @@ export default function Rewards() {
                 </div>
               </div>
               
-              <div style={{
-                backgroundColor: tier.unlocked ? '#00ff88' : '#333',
-                color: tier.unlocked ? '#000' : '#666',
-                padding: '12px 24px',
-                borderRadius: '50px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                display: 'inline-block',
-                animation: tier.unlocked ? 'glow 2s ease-in-out infinite' : 'none'
-              }}>
-                +{tier.reward} tokens
-              </div>
+              {tier.already_claimed ? (
+                <div style={{
+                  backgroundColor: '#333',
+                  color: '#888',
+                  padding: '12px 24px',
+                  borderRadius: '50px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  display: 'inline-block'
+                }}>
+                  ✓ Claimed
+                </div>
+              ) : tier.unlocked ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleClaimReward(tier)
+                  }}
+                  disabled={claiming || claimingReward === tier.milestone_id}
+                  style={{
+                    backgroundColor: claiming || claimingReward === tier.milestone_id ? '#666' : '#00ff88',
+                    color: claiming || claimingReward === tier.milestone_id ? '#ccc' : '#000',
+                    border: 'none',
+                    padding: '12px 24px',
+                    borderRadius: '50px',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: claiming || claimingReward === tier.milestone_id ? 'not-allowed' : 'pointer',
+                    animation: tier.unlocked && !claiming ? 'glow 2s ease-in-out infinite' : 'none'
+                  }}
+                >
+                  {claimingReward === tier.milestone_id ? '⏳ Claiming...' : `🪙 Claim ${tier.reward} CHZ`}
+                </button>
+              ) : (
+                <div style={{
+                  backgroundColor: '#333',
+                  color: '#666',
+                  padding: '12px 24px',
+                  borderRadius: '50px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  display: 'inline-block'
+                }}>
+                  +{tier.reward} CHZ
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -550,7 +785,7 @@ export default function Rewards() {
                     marginBottom: '10px',
                     fontStyle: 'italic'
                   }}>
-                    "{reward.comment}"
+                    🏆 Achievement unlocked: {reward.tier}
                   </p>
                   
                   <div style={{
@@ -560,19 +795,6 @@ export default function Rewards() {
                     marginBottom: '10px'
                   }}>
                     <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                      backgroundColor: '#0a0a0a',
-                      padding: '5px 10px',
-                      borderRadius: '50px',
-                      border: '1px solid #ff6b35'
-                    }}>
-                      <span style={{ color: '#ff6b35' }}>❤️</span>
-                      <span style={{ color: '#ff6b35', fontWeight: 'bold' }}>{reward.likes}</span>
-                    </div>
-                    
-                    <div style={{
                       backgroundColor: '#0a0a0a',
                       padding: '5px 12px',
                       borderRadius: '50px',
@@ -580,11 +802,34 @@ export default function Rewards() {
                       color: '#0099ff',
                       fontSize: '12px'
                     }}>
-                      {reward.tier}
+                      {reward.milestone_type.toUpperCase()}
                     </div>
+                    
+                    {reward.transaction_hash && (
+                      <div style={{
+                        backgroundColor: '#0a0a0a',
+                        padding: '5px 12px',
+                        borderRadius: '50px',
+                        border: '1px solid #00ff88',
+                        color: '#00ff88',
+                        fontSize: '12px'
+                      }}>
+                        ✓ Confirmed
+                      </div>
+                    )}
                     
                     <span style={{ color: '#888', fontSize: '12px' }}>{reward.time}</span>
                   </div>
+                  
+                  {reward.transaction_hash && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#666',
+                      fontFamily: 'monospace'
+                    }}>
+                      TX: {reward.transaction_hash.slice(0, 10)}...{reward.transaction_hash.slice(-8)}
+                    </div>
+                  )}
                 </div>
                 
                 <div style={{
@@ -601,9 +846,9 @@ export default function Rewards() {
                     marginBottom: '5px',
                     animation: reward.new ? 'glow 1s ease-in-out infinite' : 'none'
                   }}>
-                    +{reward.tokens}
+                    +{reward.chz_amount}
                   </div>
-                  <div style={{ color: '#888', fontSize: '12px' }}>tokens</div>
+                  <div style={{ color: '#888', fontSize: '12px' }}>CHZ</div>
                 </div>
               </div>
             </div>
