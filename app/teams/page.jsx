@@ -22,7 +22,10 @@ export default function Teams() {
         console.log('✅ Frontend: Successfully received teams data:', {
           teamsCount: teamsData?.length || 0,
           firstTeam: teamsData?.[0]?.team?.name || 'None',
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          fullTeamsData: teamsData,
+          teamsDataStructure: teamsData?.length > 0 ? Object.keys(teamsData[0]) : [],
+          firstFewTeams: teamsData?.slice(0, 3)
         })
         
         if (!teamsData || teamsData.length === 0) {
@@ -36,7 +39,10 @@ export default function Teams() {
         console.error('❌ Frontend: Error loading teams:', {
           error: err.message,
           stack: err.stack,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
+          errorType: err.constructor.name,
+          fullError: err,
+          errorString: err.toString()
         })
         
         let errorMessage = 'Failed to load teams. '
