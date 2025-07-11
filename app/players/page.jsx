@@ -24,7 +24,7 @@ export default function Players() {
         console.log('🚀 Frontend: Starting players fetch from API...')
         console.log('📅 Frontend: Current time:', new Date().toISOString())
         
-        const response = await fetch('/api/players', {
+        const response = await fetch('/api/players?limit=25&offset=0', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -48,6 +48,8 @@ export default function Players() {
         console.log('📦 Frontend: API Data parsed:', {
           success: apiData.success,
           playersCount: apiData.count,
+          totalPlayersCount: apiData.totalCount,
+          pagination: apiData.pagination,
           dataKeys: Object.keys(apiData),
           timestamp: apiData.timestamp,
           fullApiData: apiData
@@ -136,17 +138,46 @@ export default function Players() {
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
   }, [searchTerm, selectedTeam, selectedPosition, allPlayers, playersPerPage])
 
-  const loadMorePlayers = () => {
-    const nextPage = currentPage + 1
-    const startIndex = currentPage * playersPerPage
-    const endIndex = nextPage * playersPerPage
-    const newPlayers = filteredPlayers.slice(startIndex, endIndex)
-    
-    setDisplayedPlayers(prev => [...prev, ...newPlayers])
-    setCurrentPage(nextPage)
+  const loadMorePlayers = async () => {
+    try {
+      console.log('🔄 Frontend: Loading more players...')
+      const offset = displayedPlayers.length
+      
+      const response = await fetch(`/api/players?limit=25&offset=${offset}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load more players: ${response.status}`)
+      }
+      
+      const apiData = await response.json()
+      const newPlayers = apiData.players
+      
+      console.log('✅ Frontend: Loaded more players:', {
+        newPlayersCount: newPlayers.length,
+        totalDisplayed: displayedPlayers.length + newPlayers.length
+      })
+      
+      setAllPlayers(prev => [...prev, ...newPlayers])
+      setDisplayedPlayers(prev => [...prev, ...newPlayers])
+      
+      // Update filtered players if no filters are active
+      if (!searchTerm && !selectedTeam && !selectedPosition) {
+        setFilteredPlayers(prev => [...prev, ...newPlayers])
+      }
+      
+    } catch (error) {
+      console.error('❌ Frontend: Error loading more players:', error)
+      setError('Failed to load more players. Please try again.')
+    }
   }
 
-  const hasMorePlayers = displayedPlayers.length < filteredPlayers.length
+  const hasMorePlayers = displayedPlayers.length < filteredPlayers.length || 
+    (filteredPlayers.length === displayedPlayers.length && displayedPlayers.length % 25 === 0 && displayedPlayers.length > 0)
 
   const getCountryFlag = (country) => {
     const flagMap = {
@@ -226,9 +257,9 @@ export default function Players() {
         </div>
         <nav style={{ display: 'flex', gap: '30px' }}>
           <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
+          <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
           <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/players" style={{ color: '#ffffff', textDecoration: 'none' }}>Players</a>
           <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
         </nav>
       </header>
