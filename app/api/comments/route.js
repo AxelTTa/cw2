@@ -346,66 +346,24 @@ export async function PATCH(request) {
         }, { status: 400 })
       }
 
-      // Check if user has already reacted to this comment
-      const { data: existingReaction } = await supabaseAdmin
-        .from('reactions')
-        .select('reaction_type')
-        .eq('user_id', user_id)
-        .eq('comment_id', comment_id)
-        .eq('reaction_type', action === 'upvote' ? 'like' : 'dislike')
-        .single()
+      // Use a database transaction to prevent race conditions
+      const { data: voteResult, error: voteError } = await supabaseAdmin.rpc('handle_comment_vote', {
+        p_user_id: user_id,
+        p_comment_id: comment_id,
+        p_vote_type: action === 'upvote' ? 'like' : 'dislike'
+      })
 
-      const isRemoving = !!existingReaction
-
-      // Get current vote counts
-      const { data: currentComment } = await supabaseAdmin
-        .from('comments')
-        .select('upvotes, downvotes')
-        .eq('id', comment_id)
-        .single()
-
-      let newUpvotes = currentComment?.upvotes || 0
-      let newDownvotes = currentComment?.downvotes || 0
-
-      if (isRemoving) {
-        // Remove the reaction
-        await supabaseAdmin
-          .from('reactions')
-          .delete()
-          .eq('user_id', user_id)
-          .eq('comment_id', comment_id)
-          .eq('reaction_type', action === 'upvote' ? 'like' : 'dislike')
-
-        if (action === 'upvote') {
-          newUpvotes = Math.max(0, newUpvotes - 1)
-        } else {
-          newDownvotes = Math.max(0, newDownvotes - 1)
-        }
-      } else {
-        // Add new reaction
-        await supabaseAdmin
-          .from('reactions')
-          .insert({
-            user_id,
-            comment_id,
-            reaction_type: action === 'upvote' ? 'like' : 'dislike'
-          })
-
-        if (action === 'upvote') {
-          newUpvotes += 1
-        } else {
-          newDownvotes += 1
-        }
+      if (voteError) {
+        console.error('Vote error:', voteError)
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to process vote' 
+        }, { status: 500 })
       }
 
-      // Update comment vote counts
+      // Get updated comment with profile data
       const { data: comment, error } = await supabaseAdmin
         .from('comments')
-        .update({ 
-          upvotes: newUpvotes,
-          downvotes: newDownvotes
-        })
-        .eq('id', comment_id)
         .select(`
           *,
           profiles:user_id (
@@ -418,13 +376,15 @@ export async function PATCH(request) {
             fan_tokens
           )
         `)
+        .eq('id', comment_id)
         .single()
 
       if (error) throw error
       result = { 
         comment,
-        action: isRemoving ? 'removed' : 'added',
-        vote_type: action
+        action: voteResult?.action || 'processed',
+        vote_type: action,
+        message: voteResult?.message || 'Vote processed'
       }
 
     } else if (action === 'reaction') {

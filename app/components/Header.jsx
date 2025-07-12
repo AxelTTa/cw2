@@ -32,6 +32,9 @@ export default function Header() {
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
       setUserProfile(parsedUser)
+      
+      // Check if XP data is stale and refresh if needed
+      await refreshXPDataIfNeeded(parsedUser)
       return
     }
     
@@ -43,9 +46,64 @@ export default function Header() {
     }
   }
 
+  const refreshXPDataIfNeeded = async (user) => {
+    if (!user?.id) return
+
+    const XP_CACHE_KEY = `xp_cache_${user.id}`
+    const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
+
+    try {
+      const cached = localStorage.getItem(XP_CACHE_KEY)
+      let shouldRefresh = true
+
+      if (cached) {
+        const { timestamp } = JSON.parse(cached)
+        shouldRefresh = Date.now() - timestamp > CACHE_DURATION
+      }
+
+      if (shouldRefresh) {
+        const response = await fetch(`/api/dashboard/${user.id}`)
+        if (response.ok) {
+          const result = await response.json()
+          if (result.success && result.data) {
+            // Update user profile with fresh XP data
+            const updatedUser = {
+              ...user,
+              xp: result.data.xp,
+              level: result.data.level
+            }
+            
+            // Update cache
+            localStorage.setItem(XP_CACHE_KEY, JSON.stringify({
+              data: result.data,
+              timestamp: Date.now()
+            }))
+            
+            // Update localStorage user profile
+            localStorage.setItem('user_profile', JSON.stringify(updatedUser))
+            
+            // Update state
+            setUserProfile(updatedUser)
+            
+            // Dispatch update event
+            window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
+              detail: updatedUser 
+            }))
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Failed to refresh XP data:', error)
+    }
+  }
+
   const signOut = async () => {
-    // Clear localStorage
+    // Clear localStorage and XP cache
+    const userId = user?.id
     localStorage.removeItem('user_profile')
+    if (userId) {
+      localStorage.removeItem(`xp_cache_${userId}`)
+    }
     
     // Also clear Supabase auth if applicable
     await supabase.auth.signOut()
@@ -61,6 +119,7 @@ export default function Header() {
     { href: '/players', label: 'Players', paths: ['/players'] },
     { href: '/matches', label: 'Matches', paths: ['/matches'] },
     { href: '/live', label: 'Live', paths: ['/live'] },
+    { href: '/test-livematch', label: 'Test Live Match', paths: ['/test-livematch'] },
     { href: '/rewards', label: 'Rewards', paths: ['/rewards'] },
     { href: '/daily-leaderboard', label: 'Daily Leaderboard', paths: ['/daily-leaderboard'] }
   ]
