@@ -17,6 +17,7 @@
     "@capacitor/core": "^7.4.2",
     "@capacitor/ios": "^7.4.2",
     "@supabase/supabase-js": "^2.50.5",
+    "ethers": "^6.15.0",
     "next": "14.2.30",
     "react": "18.3.1",
     "react-dom": "18.3.1"
