@@ -10,41 +10,29 @@ export default function Home() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0)
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
 
-  const testimonials = [
+  const features = [
     {
-      name: 'Marcus Chen',
-      username: '@CryptoSportsPro',
-      avatar: '🏆',
-      text: 'Made $3,247 ETH this month just by predicting game outcomes. Clutch literally changed my life!',
-      earnings: '+$3,247 ETH',
-      verified: true,
-      bgColor: 'linear-gradient(135deg, #FFD700, #FFA500)'
-    },
-    {
-      name: 'Sarah Williams',
-      username: '@SportsBetQueen',
-      avatar: '👑',
-      text: 'The community here is insane! Every prediction feels like a mini-jackpot. Already made back my college tuition!',
-      earnings: '+$8,932 ETH',
-      verified: true,
-      bgColor: 'linear-gradient(135deg, #00FFAA, #00CC88)'
-    },
-    {
-      name: 'Alex Rodriguez',
-      username: '@ClutchMaster99',
-      avatar: '🚀',
-      text: 'From $100 to $15K in 6 weeks. The live betting system is absolutely revolutionary!',
-      earnings: '+$15,245 ETH',
-      verified: true,
+      title: '🔮 Predict & Earn',
+      description: 'Make predictions on live matches and earn CHZ tokens for accurate calls',
+      icon: '🎯',
       bgColor: 'linear-gradient(135deg, #3ABEF9, #0099CC)'
     },
     {
-      name: 'Emma Thompson',
-      username: '@CryptoPrediction',
-      avatar: '💎',
-      text: 'This platform turned my sports knowledge into actual crypto wealth. The future is here!',
-      earnings: '+$7,654 ETH',
-      verified: true,
+      title: '🏆 Leaderboards',
+      description: 'Compete with other fans and climb the daily & weekly rankings',
+      icon: '📊',
+      bgColor: 'linear-gradient(135deg, #00FFAA, #00CC88)'
+    },
+    {
+      title: '👥 Fan Community',
+      description: 'Connect with passionate sports fans and share your insights',
+      icon: '💬',
+      bgColor: 'linear-gradient(135deg, #FFD700, #FFA500)'
+    },
+    {
+      title: '🎪 Live Events',
+      description: 'Join live prediction events during major football matches',
+      icon: '⚡',
       bgColor: 'linear-gradient(135deg, #FF6B9D, #C44569)'
     }
   ]
@@ -53,46 +41,46 @@ export default function Home() {
     1: {
       name: 'CryptoKing88',
       avatar: '👑',
-      totalEarnings: '0.34 ETH',
-      weeklyEarnings: '+0.12 ETH',
+      totalEarnings: '34 CHZ',
+      weeklyEarnings: '+12 CHZ',
       successRate: '87%',
       totalPredictions: 2847,
       streak: 12,
       rank: 1,
       badges: ['🔥', '💎', '🎯'],
       recentPredictions: [
-        { match: 'Real Madrid vs Barcelona', prediction: 'Real Madrid Win', result: '✅', payout: '+0.05 ETH' },
-        { match: 'Arsenal vs Chelsea', prediction: 'Over 2.5 Goals', result: '✅', payout: '+0.03 ETH' },
-        { match: 'Liverpool vs City', prediction: 'Liverpool Win', result: '❌', payout: '-0.02 ETH' }
+        { match: 'Real Madrid vs Barcelona', prediction: 'Real Madrid Win', result: '✅', payout: '+5 CHZ' },
+        { match: 'Arsenal vs Chelsea', prediction: 'Over 2.5 Goals', result: '✅', payout: '+3 CHZ' },
+        { match: 'Liverpool vs City', prediction: 'Liverpool Win', result: '❌', payout: '-2 CHZ' }
       ]
     },
     2: {
       name: 'SportsProphet',
       avatar: '🔮',
-      totalEarnings: '0.21 ETH',
-      weeklyEarnings: '+0.08 ETH',
+      totalEarnings: '21 CHZ',
+      weeklyEarnings: '+8 CHZ',
       successRate: '82%',
       totalPredictions: 2156,
       streak: 8,
       rank: 2,
       badges: ['⚡', '🎯', '🏆'],
       recentPredictions: [
-        { match: 'PSG vs Monaco', prediction: 'PSG Win', result: '✅', payout: '+0.04 ETH' },
-        { match: 'Bayern vs Dortmund', prediction: 'Under 3.5 Goals', result: '✅', payout: '+0.02 ETH' }
+        { match: 'PSG vs Monaco', prediction: 'PSG Win', result: '✅', payout: '+4 CHZ' },
+        { match: 'Bayern vs Dortmund', prediction: 'Under 3.5 Goals', result: '✅', payout: '+2 CHZ' }
       ]
     },
     3: {
       name: 'ClutchMaster',
       avatar: '⚡',
-      totalEarnings: '0.15 ETH',
-      weeklyEarnings: '+0.06 ETH',
+      totalEarnings: '15 CHZ',
+      weeklyEarnings: '+6 CHZ',
       successRate: '79%',
       totalPredictions: 1893,
       streak: 6,
       rank: 3,
       badges: ['🔥', '⭐', '🎯'],
       recentPredictions: [
-        { match: 'Juventus vs Milan', prediction: 'Both Teams to Score', result: '✅', payout: '+0.03 ETH' }
+        { match: 'Juventus vs Milan', prediction: 'Both Teams to Score', result: '✅', payout: '+3 CHZ' }
       ]
     }
   }
@@ -356,6 +344,9 @@ export default function Home() {
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
+          .crypto-bg {
+            padding: 60px 20px 80px !important;
+          }
           .hero-title {
             font-size: 48px !important;
             line-height: 1.2 !important;
@@ -400,7 +391,7 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="crypto-bg" style={{ 
-        padding: '120px 20px 100px', 
+        padding: '80px 20px 100px', 
         textAlign: 'center',
         position: 'relative',
         minHeight: '100vh',
@@ -451,9 +442,9 @@ export default function Home() {
             flexWrap: 'wrap'
           }}>
             {[
-              { label: 'Total Rewards Paid', value: '$2.4M ETH', icon: '💰' },
-              { label: 'Active Predictors', value: '47,293', icon: '🔥' },
-              { label: 'Success Rate', value: '87.2%', icon: '🎯' }
+              { label: 'Hackathon Demo', value: 'Live Now', icon: '🚀' },
+              { label: 'Built With', value: 'Next.js', icon: '⚛️' },
+              { label: 'Powered By', value: 'Chiliz', icon: '🌶️' }
             ].map((stat, index) => (
               <div key={index} style={{
                 textAlign: 'center',
@@ -478,16 +469,16 @@ export default function Home() {
             flexWrap: 'wrap',
             marginTop: '40px'
           }}>
-            <button className="btn-crypto">
+            <button className="btn-crypto" onClick={() => window.location.href = '/login'}>
               🚀 Join Clutch Now
             </button>
-            <button className="btn-crypto" style={{
+            <button className="btn-crypto" onClick={() => window.location.href = '/teams/1'} style={{
               background: 'transparent',
               border: '2px solid #3ABEF9',
               color: '#3ABEF9',
               boxShadow: '0 0 30px rgba(58, 190, 249, 0.3)'
             }}>
-              🎯 Watch Live Demo
+              👥 Join the Community
             </button>
           </div>
         </div>
@@ -532,7 +523,7 @@ export default function Home() {
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text'
-            }}>📊</div>
+            }}>⚡</div>
             <h3 style={{
               fontSize: '32px',
               fontWeight: '700',
@@ -682,9 +673,9 @@ export default function Home() {
 
         <div style={{ position: 'relative' }}>
           {[
-            { rank: 1, name: 'CryptoKing88', likes: 2847, earnings: '0.34 ETH', change: '+12%', avatar: '👑', gradient: 'linear-gradient(135deg, #FFD700, #FFA500)' },
-            { rank: 2, name: 'SportsProphet', likes: 2156, earnings: '0.21 ETH', change: '+8%', avatar: '🔮', gradient: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' },
-            { rank: 3, name: 'ClutchMaster', likes: 1893, earnings: '0.15 ETH', change: '+5%', avatar: '⚡', gradient: 'linear-gradient(135deg, #CD7F32, #B8860B)' }
+            { rank: 1, name: 'CryptoKing88', likes: 2847, earnings: '34 CHZ', change: '+12%', avatar: '👑', gradient: 'linear-gradient(135deg, #FFD700, #FFA500)' },
+            { rank: 2, name: 'SportsProphet', likes: 2156, earnings: '21 CHZ', change: '+8%', avatar: '🔮', gradient: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' },
+            { rank: 3, name: 'ClutchMaster', likes: 1893, earnings: '15 CHZ', change: '+5%', avatar: '⚡', gradient: 'linear-gradient(135deg, #CD7F32, #B8860B)' }
           ].map((player, index) => (
             <div key={index} 
                  className="rank-card" 
