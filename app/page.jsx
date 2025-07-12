@@ -5,21 +5,140 @@ import Header from './components/Header'
 
 export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
-  const [floatingElements, setFloatingElements] = useState([])
+  const [particles, setParticles] = useState([])
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
+  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  const testimonials = [
+    {
+      name: 'Marcus Chen',
+      username: '@CryptoSportsPro',
+      avatar: '🏆',
+      text: 'Made $3,247 ETH this month just by predicting game outcomes. Clutch literally changed my life!',
+      earnings: '+$3,247 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #FFD700, #FFA500)'
+    },
+    {
+      name: 'Sarah Williams',
+      username: '@SportsBetQueen',
+      avatar: '👑',
+      text: 'The community here is insane! Every prediction feels like a mini-jackpot. Already made back my college tuition!',
+      earnings: '+$8,932 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #00FFAA, #00CC88)'
+    },
+    {
+      name: 'Alex Rodriguez',
+      username: '@ClutchMaster99',
+      avatar: '🚀',
+      text: 'From $100 to $15K in 6 weeks. The live betting system is absolutely revolutionary!',
+      earnings: '+$15,245 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #3ABEF9, #0099CC)'
+    },
+    {
+      name: 'Emma Thompson',
+      username: '@CryptoPrediction',
+      avatar: '💎',
+      text: 'This platform turned my sports knowledge into actual crypto wealth. The future is here!',
+      earnings: '+$7,654 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #FF6B9D, #C44569)'
+    }
+  ]
+
+  const playerStats = {
+    1: {
+      name: 'CryptoKing88',
+      avatar: '👑',
+      totalEarnings: '0.34 ETH',
+      weeklyEarnings: '+0.12 ETH',
+      successRate: '87%',
+      totalPredictions: 2847,
+      streak: 12,
+      rank: 1,
+      badges: ['🔥', '💎', '🎯'],
+      recentPredictions: [
+        { match: 'Real Madrid vs Barcelona', prediction: 'Real Madrid Win', result: '✅', payout: '+0.05 ETH' },
+        { match: 'Arsenal vs Chelsea', prediction: 'Over 2.5 Goals', result: '✅', payout: '+0.03 ETH' },
+        { match: 'Liverpool vs City', prediction: 'Liverpool Win', result: '❌', payout: '-0.02 ETH' }
+      ]
+    },
+    2: {
+      name: 'SportsProphet',
+      avatar: '🔮',
+      totalEarnings: '0.21 ETH',
+      weeklyEarnings: '+0.08 ETH',
+      successRate: '82%',
+      totalPredictions: 2156,
+      streak: 8,
+      rank: 2,
+      badges: ['⚡', '🎯', '🏆'],
+      recentPredictions: [
+        { match: 'PSG vs Monaco', prediction: 'PSG Win', result: '✅', payout: '+0.04 ETH' },
+        { match: 'Bayern vs Dortmund', prediction: 'Under 3.5 Goals', result: '✅', payout: '+0.02 ETH' }
+      ]
+    },
+    3: {
+      name: 'ClutchMaster',
+      avatar: '⚡',
+      totalEarnings: '0.15 ETH',
+      weeklyEarnings: '+0.06 ETH',
+      successRate: '79%',
+      totalPredictions: 1893,
+      streak: 6,
+      rank: 3,
+      badges: ['🔥', '⭐', '🎯'],
+      recentPredictions: [
+        { match: 'Juventus vs Milan', prediction: 'Both Teams to Score', result: '✅', payout: '+0.03 ETH' }
+      ]
+    }
+  }
 
   useEffect(() => {
     setIsVisible(true)
     
-    // Create floating elements
-    const elements = Array.from({ length: 8 }, (_, i) => ({
+    // Create animated particles
+    const particleArray = Array.from({ length: 50 }, (_, i) => ({
       id: i,
-      emoji: ['⚽', '🏆', '🔥', '⭐', '🎯', '⚡', '💰', '🚀'][i],
       x: Math.random() * 100,
       y: Math.random() * 100,
-      delay: Math.random() * 3,
-      speed: 15 + Math.random() * 10
+      size: Math.random() * 4 + 1,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: (Math.random() - 0.5) * 0.5,
+      color: ['#3ABEF9', '#00FFAA', '#FFD700', '#FF6B9D'][Math.floor(Math.random() * 4)]
     }))
-    setFloatingElements(elements)
+    setParticles(particleArray)
+
+    // Animate particles
+    const animateParticles = () => {
+      setParticles(prev => prev.map(particle => ({
+        ...particle,
+        x: (particle.x + particle.speedX + 100) % 100,
+        y: (particle.y + particle.speedY + 100) % 100
+      })))
+    }
+
+    const particleInterval = setInterval(animateParticles, 50)
+
+    // Cycle testimonials
+    const testimonialInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
+    }, 4000)
+
+    // Mouse tracking
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      clearInterval(particleInterval)
+      clearInterval(testimonialInterval)
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
   }, [])
 
   return (
@@ -32,484 +151,900 @@ export default function Home() {
       overflow: 'hidden'
     }}>
       <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.2; }
-          25% { transform: translateY(-20px) rotate(90deg); opacity: 0.4; }
-          50% { transform: translateY(-10px) rotate(180deg); opacity: 0.6; }
-          75% { transform: translateY(-15px) rotate(270deg); opacity: 0.3; }
+        @keyframes float3D {
+          0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+          25% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
+          50% { transform: translateY(-10px) rotateX(-5deg) rotateY(-5deg); }
+          75% { transform: translateY(-15px) rotateX(5deg) rotateY(-10deg); }
         }
-        @keyframes gradientShift {
+        @keyframes gradientWave {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
         }
         @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(40px); }
+          from { opacity: 0; transform: translateY(60px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 0 0 20px rgba(58, 190, 249, 0.3), 0 0 40px rgba(0, 255, 170, 0.2); }
+          50% { box-shadow: 0 0 40px rgba(58, 190, 249, 0.6), 0 0 60px rgba(0, 255, 170, 0.4); }
         }
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(58, 190, 249, 0.3); }
-          50% { box-shadow: 0 0 40px rgba(58, 190, 249, 0.6); }
+        @keyframes rotateHue {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
+        }
+        @keyframes bounce3D {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotateY(0deg); }
+          40% { transform: translateY(-20px) rotateY(180deg); }
+          60% { transform: translateY(-10px) rotateY(360deg); }
+        }
+        @keyframes shimmerFlow {
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(200%) skewX(-15deg); }
+        }
+        @keyframes numberCount {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
         
-        .floating-element {
+        .particle {
           position: absolute;
-          font-size: 24px;
+          border-radius: 50%;
           pointer-events: none;
-          animation: float var(--duration) ease-in-out infinite;
-          animation-delay: var(--delay);
-          z-index: 1;
+          opacity: 0.6;
+          animation: float3D 6s ease-in-out infinite;
         }
         
-        .hero-bg {
-          background: linear-gradient(-45deg, #0a0a0a, #111111, #0f0f0f, #0a0a0a);
+        .crypto-bg {
+          background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460, #0a0a0a);
           background-size: 400% 400%;
-          animation: gradientShift 8s ease infinite;
+          animation: gradientWave 15s ease infinite;
+          position: relative;
         }
         
-        .card-hover {
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
+        .crypto-bg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(58, 190, 249, 0.1) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        
+        .glass-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
           position: relative;
           overflow: hidden;
         }
         
-        .card-hover:hover {
-          transform: translateY(-8px);
-          box-shadow: 0 20px 40px rgba(58, 190, 249, 0.2);
+        .glass-card::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.6s;
         }
         
-        .btn-primary {
+        .glass-card:hover::before {
+          left: 100%;
+        }
+        
+        .glass-card:hover {
+          transform: translateY(-15px) rotateX(5deg) rotateY(5deg);
+          box-shadow: 0 35px 60px rgba(58, 190, 249, 0.3);
+          border-color: rgba(58, 190, 249, 0.5);
+        }
+        
+        .feature-icon-3d {
+          font-size: 80px;
           background: linear-gradient(45deg, #3ABEF9, #00FFAA);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 10px 20px rgba(58, 190, 249, 0.3));
+          animation: bounce3D 3s ease-in-out infinite;
+          transform-style: preserve-3d;
+        }
+        
+        .btn-crypto {
+          background: linear-gradient(45deg, #3ABEF9, #00FFAA, #FFD700);
+          background-size: 200% 200%;
+          animation: gradientWave 3s ease infinite;
           border: none;
           color: #000;
           font-weight: bold;
-          padding: 16px 32px;
-          border-radius: 12px;
+          padding: 18px 36px;
+          border-radius: 16px;
           font-size: 18px;
           cursor: pointer;
           transition: all 0.3s ease;
           text-decoration: none;
           display: inline-block;
+          position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(58, 190, 249, 0.4);
         }
         
-        .btn-primary:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px rgba(58, 190, 249, 0.4);
+        .btn-crypto::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transform: translateX(-100%) skewX(-15deg);
+          transition: transform 0.6s;
         }
         
-        .btn-secondary {
-          background: transparent;
-          border: 2px solid #3ABEF9;
-          color: #3ABEF9;
-          font-weight: bold;
-          padding: 14px 28px;
-          border-radius: 12px;
-          font-size: 16px;
+        .btn-crypto:hover::after {
+          animation: shimmerFlow 0.8s ease-in-out;
+        }
+        
+        .btn-crypto:hover {
+          transform: translateY(-5px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(58, 190, 249, 0.6);
+        }
+        
+        .rank-card {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(20px);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          padding: 24px;
+          margin: 12px 0;
           cursor: pointer;
-          transition: all 0.3s ease;
-          text-decoration: none;
-          display: inline-block;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
         }
         
-        .btn-secondary:hover {
-          background: #3ABEF9;
-          color: #000;
-          transform: translateY(-2px);
+        .rank-card:hover {
+          transform: translateX(10px) scale(1.02);
+          border-color: rgba(58, 190, 249, 0.5);
+          box-shadow: 0 20px 40px rgba(58, 190, 249, 0.2);
+        }
+        
+        .testimonial-card {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(25px);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 24px;
+          padding: 40px;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.6s ease;
+        }
+        
+        .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          animation: slideInUp 0.3s ease-out;
+        }
+        
+        .modal-content {
+          background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(17, 17, 17, 0.95));
+          backdrop-filter: blur(20px);
+          border: 2px solid rgba(58, 190, 249, 0.3);
+          border-radius: 24px;
+          padding: 40px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          position: relative;
         }
 
         /* Mobile Responsive */
         @media (max-width: 768px) {
           .hero-title {
-            font-size: 40px !important;
+            font-size: 48px !important;
             line-height: 1.2 !important;
           }
           .hero-subtitle {
-            font-size: 18px !important;
+            font-size: 20px !important;
           }
           .feature-grid {
             grid-template-columns: 1fr !important;
-            gap: 20px !important;
+            gap: 24px !important;
           }
-          .btn-primary, .btn-secondary {
-            padding: 14px 24px !important;
+          .feature-icon-3d {
+            font-size: 60px !important;
+          }
+          .btn-crypto {
+            padding: 16px 28px !important;
             font-size: 16px !important;
+          }
+          .rank-card {
+            padding: 20px !important;
           }
         }
       `}</style>
 
-      {/* Floating Background Elements */}
-      {floatingElements.map(element => (
+      {/* Animated Particles Background */}
+      {particles.map(particle => (
         <div
-          key={element.id}
-          className="floating-element"
+          key={particle.id}
+          className="particle"
           style={{
-            '--duration': `${element.speed}s`,
-            '--delay': `${element.delay}s`,
-            top: `${element.y}%`,
-            left: `${element.x}%`
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            backgroundColor: particle.color,
+            boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`
           }}
-        >
-          {element.emoji}
-        </div>
+        />
       ))}
 
       <Header />
 
       {/* Hero Section */}
-      <section className="hero-bg" style={{ 
-        padding: '100px 20px 80px', 
+      <section className="crypto-bg" style={{ 
+        padding: '120px 20px 100px', 
         textAlign: 'center',
-        position: 'relative'
+        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
         <div style={{
-          maxWidth: '900px',
+          maxWidth: '1000px',
           margin: '0 auto',
           opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
-          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)'
+          transform: isVisible ? 'translateY(0)' : 'translateY(60px)',
+          transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
           <h1 className="hero-title" style={{
-            fontSize: '64px',
+            fontSize: '72px',
             fontWeight: '900',
-            marginBottom: '24px',
-            background: 'linear-gradient(45deg, #3ABEF9, #00FFAA, #3ABEF9)',
-            backgroundSize: '200% 200%',
+            marginBottom: '32px',
+            background: 'linear-gradient(45deg, #3ABEF9, #00FFAA, #FFD700, #FF6B9D, #3ABEF9)',
+            backgroundSize: '300% 300%',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            animation: 'gradientShift 3s ease infinite',
-            lineHeight: '1.1'
+            animation: 'gradientWave 4s ease infinite',
+            lineHeight: '1.1',
+            textShadow: '0 0 60px rgba(58, 190, 249, 0.5)'
           }}>
             Step Up Your Game with Clutch
           </h1>
           
           <p className="hero-subtitle" style={{
-            fontSize: '24px',
+            fontSize: '28px',
             color: '#cccccc',
-            marginBottom: '40px',
+            marginBottom: '50px',
             fontWeight: '400',
-            lineHeight: '1.5'
+            lineHeight: '1.5',
+            animation: 'slideInUp 1.2s ease-out 0.3s both'
           }}>
             Engage, Predict, Monetize – Where Crypto Meets Sports
           </p>
 
+          {/* Live Stats Counter */}
           <div style={{
             display: 'flex',
-            gap: '20px',
+            justifyContent: 'center',
+            gap: '40px',
+            marginBottom: '50px',
+            flexWrap: 'wrap'
+          }}>
+            {[
+              { label: 'Total Rewards Paid', value: '$2.4M ETH', icon: '💰' },
+              { label: 'Active Predictors', value: '47,293', icon: '🔥' },
+              { label: 'Success Rate', value: '87.2%', icon: '🎯' }
+            ].map((stat, index) => (
+              <div key={index} style={{
+                textAlign: 'center',
+                animation: `slideInUp 1s ease-out ${0.5 + index * 0.2}s both`
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>{stat.icon}</div>
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: '#00FFAA',
+                  animation: 'numberCount 1s ease-out'
+                }}>{stat.value}</div>
+                <div style={{ fontSize: '14px', color: '#aaa' }}>{stat.label}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            display: 'flex',
+            gap: '24px',
             justifyContent: 'center',
             flexWrap: 'wrap',
             marginTop: '40px'
           }}>
-            <button className="btn-primary">
-              Join Clutch Now
+            <button className="btn-crypto">
+              🚀 Join Clutch Now
+            </button>
+            <button className="btn-crypto" style={{
+              background: 'transparent',
+              border: '2px solid #3ABEF9',
+              color: '#3ABEF9',
+              boxShadow: '0 0 30px rgba(58, 190, 249, 0.3)'
+            }}>
+              🎯 Watch Live Demo
             </button>
           </div>
         </div>
       </section>
 
-      {/* Feature Showcase - Three Sections */}
+      {/* 3D Feature Showcase */}
       <section style={{
-        padding: '80px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto'
+        padding: '100px 20px',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        position: 'relative'
       }}>
+        <h2 style={{
+          fontSize: '48px',
+          fontWeight: '700',
+          textAlign: 'center',
+          marginBottom: '80px',
+          background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          The Ultimate Crypto Sports Experience
+        </h2>
+
         <div className="feature-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
-          gap: '40px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '50px'
         }}>
-          {/* Know the Game */}
-          <div className="card-hover" style={{
-            backgroundColor: '#111',
-            border: '2px solid #333',
-            borderRadius: '20px',
-            padding: '40px',
+          {/* Real-Time Stats */}
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
             textAlign: 'center',
-            animation: 'slideInUp 0.8s ease-out 0.2s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#3ABEF9'
-            e.currentTarget.style.backgroundColor = '#1a1a1a'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#333'
-            e.currentTarget.style.backgroundColor = '#111'
+            animation: 'slideInUp 0.8s ease-out 0.2s both',
+            background: 'linear-gradient(135deg, rgba(58, 190, 249, 0.1), rgba(58, 190, 249, 0.05))'
           }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '24px'
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #3ABEF9, #00FFAA, #3ABEF9)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}>📊</div>
             <h3 style={{
-              fontSize: '28px',
+              fontSize: '32px',
               fontWeight: '700',
               color: '#3ABEF9',
-              marginBottom: '20px'
+              marginBottom: '24px'
             }}>
               Real-Time Stats & Insights
             </h3>
             <p style={{
-              fontSize: '18px',
-              color: '#aaa',
-              lineHeight: '1.6'
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
             }}>
               Stay ahead of the action with instant access to detailed stats on players, teams, and competitions. Knowledge is your edge.
             </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#00FFAA'
+            }}>
+              <span>⚡ Live Updates</span>
+              <span>📈 AI Predictions</span>
+              <span>🔥 Hot Streaks</span>
+            </div>
           </div>
 
-          {/* Engage & Win */}
-          <div className="card-hover" style={{
-            backgroundColor: '#111',
-            border: '2px solid #333',
-            borderRadius: '20px',
-            padding: '40px',
+          {/* Join Conversation */}
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
             textAlign: 'center',
-            animation: 'slideInUp 0.8s ease-out 0.4s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#00FFAA'
-            e.currentTarget.style.backgroundColor = '#1a1a1a'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#333'
-            e.currentTarget.style.backgroundColor = '#111'
+            animation: 'slideInUp 0.8s ease-out 0.4s both',
+            background: 'linear-gradient(135deg, rgba(0, 255, 170, 0.1), rgba(0, 255, 170, 0.05))'
           }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '24px'
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #00FFAA, #3ABEF9, #00FFAA)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}>💬</div>
             <h3 style={{
-              fontSize: '28px',
+              fontSize: '32px',
               fontWeight: '700',
               color: '#00FFAA',
-              marginBottom: '20px'
+              marginBottom: '24px'
             }}>
               Join the Conversation
             </h3>
             <p style={{
-              fontSize: '18px',
-              color: '#aaa',
-              lineHeight: '1.6'
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
             }}>
               Share your thoughts, predictions, and analysis. Get likes, build your profile, and compete daily to monetize your sports insight.
             </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#3ABEF9'
+            }}>
+              <span>👍 Get Likes</span>
+              <span>🏆 Build Profile</span>
+              <span>💰 Earn Crypto</span>
+            </div>
           </div>
 
           {/* Clutch Bets */}
-          <div className="card-hover" style={{
-            backgroundColor: '#111',
-            border: '2px solid #333',
-            borderRadius: '20px',
-            padding: '40px',
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
             textAlign: 'center',
-            animation: 'slideInUp 0.8s ease-out 0.6s both'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.borderColor = '#3ABEF9'
-            e.currentTarget.style.backgroundColor = '#1a1a1a'
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.borderColor = '#333'
-            e.currentTarget.style.backgroundColor = '#111'
+            animation: 'slideInUp 0.8s ease-out 0.6s both',
+            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+            gridColumn: 'span 1'
           }}>
-            <div style={{
-              fontSize: '48px',
-              marginBottom: '24px'
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #FFD700, #3ABEF9, #FFD700)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}>🎯</div>
             <h3 style={{
-              fontSize: '28px',
+              fontSize: '32px',
               fontWeight: '700',
-              color: '#3ABEF9',
-              marginBottom: '20px'
+              color: '#FFD700',
+              marginBottom: '24px'
             }}>
               Instant Mini-Bets, Big Rewards
             </h3>
             <p style={{
-              fontSize: '18px',
-              color: '#aaa',
-              lineHeight: '1.6'
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
             }}>
               Make the game even more thrilling. Place instant Clutch bets on live matches and earn crypto rewards in real-time.
             </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#FFD700'
+            }}>
+              <span>⚡ Instant Bets</span>
+              <span>🔥 Live Matches</span>
+              <span>💎 Big Rewards</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Community Highlights Section */}
+      {/* Vertical Ranking - Top Clutch Players */}
       <section style={{
-        padding: '80px 20px',
-        backgroundColor: '#111',
-        margin: '0 20px',
-        borderRadius: '24px',
-        maxWidth: '1200px',
-        margin: '0 auto',
-        marginBottom: '80px'
+        padding: '100px 20px',
+        maxWidth: '800px',
+        margin: '0 auto'
       }}>
         <div style={{
           textAlign: 'center',
-          marginBottom: '50px'
+          marginBottom: '60px'
         }}>
           <h2 style={{
-            fontSize: '36px',
+            fontSize: '42px',
             fontWeight: '700',
             color: '#ffffff',
-            marginBottom: '16px'
+            marginBottom: '20px',
+            background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
           }}>
-            Today's Top Clutch Players
+            🏆 Today's Top Clutch Players
           </h2>
           <p style={{
-            fontSize: '20px',
+            fontSize: '22px',
             color: '#aaa'
           }}>
-            See who's leading today. Gain recognition and crypto rewards by becoming one of the top three most-liked contributors each day.
+            See who's leading today. Click any player to view their detailed stats!
           </p>
         </div>
 
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-          gap: '24px'
-        }}>
+        <div style={{ position: 'relative' }}>
           {[
-            { rank: 1, name: 'CryptoKing88', likes: 2847, earnings: '0.34 ETH', color: '#FFD700' },
-            { rank: 2, name: 'SportsProphet', likes: 2156, earnings: '0.21 ETH', color: '#C0C0C0' },
-            { rank: 3, name: 'ClutchMaster', likes: 1893, earnings: '0.15 ETH', color: '#CD7F32' }
+            { rank: 1, name: 'CryptoKing88', likes: 2847, earnings: '0.34 ETH', change: '+12%', avatar: '👑', gradient: 'linear-gradient(135deg, #FFD700, #FFA500)' },
+            { rank: 2, name: 'SportsProphet', likes: 2156, earnings: '0.21 ETH', change: '+8%', avatar: '🔮', gradient: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' },
+            { rank: 3, name: 'ClutchMaster', likes: 1893, earnings: '0.15 ETH', change: '+5%', avatar: '⚡', gradient: 'linear-gradient(135deg, #CD7F32, #B8860B)' }
           ].map((player, index) => (
-            <div key={index} className="card-hover" style={{
-              backgroundColor: '#1a1a1a',
-              border: `2px solid ${player.color}`,
-              borderRadius: '16px',
-              padding: '24px',
-              textAlign: 'center',
-              animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.2}s both`
-            }}>
-              <div style={{
-                fontSize: '32px',
-                fontWeight: 'bold',
-                color: player.color,
-                marginBottom: '12px'
-              }}>
-                #{player.rank}
-              </div>
-              <h4 style={{
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: '#fff',
-                marginBottom: '8px'
-              }}>
-                {player.name}
-              </h4>
+            <div key={index} 
+                 className="rank-card" 
+                 style={{
+                   background: player.gradient,
+                   animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.3}s both`,
+                   border: player.rank === 1 ? '3px solid #FFD700' : '2px solid rgba(255, 255, 255, 0.1)'
+                 }}
+                 onClick={() => setSelectedPlayer(player.rank)}>
               <div style={{
                 display: 'flex',
-                justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '12px',
-                fontSize: '14px',
-                color: '#aaa'
+                justifyContent: 'space-between'
               }}>
-                <span>👍 {player.likes.toLocaleString()}</span>
-                <span style={{ color: '#00FFAA', fontWeight: 'bold' }}>
-                  {player.earnings}
-                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#000',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '50%',
+                    width: '60px',
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    #{player.rank}
+                  </div>
+                  <div style={{ fontSize: '32px' }}>{player.avatar}</div>
+                  <div>
+                    <h4 style={{
+                      fontSize: '24px',
+                      fontWeight: 'bold',
+                      color: '#000',
+                      marginBottom: '4px'
+                    }}>
+                      {player.name}
+                    </h4>
+                    <div style={{
+                      fontSize: '16px',
+                      color: 'rgba(0, 0, 0, 0.7)'
+                    }}>
+                      👍 {player.likes.toLocaleString()} likes
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{
+                    fontSize: '22px',
+                    fontWeight: 'bold',
+                    color: '#000'
+                  }}>
+                    {player.earnings}
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: 'rgba(0, 0, 0, 0.8)',
+                    background: 'rgba(0, 255, 0, 0.2)',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    marginTop: '4px'
+                  }}>
+                    {player.change} today
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                color: 'rgba(0, 0, 0, 0.6)'
+              }}>
+                Click for stats →
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Social Proof Section */}
+      {/* Enhanced Testimonials Section */}
       <section style={{
-        padding: '80px 20px',
+        padding: '100px 20px',
         textAlign: 'center',
-        maxWidth: '900px',
-        margin: '0 auto'
+        maxWidth: '1200px',
+        margin: '0 auto',
+        position: 'relative'
       }}>
         <h2 style={{
-          fontSize: '36px',
+          fontSize: '48px',
           fontWeight: '700',
           color: '#ffffff',
-          marginBottom: '40px'
+          marginBottom: '20px',
+          background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
         }}>
-          The New Era of Sports Fans is Here
+          🚀 Real Success Stories
         </h2>
+        <p style={{
+          fontSize: '24px',
+          color: '#aaa',
+          marginBottom: '60px'
+        }}>
+          The New Era of Sports Fans is Here - Join the Winners!
+        </p>
         
         <div style={{
-          backgroundColor: '#111',
-          borderRadius: '20px',
-          padding: '40px',
-          border: '2px solid #333',
-          position: 'relative'
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+          gap: '30px',
+          marginBottom: '50px'
         }}>
-          <div style={{
-            fontSize: '48px',
-            marginBottom: '24px',
-            opacity: 0.3
-          }}>
-            "
-          </div>
-          <p style={{
-            fontSize: '20px',
-            color: '#ddd',
-            fontStyle: 'italic',
-            lineHeight: '1.6',
-            marginBottom: '24px'
-          }}>
-            Clutch changed how I watch sports. Betting live, winning crypto, and connecting with other fans—there's nothing else like it.
-          </p>
-          <div style={{
-            fontSize: '16px',
-            color: '#3ABEF9',
-            fontWeight: 'bold'
-          }}>
-            — Alex, Crypto Enthusiast & Football Fan
-          </div>
+          {testimonials.map((testimonial, index) => (
+            <div key={index} 
+                 className="testimonial-card" 
+                 style={{
+                   background: testimonial.bgColor,
+                   opacity: index === currentTestimonial ? 1 : 0.7,
+                   transform: index === currentTestimonial ? 'scale(1.05)' : 'scale(1)',
+                   animation: `slideInUp 0.8s ease-out ${index * 0.2}s both`
+                 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '24px',
+                gap: '16px'
+              }}>
+                <div style={{ fontSize: '48px' }}>{testimonial.avatar}</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    {testimonial.name}
+                    {testimonial.verified && <span style={{ color: '#00AAFF' }}>✓</span>}
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'rgba(0, 0, 0, 0.7)' }}>
+                    {testimonial.username}
+                  </div>
+                </div>
+                <div style={{
+                  marginLeft: 'auto',
+                  background: 'rgba(0, 0, 0, 0.1)',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#000'
+                }}>
+                  {testimonial.earnings}
+                </div>
+              </div>
+              
+              <p style={{
+                fontSize: '18px',
+                color: '#000',
+                fontWeight: '500',
+                lineHeight: '1.6',
+                fontStyle: 'italic'
+              }}>
+                "{testimonial.text}"
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Testimonial Navigation Dots */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '12px',
+          marginTop: '30px'
+        }}>
+          {testimonials.map((_, index) => (
+            <div key={index}
+                 style={{
+                   width: '12px',
+                   height: '12px',
+                   borderRadius: '50%',
+                   background: index === currentTestimonial ? '#3ABEF9' : '#666',
+                   cursor: 'pointer',
+                   transition: 'all 0.3s ease'
+                 }}
+                 onClick={() => setCurrentTestimonial(index)}
+            />
+          ))}
         </div>
       </section>
 
       {/* Footer CTA */}
       <section style={{
-        padding: '80px 20px',
+        padding: '100px 20px',
         textAlign: 'center',
-        background: 'linear-gradient(45deg, rgba(58, 190, 249, 0.1), rgba(0, 255, 170, 0.1))',
-        margin: '80px 20px 40px',
-        borderRadius: '24px',
-        maxWidth: '1000px',
-        margin: '80px auto 40px'
+        background: 'linear-gradient(45deg, rgba(58, 190, 249, 0.15), rgba(0, 255, 170, 0.15), rgba(255, 215, 0, 0.1))',
+        margin: '100px 20px 60px',
+        borderRadius: '32px',
+        maxWidth: '1200px',
+        margin: '100px auto 60px',
+        position: 'relative',
+        overflow: 'hidden'
       }}>
-        <h2 style={{
-          fontSize: '42px',
-          fontWeight: '700',
-          color: '#ffffff',
-          marginBottom: '16px'
-        }}>
-          Ready to Go Clutch?
-        </h2>
-        <p style={{
-          fontSize: '20px',
-          color: '#aaa',
-          marginBottom: '40px'
-        }}>
-          Join thousands of fans already turning passion into profit.
-        </p>
-        
         <div style={{
-          display: 'flex',
-          gap: '20px',
-          justifyContent: 'center',
-          flexWrap: 'wrap'
-        }}>
-          <button className="btn-primary">
-            Sign Up & Win
-          </button>
-          <button className="btn-secondary">
-            Learn More
-          </button>
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%233ABEF9" fill-opacity="0.1"%3E%3Ccircle cx="10" cy="10" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+          animation: 'float3D 10s ease-in-out infinite'
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <h2 style={{
+            fontSize: '52px',
+            fontWeight: '700',
+            color: '#ffffff',
+            marginBottom: '20px',
+            animation: 'pulseGlow 3s ease-in-out infinite'
+          }}>
+            Ready to Go Clutch? 🚀
+          </h2>
+          <p style={{
+            fontSize: '24px',
+            color: '#aaa',
+            marginBottom: '50px'
+          }}>
+            Join thousands of fans already turning passion into profit.
+          </p>
+          
+          <div style={{
+            display: 'flex',
+            gap: '24px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <button className="btn-crypto">
+              💎 Sign Up & Win Now
+            </button>
+            <button className="btn-crypto" style={{
+              background: 'transparent',
+              border: '2px solid #00FFAA',
+              color: '#00FFAA',
+              boxShadow: '0 0 30px rgba(0, 255, 170, 0.3)'
+            }}>
+              📊 View Live Stats
+            </button>
+          </div>
         </div>
       </section>
+
+      {/* Player Stats Modal */}
+      {selectedPlayer && (
+        <div className="modal" onClick={() => setSelectedPlayer(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '30px'
+            }}>
+              <h3 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#3ABEF9'
+              }}>
+                {playerStats[selectedPlayer].avatar} {playerStats[selectedPlayer].name}
+              </h3>
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#aaa',
+                  fontSize: '24px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '20px',
+              marginBottom: '30px'
+            }}>
+              {[
+                { label: 'Total Earnings', value: playerStats[selectedPlayer].totalEarnings, icon: '💰' },
+                { label: 'Weekly Earnings', value: playerStats[selectedPlayer].weeklyEarnings, icon: '📈' },
+                { label: 'Success Rate', value: playerStats[selectedPlayer].successRate, icon: '🎯' },
+                { label: 'Total Predictions', value: playerStats[selectedPlayer].totalPredictions.toLocaleString(), icon: '📊' },
+                { label: 'Current Streak', value: `${playerStats[selectedPlayer].streak} wins`, icon: '🔥' },
+                { label: 'Global Rank', value: `#${playerStats[selectedPlayer].rank}`, icon: '🏆' }
+              ].map((stat, index) => (
+                <div key={index} style={{
+                  background: 'rgba(58, 190, 249, 0.1)',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>{stat.icon}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#3ABEF9' }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#aaa' }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '20px',
+              justifyContent: 'center'
+            }}>
+              {playerStats[selectedPlayer].badges.map((badge, index) => (
+                <span key={index} style={{ fontSize: '24px' }}>{badge}</span>
+              ))}
+            </div>
+
+            <h4 style={{ color: '#00FFAA', marginBottom: '15px' }}>Recent Predictions</h4>
+            {playerStats[selectedPlayer].recentPredictions.map((pred, index) => (
+              <div key={index} style={{
+                background: 'rgba(0, 255, 170, 0.1)',
+                padding: '15px',
+                borderRadius: '8px',
+                marginBottom: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>{pred.match}</div>
+                  <div style={{ fontSize: '14px', color: '#aaa' }}>{pred.prediction}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div>{pred.result}</div>
+                  <div style={{ 
+                    color: pred.payout.includes('+') ? '#00FFAA' : '#FF6B6B',
+                    fontWeight: 'bold'
+                  }}>
+                    {pred.payout}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
