@@ -280,9 +280,11 @@ export default function Header() {
         padding: '20px',
         transition: 'left 0.3s ease',
         zIndex: 999,
-        display: 'flex',
+        display: mobileMenuOpen ? 'flex' : 'none',
         flexDirection: 'column',
-        gap: '10px'
+        gap: '10px',
+        visibility: mobileMenuOpen ? 'visible' : 'hidden',
+        opacity: mobileMenuOpen ? 1 : 0
       }} className="mobile-nav">
         {navItems.map((item) => {
           const isActive = isActivePath(item)
@@ -446,6 +448,13 @@ export default function Header() {
         @media (min-width: 769px) {
           .mobile-nav {
             display: none !important;
+            visibility: hidden !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .mobile-nav {
+            transform: translateX(0);
           }
         }
       `}</style>
