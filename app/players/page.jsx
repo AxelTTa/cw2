@@ -14,10 +14,12 @@ export default function Players() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
+  const [selectedLeague, setSelectedLeague] = useState('')
   const [sortBy, setSortBy] = useState('name')
   const [playersPerPage] = useState(25)
   const [currentPage, setCurrentPage] = useState(1)
   const [teams, setTeams] = useState([])
+  const [leagues, setLeagues] = useState([])
   const [isVisible, setIsVisible] = useState(false)
   const [floatingTrophies, setFloatingTrophies] = useState([])
   const [searchFocused, setSearchFocused] = useState(false)
@@ -98,10 +100,13 @@ export default function Players() {
         return
       }
       
-      // Extract unique teams from first batch
+      // Extract unique teams and leagues from first batch
       const uniqueTeams = [...new Set(playersData.map(p => p.team?.name).filter(Boolean))]
         .sort()
+      const uniqueLeagues = [...new Set(playersData.map(p => p.league?.name).filter(Boolean))]
+        .sort()
       setTeams(uniqueTeams)
+      setLeagues(uniqueLeagues)
       
       setLoadedPlayers(playersData)
       setFilteredPlayers(playersData)
@@ -164,15 +169,18 @@ export default function Players() {
           additionalPlayers: allPlayersData.length - playersPerPage
         })
         
-        // Extract all unique teams
+        // Extract all unique teams and leagues
         const allUniqueTeams = [...new Set(allPlayersData.map(p => p.team?.name).filter(Boolean))]
           .sort()
+        const allUniqueLeagues = [...new Set(allPlayersData.map(p => p.league?.name).filter(Boolean))]
+          .sort()
         setTeams(allUniqueTeams)
+        setLeagues(allUniqueLeagues)
         
         setAllPlayers(allPlayersData)
         
         // If user hasn't filtered yet, update the filtered players to include all
-        if (loadedPlayers.length === filteredPlayers.length && !searchTerm && !selectedTeam && !selectedPosition) {
+        if (loadedPlayers.length === filteredPlayers.length && !searchTerm && !selectedTeam && !selectedPosition && !selectedLeague) {
           setFilteredPlayers(allPlayersData)
         }
       }
@@ -190,7 +198,7 @@ export default function Players() {
     let filtered = datasetToFilter
 
     // Show loading indicator if searching but all players aren't loaded yet
-    if ((searchTerm || selectedTeam || selectedPosition) && allPlayers.length === 0) {
+    if ((searchTerm || selectedTeam || selectedPosition || selectedLeague) && allPlayers.length === 0) {
       setSearchLoading(true)
     } else {
       setSearchLoading(false)
@@ -210,6 +218,11 @@ export default function Players() {
       filtered = filtered.filter(playerData => playerData.team?.name === selectedTeam)
     }
 
+    // Apply league filter
+    if (selectedLeague) {
+      filtered = filtered.filter(playerData => playerData.league?.name === selectedLeague)
+    }
+
     // Apply position filter
     if (selectedPosition) {
       filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
@@ -221,7 +234,7 @@ export default function Players() {
     setFilteredPlayers(filtered)
     setCurrentPage(1)
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
-  }, [searchTerm, selectedTeam, selectedPosition, sortBy, allPlayers, loadedPlayers, playersPerPage])
+  }, [searchTerm, selectedTeam, selectedPosition, selectedLeague, sortBy, allPlayers, loadedPlayers, playersPerPage])
 
   const sortPlayers = (players, sortCriteria) => {
     return [...players].sort((a, b) => {
@@ -762,6 +775,36 @@ export default function Players() {
               ))}
             </select>
             
+            {/* League Filter */}
+            <select
+              value={selectedLeague}
+              onChange={(e) => setSelectedLeague(e.target.value)}
+              style={{
+                padding: '16px 20px',
+                borderRadius: '12px',
+                border: '2px solid #333',
+                backgroundColor: '#111',
+                color: '#fff',
+                fontSize: '16px',
+                minWidth: '200px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#0099ff'
+                e.target.style.backgroundColor = '#1a1a1a'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#333'
+                e.target.style.backgroundColor = '#111'
+              }}
+            >
+              <option value="">🏆 All Leagues</option>
+              {leagues.map(league => (
+                <option key={league} value={league}>{league}</option>
+              ))}
+            </select>
+            
             {/* Position Filter */}
             <select
               value={selectedPosition}
@@ -976,6 +1019,7 @@ export default function Players() {
               {displayedPlayers.map((playerData, index) => {
                 const player = playerData.player
                 const team = playerData.team
+                const league = playerData.league
                 const statistics = playerData.statistics
                 return (
                   <div 
@@ -1064,11 +1108,24 @@ export default function Players() {
                           alignItems: 'center',
                           fontSize: '14px',
                           color: '#00ff88',
-                          fontWeight: 'bold'
+                          fontWeight: 'bold',
+                          marginBottom: '4px'
                         }}>
                           <span style={{ marginRight: '10px' }}>⚽</span>
                           {team?.name || 'Unknown Team'}
                         </div>
+                        {league && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            fontSize: '12px',
+                            color: '#666',
+                            fontStyle: 'italic'
+                          }}>
+                            <span style={{ marginRight: '6px' }}>🏆</span>
+                            {league.name}
+                          </div>
+                        )}
                       </div>
                     </div>
                     
