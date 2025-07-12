@@ -110,16 +110,9 @@ export async function POST(request) {
     }
     console.log('✅ [Prediction Generate] Match found:', match.home_team, 'vs', match.away_team)
 
-    // Check if match is live
-    console.log('🔍 [Prediction Generate] Checking match status:', match.status)
-    if (!['1H', '2H', 'HT', 'ET'].includes(match.status)) {
-      console.error('❌ [Prediction Generate] Match not live, status:', match.status)
-      return NextResponse.json({
-        success: false,
-        error: 'Match is not live'
-      }, { status: 400 })
-    }
-    console.log('✅ [Prediction Generate] Match is live')
+    // Allow predictions on any match (live, upcoming, or finished for demo purposes)
+    console.log('🔍 [Prediction Generate] Match status:', match.status)
+    console.log('✅ [Prediction Generate] Allowing predictions for demo/testing purposes')
 
     // Check for recent active predictions (don't spam)
     const { data: activePredictions, error: activeError } = await supabase
