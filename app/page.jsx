@@ -11,6 +11,7 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
   const [floatingElements, setFloatingElements] = useState([])
   const [currentAnimation, setCurrentAnimation] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchRecentMatches()
@@ -212,6 +213,161 @@ export default function Home() {
         .rotating-border:hover::before {
           opacity: 1;
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .floating-element {
+            font-size: 20px !important;
+          }
+          
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          
+          .desktop-nav {
+            display: none !important;
+          }
+          
+          .mobile-nav {
+            flex-direction: column;
+            gap: 15px !important;
+            position: fixed;
+            top: 70px;
+            left: -100%;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            transition: left 0.3s ease;
+            z-index: 99;
+            border-bottom: 1px solid #333;
+          }
+          
+          .mobile-nav.open {
+            left: 0;
+          }
+          
+          .mobile-header {
+            padding: 15px !important;
+            flex-wrap: wrap;
+          }
+          
+          .mobile-title {
+            font-size: 20px !important;
+          }
+          
+          .mobile-hero {
+            padding: 40px 15px !important;
+          }
+          
+          .mobile-hero-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 16px !important;
+            margin: 0 auto 30px !important;
+          }
+          
+          .mobile-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-card {
+            padding: 20px !important;
+            margin: 0 !important;
+          }
+          
+          .mobile-match-card {
+            padding: 20px !important;
+          }
+          
+          .mobile-teams {
+            flex-direction: column !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-score {
+            font-size: 20px !important;
+            margin: 15px 0 !important;
+          }
+          
+          .mobile-team {
+            justify-content: center !important;
+          }
+          
+          .mobile-team img {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          
+          .mobile-team span {
+            font-size: 14px !important;
+          }
+          
+          .mobile-match-info {
+            flex-direction: column !important;
+            gap: 8px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-feature {
+            padding: 25px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-feature h3 {
+            font-size: 18px !important;
+          }
+          
+          .mobile-feature p {
+            font-size: 15px !important;
+          }
+          
+          .mobile-cta {
+            padding: 30px 20px !important;
+            margin: 40px 15px 0 !important;
+          }
+          
+          .mobile-cta h2 {
+            font-size: 24px !important;
+          }
+          
+          .mobile-cta p {
+            font-size: 16px !important;
+          }
+          
+          .mobile-btn {
+            padding: 14px 28px !important;
+            font-size: 16px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-hero-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 15px !important;
+          }
+          
+          .mobile-card {
+            padding: 15px !important;
+          }
+          
+          .mobile-feature {
+            padding: 20px !important;
+          }
+          
+          .mobile-cta {
+            padding: 25px 15px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Background Elements */}
@@ -231,7 +387,7 @@ export default function Home() {
       ))}
 
       {/* Header */}
-      <header style={{
+      <header className="mobile-header" style={{
         padding: '20px',
         borderBottom: '1px solid #333',
         display: 'flex',
@@ -244,6 +400,7 @@ export default function Home() {
         zIndex: 100
       }}>
         <div 
+          className="mobile-title"
           style={{
             fontSize: '24px',
             fontWeight: 'bold',
@@ -265,7 +422,31 @@ export default function Home() {
         >
           Clutch
         </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
+        
+        {/* Mobile Menu Button */}
+        <button
+          style={{
+            display: 'none',
+            background: 'none',
+            border: '2px solid #00ff88',
+            borderRadius: '8px',
+            color: '#00ff88',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+        
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav" style={{ 
+          display: 'flex', 
+          gap: '30px' 
+        }}>
           {[
             { href: '/', label: 'Home', active: true },
             { href: '/live', label: 'Live' },
@@ -301,10 +482,49 @@ export default function Home() {
             </a>
           ))}
         </nav>
+        
+        {/* Mobile Navigation */}
+        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+          {[
+            { href: '/', label: 'Home', active: true },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players' },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/community', label: 'Community' },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '12px 0',
+                fontSize: '18px',
+                borderBottom: '1px solid #333'
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateX(10px)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateX(0)'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
       {/* Hero Section */}
-      <main className="hero-bg" style={{ 
+      <main className="hero-bg mobile-hero" style={{ 
         padding: '80px 20px', 
         textAlign: 'center',
         position: 'relative'
@@ -314,7 +534,7 @@ export default function Home() {
           transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
           transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-          <h1 style={{
+          <h1 className="mobile-hero-title" style={{
             fontSize: '56px',
             fontWeight: '900',
             marginBottom: '25px',
@@ -328,7 +548,7 @@ export default function Home() {
           }}>
             FIFA Club World Cup 2025 ⚽
           </h1>
-          <p style={{
+          <p className="mobile-hero-text" style={{
             fontSize: '22px',
             color: '#cccccc',
             marginBottom: '50px',
@@ -343,7 +563,7 @@ export default function Home() {
         </div>
 
         {/* Recent Matches Section */}
-        <div style={{
+        <div className="mobile-grid" style={{
           maxWidth: '1200px',
           margin: '80px auto',
           padding: '0 20px'
@@ -387,7 +607,7 @@ export default function Home() {
               <div style={{ fontSize: '18px' }}>{error}</div>
             </div>
           ) : (
-            <div style={{
+            <div className="mobile-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
               gap: '25px'
@@ -395,7 +615,7 @@ export default function Home() {
               {recentMatches.map((match, index) => (
                 <div
                   key={match.id}
-                  className="card-hover rotating-border"
+                  className="card-hover rotating-border mobile-match-card"
                   style={{
                     backgroundColor: '#111',
                     border: '2px solid #333',
@@ -455,13 +675,13 @@ export default function Home() {
                   </div>
                   
                   {/* Teams and Score */}
-                  <div style={{
+                  <div className="mobile-teams" style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '20px'
                   }}>
-                    <div style={{
+                    <div className="mobile-team" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -492,7 +712,7 @@ export default function Home() {
                       </span>
                     </div>
                     
-                    <div style={{
+                    <div className="mobile-score" style={{
                       fontSize: '24px',
                       fontWeight: 'bold',
                       color: '#00ff88',
@@ -506,7 +726,7 @@ export default function Home() {
                       }
                     </div>
                     
-                    <div style={{
+                    <div className="mobile-team" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -540,7 +760,7 @@ export default function Home() {
                   </div>
                   
                   {/* Match Info */}
-                  <div style={{
+                  <div className="mobile-match-info" style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -563,7 +783,7 @@ export default function Home() {
           }}>
             <a 
               href="/community" 
-              className="rotating-border"
+              className="rotating-border mobile-btn"
               style={{
                 display: 'inline-block',
                 backgroundColor: '#00ff88',
@@ -595,7 +815,7 @@ export default function Home() {
         </div>
 
         {/* Feature Cards */}
-        <div style={{
+        <div className="mobile-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '35px',
@@ -625,7 +845,7 @@ export default function Home() {
           ].map((feature, index) => (
             <div 
               key={index}
-              className="card-hover rotating-border"
+              className="card-hover rotating-border mobile-feature"
               style={{
                 backgroundColor: '#111',
                 border: `2px solid ${feature.color}`,
@@ -666,7 +886,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div style={{
+        <div className="mobile-cta" style={{
           marginTop: '80px',
           padding: '50px',
           backgroundColor: '#111',

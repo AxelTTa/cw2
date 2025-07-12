@@ -1,12 +1,20 @@
 export const metadata = {
   title: 'Clutch',
   description: 'Sports stats and crypto rewards app',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+      </head>
+      <body style={{
+        margin: 0,
+        padding: 0,
+        overflowX: 'hidden'
+      }}>{children}</body>
     </html>
   )
 }
