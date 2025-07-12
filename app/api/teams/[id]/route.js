@@ -27,6 +27,7 @@ export async function GET(request, { params }) {
     return NextResponse.json({
       success: true,
       team: teamInfo,
+      venue: teamInfo?.venue || null,
       players: teamPlayers,
       playersCount: teamPlayers?.length || 0,
       timestamp: new Date().toISOString()
@@ -138,12 +139,12 @@ function getMockTeamInfo(teamId) {
   console.log(`🎭 Backend Generating mock team info for team ID: ${teamId}`)
   
   const mockTeams = {
-    49: { id: 49, name: 'Chelsea', logo: 'https://media.api-sports.io/football/teams/49.png', country: 'England', founded: 1905, code: 'CHE', venue: { name: 'Stamford Bridge', capacity: 40341, city: 'London', surface: 'grass' } },
-    50: { id: 50, name: 'Manchester City', logo: 'https://media.api-sports.io/football/teams/50.png', country: 'England', founded: 1880, code: 'MCI', venue: { name: 'Etihad Stadium', capacity: 55017, city: 'Manchester', surface: 'grass' } },
-    85: { id: 85, name: 'Paris Saint Germain', logo: 'https://media.api-sports.io/football/teams/85.png', country: 'France', founded: 1970, code: 'PSG', venue: { name: 'Parc des Princes', capacity: 47929, city: 'Paris', surface: 'grass' } },
-    157: { id: 157, name: 'Bayern München', logo: 'https://media.api-sports.io/football/teams/157.png', country: 'Germany', founded: 1900, code: 'BAY', venue: { name: 'Allianz Arena', capacity: 75000, city: 'Munich', surface: 'grass' } },
-    541: { id: 541, name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png', country: 'Spain', founded: 1902, code: 'REA', venue: { name: 'Santiago Bernabéu', capacity: 81044, city: 'Madrid', surface: 'grass' } },
-    9568: { id: 9568, name: 'Inter Miami', logo: 'https://media.api-sports.io/football/teams/9568.png', country: 'USA', founded: 2018, code: 'MIA', venue: { name: 'DRV PNK Stadium', capacity: 18000, city: 'Fort Lauderdale', surface: 'grass' } }
+    49: { id: 49, name: 'Chelsea', logo: 'https://media.api-sports.io/football/teams/49.png', country: 'England', founded: 1905, code: 'CHE', venue: { name: 'Stamford Bridge', capacity: 40341, city: 'London', address: 'Fulham Road', surface: 'grass' } },
+    50: { id: 50, name: 'Manchester City', logo: 'https://media.api-sports.io/football/teams/50.png', country: 'England', founded: 1880, code: 'MCI', venue: { name: 'Etihad Stadium', capacity: 55097, city: 'Manchester', address: 'Rowsley Street', surface: 'grass' } },
+    85: { id: 85, name: 'Paris Saint Germain', logo: 'https://media.api-sports.io/football/teams/85.png', country: 'France', founded: 1970, code: 'PSG', venue: { name: 'Parc des Princes', capacity: 47929, city: 'Paris', address: '24 Rue du Commandant Guilbaud', surface: 'grass' } },
+    157: { id: 157, name: 'Bayern München', logo: 'https://media.api-sports.io/football/teams/157.png', country: 'Germany', founded: 1900, code: 'BAY', venue: { name: 'Allianz Arena', capacity: 75000, city: 'Munich', address: 'Werner-Heisenberg-Allee 25', surface: 'grass' } },
+    541: { id: 541, name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png', country: 'Spain', founded: 1902, code: 'REA', venue: { name: 'Santiago Bernabéu', capacity: 81044, city: 'Madrid', address: 'Avenida de Concha Espina 1', surface: 'grass' } },
+    9568: { id: 9568, name: 'Inter Miami', logo: 'https://media.api-sports.io/football/teams/9568.png', country: 'USA', founded: 2018, code: 'MIA', venue: { name: 'DRV PNK Stadium', capacity: 18000, city: 'Fort Lauderdale', address: '1350 NW 55th Street', surface: 'grass' } }
   }
   
   return mockTeams[teamId] || { id: parseInt(teamId), name: 'Unknown Team', logo: '', country: 'Unknown', founded: null, code: 'UNK', venue: null }

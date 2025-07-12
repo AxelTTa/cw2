@@ -204,6 +204,7 @@ export default function TeamDetail() {
             <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
             <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
             <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
+            <a href="/dashboard" style={{ color: '#888', textDecoration: 'none' }}>Dashboard</a>
           </nav>
         </header>
 
@@ -243,6 +244,7 @@ export default function TeamDetail() {
             <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
             <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
             <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
+            <a href="/dashboard" style={{ color: '#888', textDecoration: 'none' }}>Dashboard</a>
           </nav>
         </header>
 
@@ -300,6 +302,7 @@ export default function TeamDetail() {
           <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
           <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
           <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
+          <a href="/dashboard" style={{ color: '#888', textDecoration: 'none' }}>Dashboard</a>
         </nav>
       </header>
 

@@ -3,6 +3,9 @@ import { supabaseAdmin } from '../../utils/supabase'
 
 export async function GET() {
   try {
+    console.log('🎭 Backend API Route /api/memes called (GET)')
+    console.log('📅 Backend Current time:', new Date().toISOString())
+    
     const { data: memes, error } = await supabaseAdmin
       .from('memes')
       .select('*')
@@ -10,12 +13,22 @@ export async function GET() {
       .order('usage_count', { ascending: false })
 
     if (error) {
-      console.error('Error fetching memes:', error)
+      console.error('❌ Backend Error fetching memes:', {
+        error: error.message,
+        code: error.code,
+        details: error.details,
+        timestamp: new Date().toISOString()
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'Failed to fetch memes' 
       }, { status: 500 })
     }
+
+    console.log('✅ Backend Successfully fetched memes:', {
+      memesCount: memes?.length || 0,
+      timestamp: new Date().toISOString()
+    })
 
     return NextResponse.json({
       success: true,

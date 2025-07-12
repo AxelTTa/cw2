@@ -1,7 +1,15 @@
 export const metadata = {
   title: 'Clutch',
   description: 'Sports stats and crypto rewards app',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no',
+}
+
+export function generateViewport() {
+  return {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  }
 }
 
 export default function RootLayout({ children }) {

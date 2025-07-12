@@ -227,28 +227,19 @@ export async function POST(request) {
       }, { status: 500 })
     }
 
-    // Award XP to user
+    // Award XP to user (this will be handled by database triggers for consistency)
     const xpReward = is_meme || image_url ? 15 : 10
     
-    // Get current user data
-    const { data: currentProfile } = await supabaseAdmin
-      .from('profiles')
-      .select('xp, level')
-      .eq('id', user_id)
-      .single()
-    
-    const currentXp = currentProfile?.xp || 0
-    const currentLevel = currentProfile?.level || 1
-    const newXp = currentXp + xpReward
-    const newLevel = newXp >= currentLevel * 100 ? currentLevel + 1 : currentLevel
-    
-    await supabaseAdmin
-      .from('profiles')
-      .update({ 
-        xp: newXp,
-        level: newLevel
-      })
-      .eq('id', user_id)
+    console.log(`⚡ Backend: Comment created successfully, XP award will be handled by database trigger`, {
+      commentId: comment.id,
+      userId: user_id,
+      expectedXpReward: xpReward,
+      commentType: comment_type,
+      isMeme: is_meme,
+      hasImage: !!image_url,
+      entityType: entity_type,
+      entityId: finalEntityId
+    })
 
     return NextResponse.json({
       success: true,
@@ -353,26 +344,58 @@ export async function PATCH(request) {
         .eq('reaction_type', reaction_type)
         .single()
 
+      let reactionAction = 'added'
+      
       if (existingReaction) {
         // Remove reaction if it exists
-        await supabaseAdmin
+        const { error: deleteError } = await supabaseAdmin
           .from('reactions')
           .delete()
           .eq('id', existingReaction.id)
+          
+        if (deleteError) {
+          console.error('Error removing reaction:', deleteError)
+          throw deleteError
+        }
+        
+        reactionAction = 'removed'
+        console.log(`🔥 Backend: Removed ${reaction_type} reaction from comment ${comment_id} by user ${user_id}`)
       } else {
         // Add new reaction
-        await supabaseAdmin
+        const { error: insertError } = await supabaseAdmin
           .from('reactions')
           .insert({
             user_id,
             comment_id,
             reaction_type
           })
+          
+        if (insertError) {
+          console.error('Error adding reaction:', insertError)
+          throw insertError
+        }
+        
+        console.log(`👍 Backend: Added ${reaction_type} reaction to comment ${comment_id} by user ${user_id}`)
+      }
+
+      // Award/remove XP for likes (handled by database triggers)
+      if (reaction_type === 'like') {
+        const { data: commentAuthor } = await supabaseAdmin
+          .from('comments')
+          .select('user_id')
+          .eq('id', comment_id)
+          .single()
+          
+        if (commentAuthor && commentAuthor.user_id !== user_id) {
+          const xpChange = reactionAction === 'added' ? 2 : -2
+          console.log(`⚡ Backend: ${reactionAction === 'added' ? 'Awarding' : 'Removing'} ${Math.abs(xpChange)} XP to comment author for like ${reactionAction}`)
+        }
       }
 
       result = { 
-        message: existingReaction ? 'Reaction removed' : 'Reaction added',
-        action: existingReaction ? 'removed' : 'added'
+        message: `Reaction ${reactionAction}`,
+        action: reactionAction,
+        reaction_type
       }
     }
 
