@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../../../utils/supabase'
 import { NextResponse } from 'next/server'
 
 // Simple event detection for auto-settlement
@@ -86,7 +86,6 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    const supabase = createClient()
 
     // Get expired but unsettled predictions for this match
     const { data: expiredPredictions, error: predictionsError } = await supabase

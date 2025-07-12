@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../../../utils/supabase'
 import { NextResponse } from 'next/server'
 
 export async function GET(request) {
@@ -13,7 +13,6 @@ export async function GET(request) {
       }, { status: 400 })
     }
 
-    const supabase = createClient()
 
     // Get current active predictions with pools
     const { data: predictions, error: predictionsError } = await supabase

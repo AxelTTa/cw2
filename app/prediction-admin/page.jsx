@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../utils/supabase'
 
 const Button = ({ children, onClick, variant = 'default', disabled = false, style = {} }) => {
   const variants = {
@@ -49,7 +49,6 @@ export default function PredictionAdmin() {
   const [predictions, setPredictions] = useState([])
   const [loading, setLoading] = useState(true)
   const [logs, setLogs] = useState([])
-  const supabase = createClient()
 
   useEffect(() => {
     checkAuth()

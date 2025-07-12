@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../utils/supabase'
 import { useRouter } from 'next/navigation'
 
 // UI Components
@@ -367,7 +367,6 @@ export default function PredictionGrid() {
   const [liveMatches, setLiveMatches] = useState([])
   const [userBalance, setUserBalance] = useState(0)
   const router = useRouter()
-  const supabase = createClient()
 
   // Initialize user and data
   useEffect(() => {
