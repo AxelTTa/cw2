@@ -68,7 +68,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       // Add meme data if selected
       if (selectedMeme) {
         commentData.is_meme = true
-        commentData.meme_url = selectedMeme.url
+        commentData.meme_url = selectedMeme.template_url
         commentData.meme_caption = newComment.trim() || selectedMeme.caption
         commentData.comment_type = 'meme'
       }
