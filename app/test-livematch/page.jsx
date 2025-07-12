@@ -30,25 +30,43 @@ const logger = {
   }
 }
 
-// UI Components (inline to keep file count low)
+// UI Components (inline to keep file count low) - with inline styles for non-Tailwind compatibility
 const Button = ({ children, onClick, variant = 'default', size = 'default', className = '', ...props }) => {
-  const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50'
-  const variants = {
-    default: 'bg-blue-600 text-white hover:bg-blue-700',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300',
-    outline: 'border border-gray-300 bg-transparent hover:bg-gray-100',
-    ghost: 'hover:bg-gray-100',
-    destructive: 'bg-red-600 text-white hover:bg-red-700'
+  const baseStyles = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: '6px',
+    fontWeight: '500',
+    transition: 'all 0.2s',
+    border: 'none',
+    cursor: 'pointer',
+    textDecoration: 'none'
   }
+  
+  const variants = {
+    default: { backgroundColor: '#2563eb', color: 'white', padding: '10px 16px' },
+    secondary: { backgroundColor: '#e5e7eb', color: '#111827', padding: '10px 16px' },
+    outline: { border: '1px solid #d1d5db', backgroundColor: 'transparent', padding: '9px 15px' },
+    ghost: { backgroundColor: 'transparent', padding: '10px 16px' },
+    destructive: { backgroundColor: '#dc2626', color: 'white', padding: '10px 16px' }
+  }
+  
   const sizes = {
-    default: 'h-10 px-4 py-2',
-    sm: 'h-9 px-3',
-    lg: 'h-11 px-8'
+    default: { height: '40px', padding: '10px 16px' },
+    sm: { height: '36px', padding: '8px 12px', fontSize: '14px' },
+    lg: { height: '44px', padding: '12px 32px' }
+  }
+  
+  const combinedStyles = {
+    ...baseStyles,
+    ...variants[variant],
+    ...sizes[size]
   }
   
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      style={combinedStyles}
       onClick={onClick}
       {...props}
     >
@@ -57,30 +75,56 @@ const Button = ({ children, onClick, variant = 'default', size = 'default', clas
   )
 }
 
-const Card = ({ children, className = '' }) => (
-  <div className={`rounded-lg border bg-white shadow-sm ${className}`}>
-    {children}
-  </div>
-)
-
-const Badge = ({ children, variant = 'default', className = '' }) => {
-  const variants = {
-    default: 'bg-blue-100 text-blue-800',
-    secondary: 'bg-gray-100 text-gray-800',
-    destructive: 'bg-red-100 text-red-800',
-    success: 'bg-green-100 text-green-800'
+const Card = ({ children, className = '' }) => {
+  const cardStyles = {
+    borderRadius: '8px',
+    border: '1px solid #e5e7eb',
+    backgroundColor: 'white',
+    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+    padding: '16px'
   }
   
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]} ${className}`}>
+    <div style={cardStyles}>
+      {children}
+    </div>
+  )
+}
+
+const Badge = ({ children, variant = 'default', className = '' }) => {
+  const variants = {
+    default: { backgroundColor: '#dbeafe', color: '#1e40af' },
+    secondary: { backgroundColor: '#f3f4f6', color: '#374151' },
+    destructive: { backgroundColor: '#fecaca', color: '#dc2626' },
+    success: { backgroundColor: '#dcfce7', color: '#16a34a' }
+  }
+  
+  const badgeStyles = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: '2px 10px',
+    borderRadius: '9999px',
+    fontSize: '12px',
+    fontWeight: '500',
+    ...variants[variant]
+  }
+  
+  return (
+    <span style={badgeStyles}>
       {children}
     </span>
   )
 }
 
-const Skeleton = ({ className = '' }) => (
-  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
-)
+const Skeleton = ({ className = '', style = {} }) => {
+  const skeletonStyles = {
+    backgroundColor: '#e5e7eb',
+    borderRadius: '4px',
+    ...style
+  }
+  
+  return <div style={skeletonStyles} />
+}
 
 // Match Components
 const MatchHeader = ({ match, isLive }) => {
@@ -670,17 +714,17 @@ function TestLiveMatchContent() {
   if (loading) {
     logger.info('Rendering loading state')
     return (
-      <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <Skeleton className="h-8 w-64" />
-          <Skeleton className="h-64 w-full" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <Skeleton className="h-96 w-full" />
+      <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#f9fafb' }}>
+        <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+          <Skeleton style={{ height: '32px', width: '256px', marginBottom: '24px' }} />
+          <Skeleton style={{ height: '256px', width: '100%', marginBottom: '24px' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <Skeleton style={{ height: '384px', width: '100%' }} />
             </div>
-            <div className="space-y-6">
-              <Skeleton className="h-64 w-full" />
-              <Skeleton className="h-48 w-full" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <Skeleton style={{ height: '256px', width: '100%' }} />
+              <Skeleton style={{ height: '192px', width: '100%' }} />
             </div>
           </div>
         </div>
@@ -691,17 +735,35 @@ function TestLiveMatchContent() {
   if (error) {
     logger.info('Rendering error state', { error })
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="text-center max-w-md">
-          <div className="text-6xl mb-4">⚠️</div>
-          <h1 className="text-2xl font-bold mb-2">Unable to load match</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
-          <div className="flex gap-3 justify-center">
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        backgroundColor: '#f9fafb'
+      }}>
+        <div style={{ textAlign: 'center', maxWidth: '28rem' }}>
+          <div style={{ fontSize: '60px', marginBottom: '16px' }}>⚠️</div>
+          <h1 style={{
+            fontSize: '24px',
+            fontWeight: '700',
+            marginBottom: '8px'
+          }}>Unable to load match</h1>
+          <p style={{
+            color: '#4b5563',
+            marginBottom: '24px'
+          }}>{error}</p>
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center'
+          }}>
             <Button onClick={handleRefresh}>
               🔄 Retry
             </Button>
             <Button variant="outline">
-              <Link href="/">← Go Back</Link>
+              <a href="/" style={{ textDecoration: 'none', color: 'inherit' }}>← Go Back</a>
             </Button>
           </div>
         </div>
@@ -711,25 +773,53 @@ function TestLiveMatchContent() {
 
   logger.info('Rendering main match interface')
   
+  const containerStyles = {
+    minHeight: '100vh',
+    backgroundColor: '#f9fafb',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  }
+  
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div style={containerStyles}>
       {/* Header Navigation */}
-      <div className="border-b border-gray-200 bg-white sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+      <div style={{
+        borderBottom: '1px solid #e5e7eb',
+        backgroundColor: 'white',
+        position: 'sticky',
+        top: 0,
+        zIndex: 40
+      }}>
+        <div style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '16px'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px'
+            }}>
               <Button variant="ghost" size="sm">
-                <Link href="/">← Back to Matches</Link>
+                <a href="/" style={{ textDecoration: 'none', color: 'inherit' }}>← Back to Matches</a>
               </Button>
               
               {isLive && (
-                <Badge variant="destructive" className="animate-pulse">
+                <Badge variant="destructive">
                   🔴 LIVE
                 </Badge>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
               <Button variant="ghost" size="sm" onClick={handleRefresh}>
                 🔄
               </Button>
@@ -745,14 +835,34 @@ function TestLiveMatchContent() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto p-4 space-y-6">
+      <div style={{
+        maxWidth: '80rem',
+        margin: '0 auto',
+        padding: '16px'
+      }}>
         {/* Match Header */}
         <MatchHeader match={matchData?.match} isLive={isLive} />
 
         {/* Debug Information Panel */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-          <h3 className="text-lg font-semibold text-blue-800 mb-2">🐛 Debug Information</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div style={{
+          backgroundColor: '#eff6ff',
+          border: '1px solid #bfdbfe',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#1e40af',
+            marginBottom: '8px'
+          }}>🐛 Debug Information</h3>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            fontSize: '14px'
+          }}>
             <div>
               <strong>Match ID:</strong> {matchId}
             </div>
@@ -779,16 +889,34 @@ function TestLiveMatchContent() {
             </div>
           </div>
           {error && (
-            <div className="mt-2 p-2 bg-red-100 text-red-800 rounded text-sm">
+            <div style={{
+              marginTop: '8px',
+              padding: '8px',
+              backgroundColor: '#fecaca',
+              color: '#991b1b',
+              borderRadius: '4px',
+              fontSize: '14px'
+            }}>
               <strong>Error Details:</strong> {error}
             </div>
           )}
         </div>
 
         {/* Main Grid Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr',
+          gap: '24px',
+          '@media (min-width: 1024px)': {
+            gridTemplateColumns: '2fr 1fr'
+          }
+        }}>
           {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px'
+          }}>
             {/* Game Feed */}
             <GameFeed
               events={matchData?.events}
@@ -796,7 +924,11 @@ function TestLiveMatchContent() {
             />
 
             {/* Team Lineups */}
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr',
+              gap: '24px'
+            }}>
               <Lineups 
                 lineup={matchData?.lineups?.home} 
                 team={matchData?.match?.teams?.home} 
@@ -809,7 +941,11 @@ function TestLiveMatchContent() {
           </div>
 
           {/* Right Column - Sidebar */}
-          <div className="space-y-6">
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '24px'
+          }}>
             {/* Betting Odds */}
             <BettingOdds odds={matchData?.odds} />
 
@@ -830,20 +966,54 @@ function TestLiveMatchContent() {
 
       {/* Selected Event Modal (simple implementation) */}
       {selectedEvent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedEvent(null)}>
-          <Card className="p-6 max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Match Event</h3>
-            <div className="space-y-2">
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 50
+          }}
+          onClick={() => setSelectedEvent(null)}
+        >
+          <div style={{
+            maxWidth: '28rem',
+            margin: '16px',
+            ...{
+              borderRadius: '8px',
+              border: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+              padding: '24px'
+            }
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '600',
+              marginBottom: '16px'
+            }}>Match Event</h3>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px'
+            }}>
               <div><strong>Time:</strong> {selectedEvent.time?.elapsed || 'x'}'</div>
               <div><strong>Type:</strong> {selectedEvent.type || 'x'}</div>
               <div><strong>Detail:</strong> {selectedEvent.detail || 'x'}</div>
               <div><strong>Player:</strong> {selectedEvent.player?.name || 'x'}</div>
               <div><strong>Team:</strong> {selectedEvent.team?.name || 'x'}</div>
             </div>
-            <Button onClick={() => setSelectedEvent(null)} className="w-full mt-4">
-              Close
-            </Button>
-          </Card>
+            <div style={{ marginTop: '16px' }}>
+              <Button onClick={() => setSelectedEvent(null)} style={{ width: '100%' }}>
+                Close
+              </Button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -872,22 +1042,60 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <div className="text-center max-w-2xl">
-            <div className="text-6xl mb-4">💥</div>
-            <h1 className="text-2xl font-bold mb-2">Component Error</h1>
-            <p className="text-gray-600 mb-4">The test-livematch component encountered an error.</p>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
-              <h3 className="font-semibold text-red-800 mb-2">Error Details:</h3>
-              <pre className="text-sm text-red-700 whitespace-pre-wrap">
+        <div style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+          backgroundColor: '#f9fafb'
+        }}>
+          <div style={{ textAlign: 'center', maxWidth: '32rem' }}>
+            <div style={{ fontSize: '60px', marginBottom: '16px' }}>💥</div>
+            <h1 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              marginBottom: '8px'
+            }}>Component Error</h1>
+            <p style={{
+              color: '#4b5563',
+              marginBottom: '16px'
+            }}>The test-livematch component encountered an error.</p>
+            <div style={{
+              backgroundColor: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '16px',
+              textAlign: 'left',
+              marginBottom: '16px'
+            }}>
+              <h3 style={{
+                fontWeight: '600',
+                color: '#991b1b',
+                marginBottom: '8px'
+              }}>Error Details:</h3>
+              <pre style={{
+                fontSize: '14px',
+                color: '#b91c1c',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'monospace'
+              }}>
                 {this.state.error && this.state.error.toString()}
                 <br />
                 {this.state.errorInfo.componentStack}
               </pre>
             </div>
             <button 
-              onClick={() => window.location.reload()} 
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '10px 16px',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
               Reload Page
             </button>
@@ -905,21 +1113,32 @@ export default function TestLiveMatch() {
   logger.info('TestLiveMatch wrapper component rendering')
   
   const suspenseFallback = (
-    <div className="min-h-screen p-4">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-yellow-800 mb-2">⏳ Loading Test LiveMatch...</h3>
-          <p className="text-yellow-700">Initializing component and fetching match data...</p>
+    <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#f9fafb' }}>
+      <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
+        <div style={{
+          backgroundColor: '#fefce8',
+          border: '1px solid #facc15',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <h3 style={{
+            fontSize: '18px',
+            fontWeight: '600',
+            color: '#a16207',
+            marginBottom: '8px'
+          }}>⏳ Loading Test LiveMatch...</h3>
+          <p style={{ color: '#a16207' }}>Initializing component and fetching match data...</p>
         </div>
-        <div className="animate-pulse bg-gray-200 rounded h-8 w-64" />
-        <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <div className="animate-pulse bg-gray-200 rounded h-96 w-full" />
+        <Skeleton style={{ height: '32px', width: '256px', marginBottom: '24px' }} />
+        <Skeleton style={{ height: '256px', width: '100%', marginBottom: '24px' }} />
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <Skeleton style={{ height: '384px', width: '100%' }} />
           </div>
-          <div className="space-y-6">
-            <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
-            <div className="animate-pulse bg-gray-200 rounded h-48 w-full" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <Skeleton style={{ height: '256px', width: '100%' }} />
+            <Skeleton style={{ height: '192px', width: '100%' }} />
           </div>
         </div>
       </div>
