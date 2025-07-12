@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import UniversalComments from '../../components/UniversalComments'
+import Header from '../../components/Header'
 
 export default function TeamDetail() {
   const params = useParams()
@@ -10,6 +11,18 @@ export default function TeamDetail() {
   const [teamData, setTeamData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     async function fetchTeamDetail() {
@@ -280,31 +293,10 @@ export default function TeamDetail() {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Team Content */}
-      <main style={{ padding: '40px 20px' }}>
+      <main style={{ padding: isMobile ? '20px 15px' : '40px 20px' }}>
         {/* Back Button */}
         <div style={{ marginBottom: '30px' }}>
           <button 
@@ -332,15 +324,17 @@ export default function TeamDetail() {
           margin: '0 auto',
           backgroundColor: '#111',
           borderRadius: '16px',
-          padding: '40px',
-          marginBottom: '30px',
+          padding: isMobile ? '20px' : '40px',
+          marginBottom: isMobile ? '20px' : '30px',
           border: `2px solid ${confederationColor}`
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '30px',
-            flexWrap: 'wrap'
+            gap: isMobile ? '20px' : '30px',
+            flexWrap: 'wrap',
+            flexDirection: isMobile ? 'column' : 'row',
+            textAlign: isMobile ? 'center' : 'left'
           }}>
             {/* Team Logo */}
             {teamData.team?.logo && (
@@ -348,8 +342,8 @@ export default function TeamDetail() {
                 src={teamData.team.logo} 
                 alt={`${teamData.team.name} logo`}
                 style={{
-                  width: '120px',
-                  height: '120px',
+                  width: isMobile ? '100px' : '120px',
+                  height: isMobile ? '100px' : '120px',
                   borderRadius: '12px',
                   objectFit: 'contain',
                   border: `3px solid ${confederationColor}`
@@ -358,9 +352,9 @@ export default function TeamDetail() {
             )}
 
             {/* Team Info */}
-            <div style={{ flex: 1, minWidth: '300px' }}>
+            <div style={{ flex: 1, minWidth: isMobile ? 'auto' : '300px' }}>
               <h1 style={{
-                fontSize: '36px',
+                fontSize: isMobile ? '28px' : '36px',
                 fontWeight: 'bold',
                 marginBottom: '10px',
                 color: '#ffffff'
@@ -415,7 +409,7 @@ export default function TeamDetail() {
           maxWidth: '1200px',
           margin: '0 auto',
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '20px',
           marginBottom: '30px'
         }}>

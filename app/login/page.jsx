@@ -9,7 +9,19 @@ import SimpleAuth from '../components/SimpleAuth'
 export default function LoginPage() {
   const [user, setUser] = useState(null)
   const [isVisible, setIsVisible] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     setIsVisible(true)
@@ -54,7 +66,7 @@ export default function LoginPage() {
         <Header />
         
         <main style={{ 
-          padding: '80px 20px', 
+          padding: isMobile ? '40px 15px' : '80px 20px', 
           textAlign: 'center',
           maxWidth: '600px',
           margin: '0 auto'
@@ -63,12 +75,12 @@ export default function LoginPage() {
             backgroundColor: '#111',
             border: '1px solid #333',
             borderRadius: '12px',
-            padding: '40px',
+            padding: isMobile ? '20px' : '40px',
             animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
           }}>
             <div style={{ fontSize: '48px', marginBottom: '20px' }}>✅</div>
             <h1 style={{
-              fontSize: '32px',
+              fontSize: isMobile ? '24px' : '32px',
               fontWeight: 'bold',
               marginBottom: '20px',
               color: '#00ff88'
@@ -87,7 +99,8 @@ export default function LoginPage() {
               display: 'flex',
               gap: '15px',
               justifyContent: 'center',
-              flexWrap: 'wrap'
+              flexWrap: 'wrap',
+              flexDirection: isMobile ? 'column' : 'row'
             }}>
               <button
                 onClick={() => router.push('/')}
@@ -158,7 +171,7 @@ export default function LoginPage() {
       <Header />
 
       <main style={{ 
-        padding: '80px 20px', 
+        padding: isMobile ? '40px 15px' : '80px 20px', 
         textAlign: 'center' 
       }}>
         <div style={{
@@ -167,7 +180,7 @@ export default function LoginPage() {
           transition: 'all 1s ease-out'
         }}>
           <h1 style={{
-            fontSize: '48px',
+            fontSize: isMobile ? '32px' : '48px',
             fontWeight: '900',
             marginBottom: '20px',
             background: 'linear-gradient(45deg, #00ff88, #0099ff)',
@@ -180,12 +193,13 @@ export default function LoginPage() {
           </h1>
           
           <p style={{
-            fontSize: '20px',
+            fontSize: isMobile ? '16px' : '20px',
             color: '#cccccc',
-            marginBottom: '50px',
+            marginBottom: isMobile ? '30px' : '50px',
             maxWidth: '600px',
-            margin: '0 auto 50px',
-            lineHeight: '1.6'
+            margin: isMobile ? '0 auto 30px' : '0 auto 50px',
+            lineHeight: '1.6',
+            padding: isMobile ? '0 10px' : '0'
           }}>
             Join the FIFA Club World Cup 2025 community. 
             Comment on matches, share memes, and connect with football fans worldwide.
@@ -194,18 +208,18 @@ export default function LoginPage() {
 
         {/* Login Options */}
         <div style={{
-          maxWidth: '500px',
+          maxWidth: isMobile ? '95%' : '500px',
           margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '30px'
+          gap: isMobile ? '20px' : '30px'
         }}>
           {/* Google Authentication */}
           <div style={{
             backgroundColor: '#111',
             border: '1px solid #333',
             borderRadius: '12px',
-            padding: '30px',
+            padding: isMobile ? '20px' : '30px',
             animation: isVisible ? 'slideInUp 0.8s ease-out 0.3s both' : 'none'
           }}>
             <h3 style={{
@@ -219,7 +233,7 @@ export default function LoginPage() {
             <p style={{
               color: '#888',
               marginBottom: '20px',
-              fontSize: '14px'
+              fontSize: isMobile ? '13px' : '14px'
             }}>
               Sign in with your Google account for instant access
             </p>
@@ -234,7 +248,7 @@ export default function LoginPage() {
             backgroundColor: '#111',
             border: '1px solid #333',
             borderRadius: '12px',
-            padding: '30px',
+            padding: isMobile ? '20px' : '30px',
             animation: isVisible ? 'slideInUp 0.8s ease-out 0.5s both' : 'none'
           }}>
             <h3 style={{
@@ -248,7 +262,7 @@ export default function LoginPage() {
             <p style={{
               color: '#888',
               marginBottom: '20px',
-              fontSize: '14px'
+              fontSize: isMobile ? '13px' : '14px'
             }}>
               Create an account or sign in with email and password
             </p>
@@ -260,7 +274,7 @@ export default function LoginPage() {
             backgroundColor: '#111',
             border: '1px solid #333',
             borderRadius: '12px',
-            padding: '30px',
+            padding: isMobile ? '20px' : '30px',
             animation: isVisible ? 'slideInUp 0.8s ease-out 0.7s both' : 'none'
           }}>
             <h3 style={{
@@ -273,28 +287,28 @@ export default function LoginPage() {
             </h3>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '20px',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: isMobile ? '15px' : '20px',
               textAlign: 'left'
             }}>
               <div>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>💬</div>
-                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Live Discussions</div>
-                <div style={{ color: '#888', fontSize: '12px' }}>
+                <div style={{ fontSize: isMobile ? '20px' : '24px', marginBottom: '8px' }}>💬</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: isMobile ? '14px' : '16px' }}>Live Discussions</div>
+                <div style={{ color: '#888', fontSize: isMobile ? '11px' : '12px' }}>
                   Comment on live matches and share your reactions
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>📊</div>
-                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Player Stats</div>
-                <div style={{ color: '#888', fontSize: '12px' }}>
+                <div style={{ fontSize: isMobile ? '20px' : '24px', marginBottom: '8px' }}>📊</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: isMobile ? '14px' : '16px' }}>Player Stats</div>
+                <div style={{ color: '#888', fontSize: isMobile ? '11px' : '12px' }}>
                   Access detailed statistics and analysis
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '24px', marginBottom: '8px' }}>🏆</div>
-                <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Tournament Updates</div>
-                <div style={{ color: '#888', fontSize: '12px' }}>
+                <div style={{ fontSize: isMobile ? '20px' : '24px', marginBottom: '8px' }}>🏆</div>
+                <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: isMobile ? '14px' : '16px' }}>Tournament Updates</div>
+                <div style={{ color: '#888', fontSize: isMobile ? '11px' : '12px' }}>
                   Get real-time updates from Club World Cup 2025
                 </div>
               </div>
@@ -304,10 +318,10 @@ export default function LoginPage() {
 
         {/* Footer */}
         <div style={{
-          marginTop: '60px',
-          padding: '20px',
+          marginTop: isMobile ? '40px' : '60px',
+          padding: isMobile ? '15px' : '20px',
           color: '#666',
-          fontSize: '12px'
+          fontSize: isMobile ? '11px' : '12px'
         }}>
           <p>
             By signing in, you agree to our terms of service and privacy policy.
