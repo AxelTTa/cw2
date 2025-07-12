@@ -1,5 +1,6 @@
 import { supabase } from '../../../utils/supabase'
 import { NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 
 export const dynamic = 'force-dynamic'
 
@@ -58,7 +59,12 @@ export async function GET(request) {
 
       if (expiredPredictions.length > 0) {
         // Trigger auto-settlement (fire and forget)
-        fetch(`${request.url.split('/api')[0]}/api/predictions/auto-settle`, {
+        const headersList = headers()
+        const host = headersList.get('host')
+        const protocol = headersList.get('x-forwarded-proto') || 'http'
+        const baseUrl = `${protocol}://${host}`
+        
+        fetch(`${baseUrl}/api/predictions/auto-settle`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ matchId })

@@ -69,50 +69,50 @@ const shouldGeneratePrediction = (template, matchContext, recentGenerations) => 
 
 export async function POST(request) {
   try {
+    console.log('🎯 [Prediction Generate] Starting prediction generation...')
     const { matchId } = await request.json()
+    console.log('🎯 [Prediction Generate] Match ID:', matchId)
 
     if (!matchId) {
+      console.error('❌ [Prediction Generate] No match ID provided')
       return NextResponse.json({
         success: false,
         error: 'Match ID is required'
       }, { status: 400 })
     }
 
-
     // Get authenticated user
+    console.log('🔍 [Prediction Generate] Checking authentication...')
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
+      console.error('❌ [Prediction Generate] Auth error:', authError)
       return NextResponse.json({
         success: false,
         error: 'Authentication required'
       }, { status: 401 })
     }
+    console.log('✅ [Prediction Generate] User authenticated:', user.email)
 
     // Get match details
+    console.log('🔍 [Prediction Generate] Fetching match details...')
     const { data: match, error: matchError } = await supabase
       .from('matches')
-      .select(`
-        *,
-        home_team_info:teams!matches_home_team_fkey(name),
-        away_team_info:teams!matches_away_team_fkey(name)
-      `)
+      .select('*')
       .eq('id', matchId)
       .single()
 
     if (matchError || !match) {
+      console.error('❌ [Prediction Generate] Match not found:', matchError)
       return NextResponse.json({
         success: false,
         error: 'Match not found'
       }, { status: 404 })
     }
+    console.log('✅ [Prediction Generate] Match found:', match.home_team, 'vs', match.away_team)
 
-    // Check if match is live
-    if (!['1H', '2H', 'HT', 'ET'].includes(match.status)) {
-      return NextResponse.json({
-        success: false,
-        error: 'Match is not live'
-      }, { status: 400 })
-    }
+    // Allow predictions on any match (live, upcoming, or finished for demo purposes)
+    console.log('🔍 [Prediction Generate] Match status:', match.status)
+    console.log('✅ [Prediction Generate] Allowing predictions for demo/testing purposes')
 
     // Check for recent active predictions (don't spam)
     const { data: activePredictions, error: activeError } = await supabase
@@ -160,11 +160,12 @@ export async function POST(request) {
 
     // Build match context
     const matchContext = {
-      home_team_name: match.home_team_info?.name || match.home_team,
-      away_team_name: match.away_team_info?.name || match.away_team,
+      home_team_name: match.home_team,
+      away_team_name: match.away_team,
       minute: match.minute || 45, // Default to mid-match
       status: match.status
     }
+    console.log('🎯 [Prediction Generate] Match context:', matchContext)
 
     // Filter templates based on context and frequency
     const availableTemplates = templates.filter(template => 
