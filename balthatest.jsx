@@ -1862,4 +1862,7 @@ const FIFAClubWorldCup = () => {
   );
 };
 
+// Export the main component as BalthaTest for compatibility
+const BalthaTest = FIFAClubWorldCup;
+
 export default BalthaTest;

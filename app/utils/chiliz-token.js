@@ -56,9 +56,9 @@ export async function switchToChilizChain() {
  */
 export async function getChzBalance(address) {
   try {
-    const provider = new ethers.providers.JsonRpcProvider('https://rpc.chiliz.com')
+    const provider = new ethers.JsonRpcProvider('https://rpc.chiliz.com')
     const balance = await provider.getBalance(address)
-    return ethers.utils.formatEther(balance)
+    return ethers.formatEther(balance)
   } catch (error) {
     console.error('Error getting CHZ balance:', error)
     throw error
@@ -78,7 +78,7 @@ export async function sendChzTokens(recipientAddress, amount) {
     await switchToChilizChain()
 
     // Connect to MetaMask
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
+    const provider = new ethers.BrowserProvider(window.ethereum)
     const signer = provider.getSigner()
     
     // Get current account
@@ -93,7 +93,7 @@ export async function sendChzTokens(recipientAddress, amount) {
 
     // Check balance
     const balance = await provider.getBalance(fromAddress)
-    const balanceInEth = ethers.utils.formatEther(balance)
+    const balanceInEth = ethers.formatEther(balance)
     
     if (parseFloat(balanceInEth) < amount) {
       throw new Error(`Insufficient balance. You have ${balanceInEth} CHZ, but need ${amount} CHZ`)
@@ -102,7 +102,7 @@ export async function sendChzTokens(recipientAddress, amount) {
     // Create transaction
     const tx = await signer.sendTransaction({
       to: recipientAddress,
-      value: ethers.utils.parseEther(amount.toString()),
+      value: ethers.parseEther(amount.toString()),
       gasLimit: 21000, // Standard gas limit for CHZ transfer
     })
 
@@ -135,7 +135,7 @@ export async function sendChzTokens(recipientAddress, amount) {
  */
 export async function sendChzFromAdmin(recipientAddress, amount, privateKey) {
   try {
-    const provider = new ethers.providers.JsonRpcProvider('https://rpc.chiliz.com')
+    const provider = new ethers.JsonRpcProvider('https://rpc.chiliz.com')
     const wallet = new ethers.Wallet(privateKey, provider)
 
     console.log('🚀 Admin sending CHZ tokens:', {
@@ -146,7 +146,7 @@ export async function sendChzFromAdmin(recipientAddress, amount, privateKey) {
 
     // Check admin balance
     const balance = await provider.getBalance(wallet.address)
-    const balanceInEth = ethers.utils.formatEther(balance)
+    const balanceInEth = ethers.formatEther(balance)
     
     if (parseFloat(balanceInEth) < amount) {
       throw new Error(`Admin wallet insufficient balance. Has ${balanceInEth} CHZ, needs ${amount} CHZ`)
@@ -155,7 +155,7 @@ export async function sendChzFromAdmin(recipientAddress, amount, privateKey) {
     // Create and send transaction
     const tx = await wallet.sendTransaction({
       to: recipientAddress,
-      value: ethers.utils.parseEther(amount.toString()),
+      value: ethers.parseEther(amount.toString()),
       gasLimit: 21000,
     })
 
@@ -189,7 +189,7 @@ export async function sendChzFromAdmin(recipientAddress, amount, privateKey) {
  */
 export function isValidChilizAddress(address) {
   try {
-    return ethers.utils.isAddress(address)
+    return ethers.isAddress(address)
   } catch {
     return false
   }
