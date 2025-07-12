@@ -784,7 +784,7 @@ export default function Players() {
             animation: 'gradientShift 4s ease infinite',
             textShadow: '0 0 40px rgba(0, 255, 136, 0.3)'
           }}>
-            🏆 International Competition Stars
+            🌟 World Cup & Champions League Elite
           </h1>
           <p style={{
             fontSize: '22px',
@@ -794,7 +794,7 @@ export default function Players() {
             lineHeight: '1.6',
             animation: 'fadeInScale 1s ease-out 0.4s both'
           }}>
-            Discover players from teams competing in international tournaments this season
+            Discover the world's most elite players from FIFA World Cup and UEFA Champions League teams
           </p>
         </div>
 

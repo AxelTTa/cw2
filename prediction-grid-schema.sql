@@ -3,17 +3,46 @@
 -- ===================================================
 
 -- Extend prediction_markets for micro-predictions
--- Add new columns to existing table
-ALTER TABLE prediction_markets 
-ADD COLUMN IF NOT EXISTS prediction_type VARCHAR(20) DEFAULT 'standard', -- 'standard' or 'micro'
-ADD COLUMN IF NOT EXISTS time_window_seconds INTEGER DEFAULT 90,
-ADD COLUMN IF NOT EXISTS stake_amount DECIMAL(18,8) DEFAULT 0.25,
-ADD COLUMN IF NOT EXISTS house_fee_percentage DECIMAL(5,2) DEFAULT 5.0,
-ADD COLUMN IF NOT EXISTS auto_generated BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS context_data JSONB,
-ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS resolved_at TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS winning_option VARCHAR(50);
+-- Add new columns to existing table (safe if columns already exist)
+DO $$ 
+BEGIN
+  -- Add columns one by one with IF NOT EXISTS checks
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='prediction_type') THEN
+    ALTER TABLE prediction_markets ADD COLUMN prediction_type VARCHAR(20) DEFAULT 'standard';
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='time_window_seconds') THEN
+    ALTER TABLE prediction_markets ADD COLUMN time_window_seconds INTEGER DEFAULT 90;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='stake_amount') THEN
+    ALTER TABLE prediction_markets ADD COLUMN stake_amount DECIMAL(18,8) DEFAULT 0.25;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='house_fee_percentage') THEN
+    ALTER TABLE prediction_markets ADD COLUMN house_fee_percentage DECIMAL(5,2) DEFAULT 5.0;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='auto_generated') THEN
+    ALTER TABLE prediction_markets ADD COLUMN auto_generated BOOLEAN DEFAULT false;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='context_data') THEN
+    ALTER TABLE prediction_markets ADD COLUMN context_data JSONB;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='expires_at') THEN
+    ALTER TABLE prediction_markets ADD COLUMN expires_at TIMESTAMP WITH TIME ZONE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='resolved_at') THEN
+    ALTER TABLE prediction_markets ADD COLUMN resolved_at TIMESTAMP WITH TIME ZONE;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='prediction_markets' AND column_name='winning_option') THEN
+    ALTER TABLE prediction_markets ADD COLUMN winning_option VARCHAR(50);
+  END IF;
+END $$;
 
 -- Create micro prediction pools for stake aggregation
 CREATE TABLE IF NOT EXISTS prediction_pools (
@@ -346,6 +375,13 @@ ALTER TABLE prediction_stakes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prediction_templates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE prediction_generation_log ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Allow all operations on prediction_pools" ON prediction_pools;
+DROP POLICY IF EXISTS "Allow all operations on prediction_stakes" ON prediction_stakes;
+DROP POLICY IF EXISTS "Allow all operations on prediction_templates" ON prediction_templates;
+DROP POLICY IF EXISTS "Allow all operations on prediction_generation_log" ON prediction_generation_log;
+
+-- Create new policies
 CREATE POLICY "Allow all operations on prediction_pools" ON prediction_pools FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on prediction_stakes" ON prediction_stakes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on prediction_templates" ON prediction_templates FOR ALL USING (true) WITH CHECK (true);
