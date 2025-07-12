@@ -18,6 +18,18 @@ export default function MatchDetail() {
   const [replyTo, setReplyTo] = useState(null)
   const [sortBy, setSortBy] = useState('newest')
   const [commentsLoading, setCommentsLoading] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (params.id) {
@@ -139,7 +151,8 @@ export default function MatchDetail() {
           comment_type: commentData.comment_type,
           is_meme: commentData.is_meme,
           meme_url: commentData.meme_url,
-          meme_caption: commentData.meme_caption
+          meme_caption: commentData.meme_caption,
+          image_url: commentData.image_url
         })
       })
 
@@ -501,7 +514,7 @@ export default function MatchDetail() {
       <Header />
 
       {/* Main Content */}
-      <main style={{ padding: '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <main style={{ padding: isMobile ? '20px 15px' : '40px 20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* Back Button */}
         <div style={{ marginBottom: '30px' }}>
           <a href="/matches" style={{
@@ -521,8 +534,8 @@ export default function MatchDetail() {
           backgroundColor: '#111',
           border: '1px solid #333',
           borderRadius: '12px',
-          padding: '30px',
-          marginBottom: '30px'
+          padding: isMobile ? '20px' : '30px',
+          marginBottom: isMobile ? '20px' : '30px'
         }}>
           {/* Status and Date */}
           <div style={{
@@ -552,30 +565,32 @@ export default function MatchDetail() {
           {/* Teams and Score */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: '1fr auto 1fr',
-            gap: '40px',
+            gridTemplateColumns: isMobile ? '1fr' : '1fr auto 1fr',
+            gap: isMobile ? '20px' : '40px',
             alignItems: 'center',
             textAlign: 'center'
           }}>
             {/* Home Team */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: isMobile ? 'row' : 'column',
               alignItems: 'center',
-              gap: '15px'
+              gap: '15px',
+              justifyContent: isMobile ? 'flex-start' : 'center'
             }}>
               <img 
                 src={match.homeTeam.logo} 
                 alt={match.homeTeam.name}
                 style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '8px'
+                  width: isMobile ? '60px' : '80px',
+                  height: isMobile ? '60px' : '80px',
+                  borderRadius: '8px',
+                  flexShrink: 0
                 }}
               />
               <div>
                 <div style={{
-                  fontSize: '24px',
+                  fontSize: isMobile ? '18px' : '24px',
                   fontWeight: 'bold',
                   marginBottom: '5px'
                 }}>
@@ -595,7 +610,9 @@ export default function MatchDetail() {
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              gap: '10px'
+              gap: '10px',
+              order: isMobile ? -1 : 0,
+              marginBottom: isMobile ? '20px' : '0'
             }}>
               {match.status === 'ns' ? (
                 <div style={{
@@ -608,8 +625,8 @@ export default function MatchDetail() {
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '20px',
-                  fontSize: '48px',
+                  gap: isMobile ? '15px' : '20px',
+                  fontSize: isMobile ? '32px' : '48px',
                   fontWeight: 'bold',
                   color: '#00ff88'
                 }}>
@@ -636,22 +653,25 @@ export default function MatchDetail() {
             {/* Away Team */}
             <div style={{
               display: 'flex',
-              flexDirection: 'column',
+              flexDirection: isMobile ? 'row-reverse' : 'column',
               alignItems: 'center',
-              gap: '15px'
+              gap: '15px',
+              justifyContent: isMobile ? 'flex-end' : 'center',
+              textAlign: isMobile ? 'right' : 'center'
             }}>
               <img 
                 src={match.awayTeam.logo} 
                 alt={match.awayTeam.name}
                 style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '8px'
+                  width: isMobile ? '60px' : '80px',
+                  height: isMobile ? '60px' : '80px',
+                  borderRadius: '8px',
+                  flexShrink: 0
                 }}
               />
               <div>
                 <div style={{
-                  fontSize: '24px',
+                  fontSize: isMobile ? '18px' : '24px',
                   fontWeight: 'bold',
                   marginBottom: '5px'
                 }}>
@@ -671,9 +691,9 @@ export default function MatchDetail() {
         {/* Match Information and Odds Grid */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(300px, 1fr))',
           gap: '20px',
-          marginBottom: '30px'
+          marginBottom: isMobile ? '20px' : '30px'
         }}>
           {/* Tournament Info */}
           <div style={{
@@ -785,7 +805,7 @@ export default function MatchDetail() {
           backgroundColor: '#111',
           border: '1px solid #333',
           borderRadius: '12px',
-          padding: '25px'
+          padding: isMobile ? '20px' : '25px'
         }}>
           {/* Comments Header */}
           <div style={{
@@ -952,7 +972,8 @@ export default function MatchDetail() {
           gap: '15px',
           justifyContent: 'center',
           flexWrap: 'wrap',
-          marginTop: '30px'
+          marginTop: isMobile ? '20px' : '30px',
+          flexDirection: isMobile ? 'column' : 'row'
         }}>
           <a href={`/teams/${match.homeTeam.id}`} style={{
             backgroundColor: '#00ff88',

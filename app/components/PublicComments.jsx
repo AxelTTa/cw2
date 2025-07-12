@@ -24,7 +24,7 @@ export default function PublicComments({ matchId = null, showForm = true }) {
     setLoading(true)
     try {
       const url = matchId 
-        ? `/api/comments?match_id=${matchId}&limit=100` 
+        ? `/api/comments?entity_type=match&entity_id=${matchId}&limit=100` 
         : '/api/comments?limit=100'
       
       const response = await fetch(url)
@@ -58,7 +58,8 @@ export default function PublicComments({ matchId = null, showForm = true }) {
         body: JSON.stringify({
           ...commentData,
           user_id: user.id,
-          match_id: matchId
+          entity_type: 'match',
+          entity_id: matchId
         })
       })
 

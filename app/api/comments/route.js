@@ -243,6 +243,8 @@ export async function POST(request) {
       user_id,
       parent_id,
       is_meme,
+      meme_url,
+      meme_caption,
       image_url,
       comment_type
     })
