@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 import GoogleAuth from '../components/GoogleAuth'
 import PublicComments from '../components/PublicComments'
 import { supabase } from '../utils/supabase'
@@ -17,7 +18,6 @@ export default function CommunityPage() {
   const [userProfile, setUserProfile] = useState(null)
   const [isVisible, setIsVisible] = useState(false)
   const [floatingReactions, setFloatingReactions] = useState([])
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     initializePage()
@@ -662,138 +662,7 @@ export default function CommunityPage() {
           {reaction.emoji}
         </div>
       ))}
-      {/* Header */}
-      <header className="mobile-header" style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(15px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
-      }}>
-        <div className="mobile-title" style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-        onClick={() => window.location.href = '/'}
-        onMouseEnter={(e) => {
-          e.target.style.transform = 'scale(1.15)'
-          e.target.style.textShadow = '0 0 25px #00ff88'
-          e.target.style.filter = 'brightness(1.2)'
-        }}
-        onMouseLeave={(e) => {
-          e.target.style.transform = 'scale(1)'
-          e.target.style.textShadow = 'none'
-          e.target.style.filter = 'brightness(1)'
-        }}
-        >
-          Clutch Community 💬
-        </div>
-
-        {/* Mobile Menu Button */}
-        <button
-          style={{
-            display: 'none',
-            background: 'none',
-            border: '2px solid #00ff88',
-            borderRadius: '8px',
-            color: '#00ff88',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
-          }}
-          className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? '✕' : '☰'}
-        </button>
-
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav" style={{ display: 'flex', gap: '30px' }}>
-          {[
-            { href: '/', label: 'Home' },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community', active: true },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '8px 0'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-
-        {/* Mobile Navigation */}
-        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
-          {[
-            { href: '/', label: 'Home' },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community', active: true },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '12px 0',
-                fontSize: '18px',
-                borderBottom: '1px solid #333'
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateX(10px)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateX(0)'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <Header />
 
       <main className="hero-bg mobile-main" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* User Profile Section */}

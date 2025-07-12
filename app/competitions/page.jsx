@@ -168,7 +168,7 @@ export default function Competitions() {
       </section>
 
       {/* Main Content */}
-      <main style={{ padding: '40px 20px', maxWidth: '1400px', margin: '0 auto' }}>
+      <main className="mobile-main" style={{ padding: '40px 20px', maxWidth: '1400px', margin: '0 auto' }}>
         {/* Loading/Error States */}
         {loading && (
           <div style={{
@@ -201,9 +201,9 @@ export default function Competitions() {
 
         {/* Competitions Grid */}
         {!loading && !error && (
-          <div style={{
+          <div className="mobile-competitions-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: '30px'
           }}>
             {competitions.map((competition) => (
@@ -580,6 +580,37 @@ export default function Competitions() {
           }
           60% {
             transform: translateY(-10px);
+          }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-main {
+            padding: 20px 15px !important;
+          }
+          
+          .mobile-competitions-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+          
+          .mobile-competition-card {
+            padding: 20px !important;
+          }
+          
+          .mobile-stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+          }
+          
+          .mobile-page-title {
+            font-size: 32px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-page-title {
+            font-size: 28px !important;
           }
         }
       `}</style>
