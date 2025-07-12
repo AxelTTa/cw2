@@ -34,7 +34,16 @@ async function fetchPlayerDetails(playerId) {
 
       const data = await response.json()
       
-      if (response.ok && data.response && data.response.length > 0) {
+      if (!response.ok) {
+        console.error(`❌ API Error for player ${playerId}, season ${season}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        })
+        continue
+      }
+      
+      if (data.response && data.response.length > 0) {
         const playerData = data.response[0]
         
         // Store player info from first successful response
@@ -83,7 +92,7 @@ async function fetchPlayerDetails(playerId) {
   let ratingCount = 0
   
   allStatistics.forEach(stat => {
-    summaryStats.games += stat.games?.appearences || 0
+    summaryStats.games += stat.games?.appearances || 0
     summaryStats.goals += stat.goals?.total || 0
     summaryStats.assists += stat.goals?.assists || 0
     summaryStats.minutes += stat.games?.minutes || 0
@@ -122,7 +131,15 @@ async function findPlayerTeam(playerId) {
 
       const teamsData = await teamsResponse.json()
       
-      if (teamsResponse.ok && teamsData.response) {
+      if (!teamsResponse.ok) {
+        console.error(`❌ Teams API Error for league ${leagueId}:`, {
+          status: teamsResponse.status,
+          data: teamsData
+        })
+        continue
+      }
+      
+      if (teamsData.response) {
         for (const teamData of teamsData.response) {
           const teamId = teamData.team.id
           
@@ -137,7 +154,12 @@ async function findPlayerTeam(playerId) {
 
             const squadData = await squadResponse.json()
             
-            if (squadResponse.ok && squadData.response && squadData.response.length > 0) {
+            if (!squadResponse.ok) {
+              console.error(`❌ Squad API Error for team ${teamId}:`, squadData)
+              continue
+            }
+            
+            if (squadData.response && squadData.response.length > 0) {
               const players = squadData.response[0].players || []
               const foundPlayer = players.find(p => p.id == playerId)
               
