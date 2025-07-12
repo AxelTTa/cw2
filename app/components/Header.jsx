@@ -48,8 +48,7 @@ export default function Header() {
     { href: '/teams', label: 'Teams', paths: ['/teams'] },
     { href: '/players', label: 'Players', paths: ['/players'] },
     { href: '/matches', label: 'Matches', paths: ['/matches'] },
-    { href: '/live', label: 'Live', paths: ['/live'] },
-    { href: '/community', label: 'Community', paths: ['/community'] }
+    { href: '/live', label: 'Live', paths: ['/live'] }
   ]
 
   const isActivePath = (item) => {

@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import Header from './components/Header'
-import MatchDiscussion from './community/page'
 import PublicComments from './components/PublicComments'
 
 export default function Home() {

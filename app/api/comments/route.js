@@ -4,9 +4,18 @@ import { supabaseAdmin } from '../../utils/supabase'
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url)
-    const matchId = searchParams.get('match_id')
+    const entityType = searchParams.get('entity_type') || 'match'
+    const entityId = searchParams.get('entity_id') || searchParams.get('match_id') // backwards compatibility
     const limit = parseInt(searchParams.get('limit')) || 50
     const offset = parseInt(searchParams.get('offset')) || 0
+    const sortBy = searchParams.get('sort_by') || 'newest'
+
+    if (!entityId) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Entity ID is required' 
+      }, { status: 400 })
+    }
 
     let query = supabaseAdmin
       .from('comments')
@@ -18,15 +27,22 @@ export async function GET(request) {
           display_name,
           avatar_url,
           level,
-          xp
+          xp,
+          fan_tokens
         )
       `)
-      .order('created_at', { ascending: false })
+      .eq('entity_type', entityType)
+      .eq('entity_id', entityId.toString())
+      .is('parent_id', null) // Only get top-level comments
       .range(offset, offset + limit - 1)
 
-    if (matchId) {
-      // Convert to string to handle both integers and UUIDs
-      query = query.eq('match_id', matchId.toString())
+    // Apply sorting
+    if (sortBy === 'popular') {
+      query = query.order('upvotes', { ascending: false })
+    } else if (sortBy === 'oldest') {
+      query = query.order('created_at', { ascending: true })
+    } else {
+      query = query.order('is_pinned', { ascending: false }).order('created_at', { ascending: false })
     }
 
     const { data: comments, error } = await query
@@ -39,9 +55,45 @@ export async function GET(request) {
       }, { status: 500 })
     }
 
+    // Get replies for each comment
+    const commentsWithReplies = await Promise.all(
+      (comments || []).map(async (comment) => {
+        const { data: replies } = await supabaseAdmin
+          .from('comments')
+          .select(`
+            *,
+            profiles:user_id (
+              id,
+              username,
+              display_name,
+              avatar_url,
+              level,
+              xp,
+              fan_tokens
+            )
+          `)
+          .eq('parent_id', comment.id)
+          .order('created_at', { ascending: true })
+
+        // Get reactions for this comment
+        const { data: reactions } = await supabaseAdmin
+          .from('reactions')
+          .select('*')
+          .eq('comment_id', comment.id)
+
+        return {
+          ...comment,
+          replies: replies || [],
+          reactions: reactions || []
+        }
+      })
+    )
+
     return NextResponse.json({
       success: true,
-      comments: comments || []
+      comments: commentsWithReplies,
+      entity_type: entityType,
+      entity_id: entityId
     })
   } catch (error) {
     console.error('Comments API error:', error)
@@ -57,19 +109,25 @@ export async function POST(request) {
     const body = await request.json()
     const { 
       content, 
-      match_id, 
+      entity_type = 'match',
+      entity_id,
+      match_id, // backwards compatibility
       user_id, 
       is_meme = false, 
       meme_url = null, 
       meme_caption = null,
+      image_url = null,
       comment_type = 'text',
       parent_id = null
     } = body
 
-    if (!content && !is_meme) {
+    // Use entity_id or fallback to match_id for backwards compatibility
+    const finalEntityId = entity_id || match_id
+
+    if (!content && !is_meme && !image_url) {
       return NextResponse.json({ 
         success: false, 
-        error: 'Content is required' 
+        error: 'Content, meme, or image is required' 
       }, { status: 400 })
     }
 
@@ -77,6 +135,21 @@ export async function POST(request) {
       return NextResponse.json({ 
         success: false, 
         error: 'User ID is required' 
+      }, { status: 400 })
+    }
+
+    if (!finalEntityId) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Entity ID is required' 
+      }, { status: 400 })
+    }
+
+    // Validate entity_type
+    if (!['match', 'player', 'team', 'competition'].includes(entity_type)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid entity type' 
       }, { status: 400 })
     }
 
@@ -104,15 +177,14 @@ export async function POST(request) {
       console.error('Profile check/creation error:', profileError)
     }
 
-    // Convert match_id to string to handle both integers and UUIDs
-    const matchIdString = match_id ? match_id.toString() : null
-
     console.log('Creating comment with data:', {
       content,
-      match_id,
+      entity_type,
+      entity_id: finalEntityId,
       user_id,
       parent_id,
       is_meme,
+      image_url,
       comment_type
     })
 
@@ -120,12 +192,14 @@ export async function POST(request) {
       .from('comments')
       .insert([{
         content,
-        match_id: matchIdString,
+        entity_type,
+        entity_id: finalEntityId.toString(),
         user_id,
         parent_id,
         is_meme,
         meme_url,
         meme_caption,
+        image_url,
         comment_type,
         upvotes: 0,
         downvotes: 0,
@@ -139,7 +213,8 @@ export async function POST(request) {
           display_name,
           avatar_url,
           level,
-          xp
+          xp,
+          fan_tokens
         )
       `)
       .single()
@@ -152,9 +227,20 @@ export async function POST(request) {
       }, { status: 500 })
     }
 
+    // Award XP to user
+    const xpReward = is_meme || image_url ? 15 : 10
+    await supabaseAdmin
+      .from('profiles')
+      .update({ 
+        xp: supabaseAdmin.sql`xp + ${xpReward}`,
+        level: supabaseAdmin.sql`CASE WHEN xp + ${xpReward} >= level * 100 THEN level + 1 ELSE level END`
+      })
+      .eq('id', user_id)
+
     return NextResponse.json({
       success: true,
-      comment
+      comment,
+      xp_awarded: xpReward
     })
   } catch (error) {
     console.error('Comments API error:', error)
@@ -168,7 +254,7 @@ export async function POST(request) {
 export async function PATCH(request) {
   try {
     const body = await request.json()
-    const { comment_id, action, user_id } = body
+    const { comment_id, action, user_id, reaction_type } = body
 
     if (!comment_id || !action) {
       return NextResponse.json({ 
@@ -177,7 +263,14 @@ export async function PATCH(request) {
       }, { status: 400 })
     }
 
-    let updateData = {}
+    if (action === 'reaction' && (!user_id || !reaction_type)) {
+      return NextResponse.json({ 
+        success: false, 
+        error: 'User ID and reaction type are required for reactions' 
+      }, { status: 400 })
+    }
+
+    let result = {}
     
     if (action === 'upvote') {
       // Get current upvotes and increment
@@ -187,7 +280,27 @@ export async function PATCH(request) {
         .eq('id', comment_id)
         .single()
       
-      updateData.upvotes = (currentComment?.upvotes || 0) + 1
+      const { data: comment, error } = await supabaseAdmin
+        .from('comments')
+        .update({ upvotes: (currentComment?.upvotes || 0) + 1 })
+        .eq('id', comment_id)
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            display_name,
+            avatar_url,
+            level,
+            xp,
+            fan_tokens
+          )
+        `)
+        .single()
+
+      if (error) throw error
+      result = { comment }
+
     } else if (action === 'downvote') {
       // Get current downvotes and increment
       const { data: currentComment } = await supabaseAdmin
@@ -196,37 +309,63 @@ export async function PATCH(request) {
         .eq('id', comment_id)
         .single()
       
-      updateData.downvotes = (currentComment?.downvotes || 0) + 1
-    }
+      const { data: comment, error } = await supabaseAdmin
+        .from('comments')
+        .update({ downvotes: (currentComment?.downvotes || 0) + 1 })
+        .eq('id', comment_id)
+        .select(`
+          *,
+          profiles:user_id (
+            id,
+            username,
+            display_name,
+            avatar_url,
+            level,
+            xp,
+            fan_tokens
+          )
+        `)
+        .single()
 
-    const { data: comment, error } = await supabaseAdmin
-      .from('comments')
-      .update(updateData)
-      .eq('id', comment_id)
-      .select(`
-        *,
-        profiles:user_id (
-          id,
-          username,
-          display_name,
-          avatar_url,
-          level,
-          xp
-        )
-      `)
-      .single()
+      if (error) throw error
+      result = { comment }
 
-    if (error) {
-      console.error('Error updating comment:', error)
-      return NextResponse.json({ 
-        success: false, 
-        error: 'Failed to update comment' 
-      }, { status: 500 })
+    } else if (action === 'reaction') {
+      // Add or toggle reaction
+      const { data: existingReaction } = await supabaseAdmin
+        .from('reactions')
+        .select('id')
+        .eq('user_id', user_id)
+        .eq('comment_id', comment_id)
+        .eq('reaction_type', reaction_type)
+        .single()
+
+      if (existingReaction) {
+        // Remove reaction if it exists
+        await supabaseAdmin
+          .from('reactions')
+          .delete()
+          .eq('id', existingReaction.id)
+      } else {
+        // Add new reaction
+        await supabaseAdmin
+          .from('reactions')
+          .insert({
+            user_id,
+            comment_id,
+            reaction_type
+          })
+      }
+
+      result = { 
+        message: existingReaction ? 'Reaction removed' : 'Reaction added',
+        action: existingReaction ? 'removed' : 'added'
+      }
     }
 
     return NextResponse.json({
       success: true,
-      comment
+      ...result
     })
   } catch (error) {
     console.error('Comments API error:', error)

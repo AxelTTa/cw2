@@ -495,7 +495,6 @@ export default function Teams() {
             { href: '/players', label: 'Players' },
             { href: '/stats', label: 'Stats' },
             { href: '/teams', label: 'Teams', active: true },
-            { href: '/community', label: 'Community' },
             { href: '/about', label: 'About' },
             { href: '/rewards', label: 'Rewards' }
           ].map((item, index) => (
