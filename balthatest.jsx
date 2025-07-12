@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Header from './app/components/Header';
 import { 
   Clock, 
   Trophy, 
@@ -21,64 +22,224 @@ import {
   User,
   Send,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Calendar,
+  MapPin
 } from 'lucide-react';
 
-// Mock data for the demo
-const mockMatch = {
-  id: 'psg-vs-madrid-2024',
-  homeTeam: {
-    id: 'psg',
-    name: 'Paris Saint-Germain',
-    logo: 'https://via.placeholder.com/80x80/0066cc/ffffff?text=PSG',
-    country: 'France',
-    formation: '4-3-3'
+// FIFA Club World Cup matches data
+const fifaClubWorldCupMatches = [
+  {
+    id: 'real-madrid-vs-al-hilal-2025',
+    homeTeam: {
+      id: 'real-madrid',
+      name: 'Real Madrid',
+      logo: 'https://logos-world.net/wp-content/uploads/2020/06/Real-Madrid-Logo.png',
+      country: 'Spain',
+      confederation: 'UEFA'
+    },
+    awayTeam: {
+      id: 'al-hilal',
+      name: 'Al Hilal',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/16/Al-Hilal_FC_Logo.svg/1200px-Al-Hilal_FC_Logo.svg.png',
+      country: 'Saudi Arabia',
+      confederation: 'AFC'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-15T20:00:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'MetLife Stadium',
+      city: 'East Rutherford',
+      country: 'United States'
+    }
   },
-  awayTeam: {
-    id: 'madrid',
-    name: 'Real Madrid',
-    logo: 'https://via.placeholder.com/80x80/ffffff/000000?text=RM',
-    country: 'Spain',
-    formation: '4-3-3'
+  {
+    id: 'man-city-vs-flamengo-2025',
+    homeTeam: {
+      id: 'man-city',
+      name: 'Manchester City',
+      logo: 'https://logos-world.net/wp-content/uploads/2020/06/Manchester-City-Logo.png',
+      country: 'England',
+      confederation: 'UEFA'
+    },
+    awayTeam: {
+      id: 'flamengo',
+      name: 'Flamengo',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Flamengo_braz_logo.svg/1200px-Flamengo_braz_logo.svg.png',
+      country: 'Brazil',
+      confederation: 'CONMEBOL'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-16T18:00:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'Hard Rock Stadium',
+      city: 'Miami',
+      country: 'United States'
+    }
   },
-  score: {
-    home: 2,
-    away: 1,
-    halfTime: { home: 1, away: 0 }
+  {
+    id: 'bayern-vs-monterrey-2025',
+    homeTeam: {
+      id: 'bayern',
+      name: 'Bayern Munich',
+      logo: 'https://logos-world.net/wp-content/uploads/2020/06/Bayern-Munich-Logo.png',
+      country: 'Germany',
+      confederation: 'UEFA'
+    },
+    awayTeam: {
+      id: 'monterrey',
+      name: 'CF Monterrey',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/6/6b/CF_Monterrey_logo.svg/1200px-CF_Monterrey_logo.svg.png',
+      country: 'Mexico',
+      confederation: 'CONCACAF'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-17T21:00:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'SoFi Stadium',
+      city: 'Los Angeles',
+      country: 'United States'
+    }
   },
-  status: {
-    status: 'finished',
-    minute: 90,
-    period: 'full_time'
+  {
+    id: 'psg-vs-al-ahly-2025',
+    homeTeam: {
+      id: 'psg',
+      name: 'Paris Saint-Germain',
+      logo: 'https://logos-world.net/wp-content/uploads/2020/06/Paris-Saint-Germain-PSG-Logo.png',
+      country: 'France',
+      confederation: 'UEFA'
+    },
+    awayTeam: {
+      id: 'al-ahly',
+      name: 'Al Ahly',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/a/a9/Al_Ahly_logo.svg/1200px-Al_Ahly_logo.svg.png',
+      country: 'Egypt',
+      confederation: 'CAF'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-18T19:30:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'Soldier Field',
+      city: 'Chicago',
+      country: 'United States'
+    }
   },
-  startTime: '2024-03-15T20:00:00Z',
-  tournament: {
-    id: 'ucl',
-    name: 'UEFA Champions League',
-    season: '2023-24',
-    round: 'Round of 16'
+  {
+    id: 'chelsea-vs-palmeiras-2025',
+    homeTeam: {
+      id: 'chelsea',
+      name: 'Chelsea FC',
+      logo: 'https://logos-world.net/wp-content/uploads/2020/06/Chelsea-Logo.png',
+      country: 'England',
+      confederation: 'UEFA'
+    },
+    awayTeam: {
+      id: 'palmeiras',
+      name: 'Palmeiras',
+      logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1200px-Palmeiras_logo.svg.png',
+      country: 'Brazil',
+      confederation: 'CONMEBOL'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-19T22:00:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'Lincoln Financial Field',
+      city: 'Philadelphia',
+      country: 'United States'
+    }
   },
-  venue: {
-    name: 'Parc des Princes',
-    city: 'Paris',
-    country: 'France'
-  },
-  referee: 'Daniele Orsato',
-  attendance: 47929,
-  goals: {
-    home: [
-      { player: 'Kylian Mbappé', minute: '25', type: 'regular' },
-      { player: 'Lionel Messi', minute: '78', type: 'penalty' }
-    ],
-    away: [
-      { player: 'Vinícius Jr.', minute: '61', type: 'regular' }
-    ]
-  },
-  coach: {
-    home: 'Luis Enrique',
-    away: 'Carlo Ancelotti'
+  {
+    id: 'inter-miami-vs-wydad-2025',
+    homeTeam: {
+      id: 'inter-miami',
+      name: 'Inter Miami CF',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/7/78/Inter_Miami_CF_logo.svg/1200px-Inter_Miami_CF_logo.svg.png',
+      country: 'United States',
+      confederation: 'CONCACAF'
+    },
+    awayTeam: {
+      id: 'wydad',
+      name: 'Wydad AC',
+      logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Wydad_AC_logo.svg/1200px-Wydad_AC_logo.svg.png',
+      country: 'Morocco',
+      confederation: 'CAF'
+    },
+    score: null,
+    status: {
+      status: 'scheduled',
+      minute: null,
+      period: null
+    },
+    startTime: '2025-07-20T20:30:00Z',
+    tournament: {
+      id: 'cwc',
+      name: 'FIFA Club World Cup',
+      season: '2025',
+      round: 'Round of 32'
+    },
+    venue: {
+      name: 'Hard Rock Stadium',
+      city: 'Miami',
+      country: 'United States'
+    }
   }
-};
+];
 
 const mockEvents = [
   {
@@ -156,40 +317,75 @@ const mockPredictions = {
   }
 };
 
-// Component definitions with inline styles
+// Define the design system colors from example-ui
+const colors = {
+  // Dark theme colors
+  background: 'hsl(240, 10%, 3.9%)',
+  foreground: 'hsl(0, 0%, 98%)',
+  card: 'hsl(240, 10%, 8%)',
+  cardForeground: 'hsl(0, 0%, 98%)',
+  primary: 'hsl(160, 84%, 39%)',
+  primaryForeground: 'hsl(0, 0%, 98%)',
+  secondary: 'hsl(240, 5%, 15%)',
+  secondaryForeground: 'hsl(0, 0%, 98%)',
+  muted: 'hsl(240, 5%, 15%)',
+  mutedForeground: 'hsl(240, 5%, 65%)',
+  accent: 'hsl(240, 5%, 15%)',
+  accentForeground: 'hsl(0, 0%, 98%)',
+  destructive: 'hsl(0, 75%, 60%)',
+  destructiveForeground: 'hsl(0, 0%, 98%)',
+  border: 'hsl(240, 5%, 15%)',
+  input: 'hsl(240, 5%, 15%)',
+  ring: 'hsl(160, 84%, 39%)',
+  
+  // Match specific colors
+  matchBackground: 'hsl(240, 10%, 3.9%)',
+  matchCard: 'hsl(240, 10%, 8%)',
+  matchBorder: 'hsl(240, 5%, 15%)',
+  success: 'hsl(160, 84%, 39%)',
+  warning: 'hsl(38, 92%, 50%)',
+  info: 'hsl(217, 91%, 60%)',
+};
+
+// Component definitions with inline styles using the design system
 const Button = ({ children, variant = 'default', size = 'default', onClick, style = {}, ...props }) => {
   const baseStyle = {
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: '6px',
+    borderRadius: '12px', // Using --radius: 0.75rem
     fontWeight: '500',
     fontSize: '14px',
     padding: '8px 16px',
     border: 'none',
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     textDecoration: 'none',
     ...style
   };
   
   const variants = {
     default: {
-      backgroundColor: '#2563eb',
-      color: 'white',
+      backgroundColor: colors.primary,
+      color: colors.primaryForeground,
+      boxShadow: '0 0 20px hsl(160 84% 39% / 0.1)',
     },
     outline: {
       backgroundColor: 'transparent',
-      border: '1px solid #d1d5db',
-      color: '#374151',
+      border: `1px solid ${colors.border}`,
+      color: colors.foreground,
     },
     ghost: {
       backgroundColor: 'transparent',
-      color: '#374151',
+      color: colors.foreground,
     },
     destructive: {
-      backgroundColor: '#dc2626',
-      color: 'white',
+      backgroundColor: colors.destructive,
+      color: colors.destructiveForeground,
+    },
+    secondary: {
+      backgroundColor: colors.secondary,
+      color: colors.secondaryForeground,
     }
   };
   
@@ -216,6 +412,20 @@ const Button = ({ children, variant = 'default', size = 'default', onClick, styl
         ...sizes[size]
       }}
       onClick={onClick}
+      onMouseOver={(e) => {
+        if (variant === 'default') {
+          e.target.style.boxShadow = '0 0 30px hsl(160 84% 39% / 0.15)';
+        } else if (variant === 'outline' || variant === 'ghost') {
+          e.target.style.backgroundColor = colors.accent;
+        }
+      }}
+      onMouseOut={(e) => {
+        if (variant === 'default') {
+          e.target.style.boxShadow = '0 0 20px hsl(160 84% 39% / 0.1)';
+        } else if (variant === 'outline' || variant === 'ghost') {
+          e.target.style.backgroundColor = 'transparent';
+        }
+      }}
       {...props}
     >
       {children}
@@ -1187,250 +1397,467 @@ const UserPrediction = ({ stats, onPredict }) => {
   );
 };
 
+// Match Card Component
+const MatchCard = ({ match }) => {
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  return (
+    <Card>
+      <CardContent style={{ padding: '20px' }}>
+        {/* Tournament and Time Info */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '16px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Trophy size={16} style={{ color: colors.primary }} />
+            <span style={{ fontSize: '14px', color: colors.mutedForeground }}>
+              {match.tournament.name} - {match.tournament.round}
+            </span>
+          </div>
+          <Badge variant="secondary">
+            {formatDate(match.startTime)}
+          </Badge>
+        </div>
+
+        {/* Teams */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px'
+        }}>
+          {/* Home Team */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            flex: 1
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: `2px solid ${colors.border}`,
+              marginBottom: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.secondary
+            }}>
+              <img 
+                src={match.homeTeam.logo} 
+                alt={`${match.homeTeam.name} logo`}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  objectFit: 'contain'
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div style={{
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '50px',
+                height: '50px',
+                backgroundColor: colors.primary,
+                color: colors.primaryForeground,
+                fontWeight: 'bold',
+                fontSize: '20px'
+              }}>
+                {match.homeTeam.name.charAt(0)}
+              </div>
+            </div>
+            <h4 style={{
+              margin: 0,
+              fontSize: '14px',
+              fontWeight: '600',
+              textAlign: 'center',
+              color: colors.foreground
+            }}>
+              {match.homeTeam.name}
+            </h4>
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              color: colors.mutedForeground,
+              textAlign: 'center'
+            }}>
+              {match.homeTeam.country}
+            </p>
+          </div>
+
+          {/* VS and Time */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '0 20px'
+          }}>
+            <div style={{
+              fontSize: '18px',
+              fontWeight: 'bold',
+              color: colors.primary,
+              marginBottom: '4px'
+            }}>
+              VS
+            </div>
+            <div style={{
+              fontSize: '14px',
+              color: colors.mutedForeground,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              <Clock size={14} />
+              {formatTime(match.startTime)}
+            </div>
+          </div>
+
+          {/* Away Team */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            flex: 1
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: `2px solid ${colors.border}`,
+              marginBottom: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.secondary
+            }}>
+              <img 
+                src={match.awayTeam.logo} 
+                alt={`${match.awayTeam.name} logo`}
+                style={{
+                  width: '50px',
+                  height: '50px',
+                  objectFit: 'contain'
+                }}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'flex';
+                }}
+              />
+              <div style={{
+                display: 'none',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '50px',
+                height: '50px',
+                backgroundColor: colors.primary,
+                color: colors.primaryForeground,
+                fontWeight: 'bold',
+                fontSize: '20px'
+              }}>
+                {match.awayTeam.name.charAt(0)}
+              </div>
+            </div>
+            <h4 style={{
+              margin: 0,
+              fontSize: '14px',
+              fontWeight: '600',
+              textAlign: 'center',
+              color: colors.foreground
+            }}>
+              {match.awayTeam.name}
+            </h4>
+            <p style={{
+              margin: 0,
+              fontSize: '12px',
+              color: colors.mutedForeground,
+              textAlign: 'center'
+            }}>
+              {match.awayTeam.country}
+            </p>
+          </div>
+        </div>
+
+        {/* Venue Info */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          padding: '12px',
+          backgroundColor: colors.secondary,
+          borderRadius: '8px',
+          fontSize: '14px',
+          color: colors.mutedForeground
+        }}>
+          <MapPin size={14} />
+          <span>{match.venue.name}, {match.venue.city}</span>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 // Main component
-const BalthaTest = () => {
-  const [selectedEvent, setSelectedEvent] = useState(null);
-  const [showComments, setShowComments] = useState(false);
+const FIFAClubWorldCup = () => {
+  const [matches, setMatches] = useState(fifaClubWorldCupMatches);
+  const [sortBy, setSortBy] = useState('date');
+  const [filterBy, setFilterBy] = useState('all');
 
-  const handleEventClick = (event) => {
-    setSelectedEvent(event);
-    setShowComments(true);
+  const sortMatches = (matchList, sortType) => {
+    const sorted = [...matchList];
+    switch (sortType) {
+      case 'date':
+        return sorted.sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+      case 'round':
+        return sorted.sort((a, b) => a.tournament.round.localeCompare(b.tournament.round));
+      case 'venue':
+        return sorted.sort((a, b) => a.venue.city.localeCompare(b.venue.city));
+      default:
+        return sorted;
+    }
   };
 
-  const handlePrediction = (prediction) => {
-    console.log('Prediction submitted:', prediction);
+  const filterMatches = (matchList, filterType) => {
+    switch (filterType) {
+      case 'uefa':
+        return matchList.filter(match => 
+          match.homeTeam.confederation === 'UEFA' || match.awayTeam.confederation === 'UEFA'
+        );
+      case 'conmebol':
+        return matchList.filter(match => 
+          match.homeTeam.confederation === 'CONMEBOL' || match.awayTeam.confederation === 'CONMEBOL'
+        );
+      case 'concacaf':
+        return matchList.filter(match => 
+          match.homeTeam.confederation === 'CONCACAF' || match.awayTeam.confederation === 'CONCACAF'
+        );
+      case 'caf':
+        return matchList.filter(match => 
+          match.homeTeam.confederation === 'CAF' || match.awayTeam.confederation === 'CAF'
+        );
+      case 'afc':
+        return matchList.filter(match => 
+          match.homeTeam.confederation === 'AFC' || match.awayTeam.confederation === 'AFC'
+        );
+      default:
+        return matchList;
+    }
   };
 
-  const handleRefresh = () => {
-    console.log('Refreshing data...');
-  };
+  const filteredAndSortedMatches = sortMatches(filterMatches(matches, filterBy), sortBy);
 
   return (
     <div style={{
       minHeight: '100vh',
-      backgroundColor: '#f9fafb',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      backgroundColor: colors.background,
+      color: colors.foreground
     }}>
-      {/* Header Navigation */}
+      <Header />
+      
+      {/* Hero Section */}
       <div style={{
-        borderBottom: '1px solid #e5e7eb',
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(8px)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 40
+        background: `linear-gradient(135deg, ${colors.card} 0%, ${colors.secondary} 100%)`,
+        padding: '60px 20px',
+        textAlign: 'center',
+        borderBottom: `1px solid ${colors.border}`
       }}>
-        <div style={{
-          maxWidth: '1280px',
-          margin: '0 auto',
-          padding: '16px'
-        }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between'
+            justifyContent: 'center',
+            gap: '16px',
+            marginBottom: '16px'
           }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
+            <Trophy size={40} style={{ color: colors.primary }} />
+            <h1 style={{
+              fontSize: '48px',
+              fontWeight: '800',
+              margin: 0,
+              background: `linear-gradient(45deg, ${colors.primary}, ${colors.success})`,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
             }}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft size={16} style={{ marginRight: '8px' }} />
-                Back to Matches
-              </Button>
-            </div>
-
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <Button variant="ghost" size="sm" onClick={handleRefresh}>
-                <RefreshCw size={16} />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Share size={16} />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Bookmark size={16} />
-              </Button>
-            </div>
+              FIFA Club World Cup 2025
+            </h1>
           </div>
+          <p style={{
+            fontSize: '20px',
+            color: colors.mutedForeground,
+            margin: 0,
+            maxWidth: '600px',
+            marginLeft: 'auto',
+            marginRight: 'auto'
+          }}>
+            The ultimate club competition featuring the world's best teams from all confederations
+          </p>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Controls */}
       <div style={{
-        maxWidth: '1280px',
+        maxWidth: '1200px',
         margin: '0 auto',
-        padding: '24px',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '24px'
+        padding: '40px 20px 20px'
       }}>
-        {/* Match Header */}
-        <MatchHeader match={mockMatch} isLive={false} />
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '20px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '30px'
+        }}>
+          {/* Sort Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <span style={{ fontSize: '14px', color: colors.mutedForeground }}>Sort by:</span>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { key: 'date', label: 'Date' },
+                { key: 'round', label: 'Round' },
+                { key: 'venue', label: 'Venue' }
+              ].map(({ key, label }) => (
+                <Button
+                  key={key}
+                  variant={sortBy === key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setSortBy(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-        {/* Main Grid Layout */}
+          {/* Filter Controls */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
+            <span style={{ fontSize: '14px', color: colors.mutedForeground }}>Filter by confederation:</span>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              {[
+                { key: 'all', label: 'All' },
+                { key: 'uefa', label: 'UEFA' },
+                { key: 'conmebol', label: 'CONMEBOL' },
+                { key: 'concacaf', label: 'CONCACAF' },
+                { key: 'caf', label: 'CAF' },
+                { key: 'afc', label: 'AFC' }
+              ].map(({ key, label }) => (
+                <Button
+                  key={key}
+                  variant={filterBy === key ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setFilterBy(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: '1fr',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '20px',
+          marginBottom: '40px'
+        }}>
+          <Card>
+            <CardContent style={{ padding: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: colors.primary }}>
+                {filteredAndSortedMatches.length}
+              </div>
+              <div style={{ fontSize: '14px', color: colors.mutedForeground }}>
+                Upcoming Matches
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent style={{ padding: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: colors.primary }}>
+                32
+              </div>
+              <div style={{ fontSize: '14px', color: colors.mutedForeground }}>
+                Total Teams
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent style={{ padding: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: colors.primary }}>
+                6
+              </div>
+              <div style={{ fontSize: '14px', color: colors.mutedForeground }}>
+                Confederations
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent style={{ padding: '20px', textAlign: 'center' }}>
+              <div style={{ fontSize: '32px', fontWeight: 'bold', color: colors.primary }}>
+                12
+              </div>
+              <div style={{ fontSize: '14px', color: colors.mutedForeground }}>
+                Host Cities
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Matches Grid */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
           gap: '24px'
         }}>
-          {/* Desktop: 2/3 and 1/3 columns */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '24px'
-          }}>
-            {/* Game Feed */}
-            <div style={{ gridColumn: 'span 2' }}>
-              <GameFeed
-                events={mockEvents}
-                isLive={false}
-                onEventClick={handleEventClick}
-              />
-            </div>
-
-            {/* Sidebar */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '24px'
-            }}>
-              {/* Betting Odds */}
-              <BettingOdds odds={mockOdds} />
-
-              {/* User Predictions */}
-              <UserPrediction
-                stats={mockPredictions}
-                onPredict={handlePrediction}
-              />
-            </div>
-          </div>
+          {filteredAndSortedMatches.map((match) => (
+            <MatchCard key={match.id} match={match} />
+          ))}
         </div>
+
+        {filteredAndSortedMatches.length === 0 && (
+          <div style={{
+            textAlign: 'center',
+            padding: '60px 20px',
+            color: colors.mutedForeground
+          }}>
+            <Trophy size={48} style={{ marginBottom: '16px', opacity: 0.5 }} />
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>No matches found</h3>
+            <p style={{ margin: 0 }}>Try adjusting your filter criteria</p>
+          </div>
+        )}
       </div>
-
-      {/* Comment Modal */}
-      {showComments && selectedEvent && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 50
-        }}>
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '24px',
-            maxWidth: '600px',
-            width: '100%',
-            margin: '0 16px',
-            maxHeight: '80vh',
-            overflowY: 'auto'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '16px'
-            }}>
-              <h3 style={{
-                fontSize: '18px',
-                fontWeight: '600',
-                margin: 0
-              }}>Event Comments</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowComments(false)}>
-                ×
-              </Button>
-            </div>
-            
-            <div style={{
-              marginBottom: '16px',
-              padding: '16px',
-              backgroundColor: '#f3f4f6',
-              borderRadius: '8px'
-            }}>
-              <div style={{
-                fontSize: '14px',
-                fontWeight: '500'
-              }}>{selectedEvent.minute}' - {selectedEvent.type}</div>
-              <div style={{
-                fontSize: '14px',
-                color: '#6b7280'
-              }}>{selectedEvent.description}</div>
-            </div>
-            
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px'
-            }}>
-              <div style={{
-                padding: '16px',
-                border: '1px solid #e5e7eb',
-                borderRadius: '8px'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginBottom: '8px'
-                }}>
-                  <User size={16} />
-                  <span style={{
-                    fontWeight: '500',
-                    fontSize: '14px'
-                  }}>FootballFan123</span>
-                  <span style={{
-                    fontSize: '12px',
-                    color: '#6b7280'
-                  }}>5 min ago</span>
-                </div>
-                <p style={{
-                  fontSize: '14px',
-                  margin: 0
-                }}>What a goal! Absolutely incredible technique from that angle.</p>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '8px'
-                }}>
-                  <Button variant="ghost" size="sm">
-                    <Heart size={12} style={{ marginRight: '4px' }} />
-                    24
-                  </Button>
-                </div>
-              </div>
-              
-              <div style={{
-                display: 'flex',
-                gap: '8px'
-              }}>
-                <input
-                  type="text"
-                  placeholder="Add a comment..."
-                  style={{
-                    flex: 1,
-                    padding: '8px 12px',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    backgroundColor: 'white'
-                  }}
-                />
-                <Button size="sm">
-                  <Send size={16} />
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
