@@ -153,7 +153,7 @@ async function fetchMajorEuropeanTeams() {
         }
         
         majorTeams.push(teamWithLeague)
-        console.log(`✅ Backend Added major team: ${teamData.team.name}`)
+        console.log(`✅ Backend Added major team: ${teamData.team.name} (ID: ${teamId})`)
       } else {
         console.log(`⚠️ Backend No data for team ${teamId}:`, data)
       }
@@ -270,11 +270,23 @@ async function fetchAllEuropeanAndClubWorldCupTeams() {
   return allTeams
 }
 
-async function fetchPlayersForTeam(teamId, season = 2025) {
+// Rate limiting helper
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+async function fetchPlayersForTeam(teamId, season = 2025, retryCount = 0) {
   const endpoint = '/players/squads'
+  const maxRetries = 2 // Reduce retries since we have better initial delays
+  const baseDelay = 5000 // 5 seconds base delay for more conservative approach
   
   try {
-    console.log(`🏃 Backend Fetching players for team: ${teamId}`)
+    console.log(`🏃 Backend Fetching players for team: ${teamId} (attempt ${retryCount + 1})`)
+    
+    // Add delay between requests to respect rate limits
+    if (retryCount > 0) {
+      const delay = baseDelay * Math.pow(2, retryCount) // Exponential backoff
+      console.log(`⏳ Backend Waiting ${delay}ms before retry for team ${teamId}`)
+      await sleep(delay)
+    }
     
     const response = await fetch(`${BASE_URL}/players/squads?team=${teamId}`, {
       method: 'GET',
@@ -286,13 +298,52 @@ async function fetchPlayersForTeam(teamId, season = 2025) {
 
     const data = await response.json()
     
-    if (response.ok && data.response && data.response.length > 0) {
-      return data.response[0].players || []
+    // Check for rate limiting error specifically
+    if (data.errors && data.errors.rateLimit) {
+      console.log(`🚫 Backend Rate limit hit for team ${teamId}, retry ${retryCount + 1}/${maxRetries}`)
+      
+      if (retryCount < maxRetries) {
+        return await fetchPlayersForTeam(teamId, season, retryCount + 1)
+      } else {
+        console.error(`❌ Backend Max retries exceeded for team ${teamId} due to rate limiting`)
+        return []
+      }
     }
     
-    return []
+    if (!response.ok) {
+      console.error(`❌ Squad API Error for team ${teamId}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: data
+      })
+      return []
+    }
+    
+    if (data.response && data.response.length > 0) {
+      const players = data.response[0].players || []
+      console.log(`🔍 Squad API response for team ${teamId}:`, {
+        responseLength: data.response.length,
+        playersCount: players.length,
+        firstPlayer: players[0]?.name || 'None'
+      })
+      return players
+    } else {
+      console.log(`⚠️ No squad data for team ${teamId}:`, {
+        hasResponse: !!data.response,
+        responseLength: data.response?.length || 0,
+        fullData: data
+      })
+      return []
+    }
   } catch (error) {
     console.error(`❌ Backend Error fetching players for team ${teamId}:`, error.message)
+    
+    // Retry on network errors too
+    if (retryCount < maxRetries) {
+      console.log(`🔄 Backend Retrying team ${teamId} due to network error, attempt ${retryCount + 2}`)
+      return await fetchPlayersForTeam(teamId, season, retryCount + 1)
+    }
+    
     return []
   }
 }
@@ -362,10 +413,97 @@ async function fetchAllEuropeanPlayers(limit = null) {
   console.log(`📋 Backend Found ${teams.length} teams, now fetching ALL players...`)
   
   const allPlayers = []
-  const playerPromises = []
   
-  // Fetch players for each team
-  for (const teamData of teams) {
+  // Separate major teams from others for priority processing
+  const majorTeams = teams.filter(team => MAJOR_TEAM_IDS.includes(team.team.id))
+  const otherTeams = teams.filter(team => !MAJOR_TEAM_IDS.includes(team.team.id))
+  
+  console.log(`🎯 Backend Processing ${majorTeams.length} major teams first (with rate limiting)`)
+  
+  // Process major teams sequentially with rate limiting to avoid API limits
+  for (const teamData of majorTeams) {
+    const teamId = teamData.team.id
+    const teamName = teamData.team.name
+    const teamLogo = teamData.team.logo
+    const leagueInfo = teamData.league
+    
+    console.log(`🔍 Processing major team: ${teamName} (ID: ${teamId}) from ${leagueInfo.name}`)
+    
+    // Add larger delay between major team requests to respect API rate limits
+    await sleep(2000) // 2 second delay between major team requests
+    
+    const players = await fetchPlayersForTeam(teamId)
+    console.log(`📋 Found ${players.length} players for ${teamName}`)
+    
+    const teamPlayers = []
+    
+    // Process all players to get complete squad data
+    for (const player of players) {
+      // Fetch detailed stats for each player using their league
+      const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
+      
+      // Find the best available stat
+      let relevantStat = null
+      
+      if (stats.length > 0) {
+        // Priority: Stats with goals > 0, then games > 0, then any stat
+        relevantStat = stats.find(s => s.goals?.total > 0) ||
+                     stats.find(s => s.games?.appearences > 0) ||
+                     stats.find(s => s.goals?.assists > 0) ||
+                     stats[0] // fallback to first stat
+      }
+      
+      teamPlayers.push({
+        player: {
+          id: player.id,
+          name: player.name,
+          photo: player.photo,
+          age: player.age,
+          nationality: player.birth?.country || 'Unknown',
+          position: player.position,
+          height: player.height,
+          weight: player.weight
+        },
+        team: {
+          id: teamId,
+          name: teamName,
+          logo: teamLogo
+        },
+        league: leagueInfo,
+        statistics: relevantStat ? {
+          games: relevantStat.games?.appearences || 0,
+          goals: relevantStat.goals?.total || 0,
+          assists: relevantStat.goals?.assists || 0,
+          minutes: relevantStat.games?.minutes || 0,
+          rating: relevantStat.games?.rating || null,
+          yellow_cards: relevantStat.cards?.yellow || 0,
+          red_cards: relevantStat.cards?.red || 0,
+          league: relevantStat.league?.name || 'Unknown',
+          season: relevantStat.league?.season || 'Unknown'
+        } : {
+          games: 0,
+          goals: 0,
+          assists: 0,
+          minutes: 0,
+          rating: null,
+          yellow_cards: 0,
+          red_cards: 0,
+          league: 'No data',
+          season: 'No data'
+        }
+      })
+    }
+    
+    allPlayers.push(...teamPlayers)
+    console.log(`✅ Processed ${teamPlayers.length} players for ${teamName} (Total so far: ${allPlayers.length})`)
+  }
+  
+  console.log(`🔍 Backend Now processing ${otherTeams.length} other teams in parallel`)
+  
+  // Process other teams in parallel (they're less critical)
+  const otherPlayerPromises = []
+  
+  for (const teamData of otherTeams) {
     const teamId = teamData.team.id
     const teamName = teamData.team.name
     const teamLogo = teamData.team.logo
@@ -373,14 +511,13 @@ async function fetchAllEuropeanPlayers(limit = null) {
     
     console.log(`🔍 Processing team: ${teamName} (ID: ${teamId}) from ${leagueInfo.name}`)
     
-    playerPromises.push(
+    otherPlayerPromises.push(
       fetchPlayersForTeam(teamId).then(async (players) => {
+        console.log(`📋 Found ${players.length} players for ${teamName}`)
         const teamPlayers = []
         
         // Process all players to get complete squad data
-        const playersToProcess = players
-        
-        for (const player of playersToProcess) {
+        for (const player of players) {
           // Fetch detailed stats for each player using their league
           const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
           
@@ -442,11 +579,11 @@ async function fetchAllEuropeanPlayers(limit = null) {
     )
   }
   
-  // Wait for all player fetches to complete
-  const teamPlayersArrays = await Promise.all(playerPromises)
+  // Wait for all other team player fetches to complete
+  const otherTeamPlayersArrays = await Promise.all(otherPlayerPromises)
   
-  // Flatten all players into one array
-  for (const teamPlayers of teamPlayersArrays) {
+  // Flatten all other team players into the main array
+  for (const teamPlayers of otherTeamPlayersArrays) {
     allPlayers.push(...teamPlayers)
   }
   
