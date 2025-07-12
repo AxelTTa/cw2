@@ -21,12 +21,26 @@ const EUROPEAN_LEAGUE_IDS = [
 
 // Major European teams we want to ensure are included  
 const MAJOR_TEAM_IDS = [
-  489,  // AC Milan
-  505,  // Inter Milan
+  // Spanish teams
   541,  // Real Madrid
   529,  // Barcelona
+  530,  // Atletico Madrid
+  // English teams  
   50,   // Manchester City
   40,   // Liverpool
+  42,   // Arsenal
+  49,   // Chelsea
+  33,   // Manchester United
+  47,   // Tottenham
+  // Italian teams
+  489,  // AC Milan
+  505,  // Inter Milan
+  496,  // Juventus
+  // German teams
+  157,  // Bayern Munich
+  165,  // Borussia Dortmund
+  // French teams
+  85,   // Paris Saint Germain
 ]
 
 // All leagues combined for comprehensive player coverage
@@ -118,7 +132,6 @@ async function fetchMajorEuropeanTeams() {
       })
 
       const data = await response.json()
-      console.log(`🔍 Backend Team ${teamId} API response:`, JSON.stringify(data, null, 2))
 
       if (response.ok && data.response && data.response.length > 0) {
         const teamData = data.response[0]
@@ -130,8 +143,6 @@ async function fetchMajorEuropeanTeams() {
         else if ([489, 505, 496].includes(teamId)) primaryLeague = 'Serie A'
         else if ([157, 165].includes(teamId)) primaryLeague = 'Bundesliga'
         else if ([85].includes(teamId)) primaryLeague = 'Ligue 1'
-        else if ([211, 212].includes(teamId)) primaryLeague = 'Primeira Liga'
-        else if ([194].includes(teamId)) primaryLeague = 'Eredivisie'
         
         const teamWithLeague = {
           ...teamData,
