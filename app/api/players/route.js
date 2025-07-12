@@ -3,21 +3,21 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-// Focus on only World Cup and Champions League - the most elite competitions
+// Focus on Champions League and Club World Cup - the most elite competitions
 const ELITE_COMPETITION_LEAGUE_IDS = [
-  1,    // FIFA World Cup
   2,    // UEFA Champions League
+  15,   // FIFA Club World Cup
 ]
 
 // Remove major teams concept - focus only on actual international competition participants
 
-// Only World Cup and Champions League for most elite focus
+// Only Champions League and Club World Cup for most elite focus
 const ALL_LEAGUE_IDS = ELITE_COMPETITION_LEAGUE_IDS
 
 function getLeagueName(leagueId) {
   const leagueNames = {
-    1: 'FIFA World Cup',
-    2: 'UEFA Champions League'
+    2: 'UEFA Champions League',
+    15: 'FIFA Club World Cup'
   }
   return leagueNames[leagueId] || `Elite Competition ${leagueId}`
 }
@@ -77,7 +77,7 @@ const logApiError = (endpoint, error) => {
 // Remove major teams fetching - only use actual competition participants
 
 async function fetchEliteCompetitionTeams() {
-  console.log('🔍 Backend Starting teams fetch for World Cup + Champions League only...')
+  console.log('🔍 Backend Starting teams fetch for Champions League + Club World Cup only...')
   const allTeams = []
   const teamIdsSeen = new Set() // To avoid duplicates across leagues
   
@@ -86,7 +86,7 @@ async function fetchEliteCompetitionTeams() {
     try {
       console.log(`🎯 Backend Trying League ID: ${leagueId} for teams`)
       
-      const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2024`, {
+      const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2025`, {
         method: 'GET',
         headers: {
           'X-RapidAPI-Key': API_KEY,
@@ -127,12 +127,12 @@ async function fetchEliteCompetitionTeams() {
   
   console.log(`✅ Backend Total teams collected: ${allTeams.length}`)
   
-  // If no teams found, try fallback with 2023 season
+  // If no teams found, try fallback with 2024 season
   if (allTeams.length === 0) {
-    console.log('⚠️ No teams found for 2024, trying 2023 season...')
+    console.log('⚠️ No teams found for 2025, trying 2024 season...')
     for (const leagueId of ALL_LEAGUE_IDS) {
       try {
-        const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2023`, {
+        const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2024`, {
           method: 'GET',
           headers: {
             'X-RapidAPI-Key': API_KEY,
@@ -308,17 +308,17 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
 }
 
 async function fetchEliteCompetitionPlayers(limit = null) {
-  console.log('🔍 Backend Starting World Cup + Champions League players fetch...')
+  console.log('🔍 Backend Starting Champions League + Club World Cup players fetch...')
   console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
-  // First, get all teams from World Cup and Champions League
+  // First, get all teams from Champions League and Club World Cup
   const teams = await fetchEliteCompetitionTeams()
   console.log(`📋 Backend Found ${teams.length} teams, now fetching players...`)
   
   const allPlayers = []
   
   // Process all teams sequentially with rate limiting to avoid API issues
-  console.log(`🎯 Backend Processing ${teams.length} World Cup + Champions League teams`)
+  console.log(`🎯 Backend Processing ${teams.length} Champions League + Club World Cup teams`)
   
   const playerPromises = []
   
@@ -338,7 +338,7 @@ async function fetchEliteCompetitionPlayers(limit = null) {
         // Process all players to get complete squad data
         for (const player of players) {
           // Fetch detailed stats for each player using their league
-          const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
+          const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2025)
           
           // Find the best available stat and extract player details
           let relevantStat = null
