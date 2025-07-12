@@ -73,13 +73,6 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     e.preventDefault()
     if (!user || (!newComment.trim() && !selectedMeme && !imageUrl)) return
 
-    // Debug logging
-    console.log('Submitting comment with:', {
-      entityType,
-      entityId,
-      user: user?.id,
-      content: newComment.trim()
-    })
 
     if (!entityId) {
       setError('Entity ID is missing. Please refresh the page and try again.')
@@ -274,9 +267,6 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   }
 
 
-  // Debug info
-  const hasValidProps = entityType && entityId && entityName
-  
   return (
     <div style={{
       backgroundColor: '#1a1a1a',
@@ -285,19 +275,6 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       padding: '25px',
       marginTop: '20px'
     }}>
-      {/* Debug info - remove in production */}
-      {!hasValidProps && (
-        <div style={{
-          backgroundColor: '#664444',
-          border: '1px solid #ff4444',
-          borderRadius: '8px',
-          padding: '15px',
-          marginBottom: '20px',
-          color: '#ff6b6b'
-        }}>
-          <strong>Debug Info:</strong> entityType={entityType}, entityId={entityId}, entityName={entityName}
-        </div>
-      )}
 
       {/* Header */}
       <div style={{
