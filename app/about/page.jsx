@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 
 export default function AboutUs() {
   const [isVisible, setIsVisible] = useState(false)
@@ -70,55 +71,54 @@ export default function AboutUs() {
           transform: translateY(-10px) scale(1.02);
           box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-hero-section {
+            padding: 60px 15px !important;
+            min-height: 60vh !important;
+          }
+          
+          .mobile-hero-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 16px !important;
+          }
+          
+          .mobile-about-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-about-card {
+            padding: 20px !important;
+          }
+          
+          .mobile-content-section {
+            padding: 40px 15px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-hero-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 15px !important;
+          }
+          
+          .mobile-about-card {
+            padding: 15px !important;
+          }
+        }
       `}</style>
 
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Home</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Community</a>
-          <a href="/about" style={{ color: '#ffffff', textDecoration: 'none' }}>About</a>
-          <a href="/rewards" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Rewards</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section className="hero-bg" style={{

@@ -1,14 +1,21 @@
 {
-  "name": "chilizwinner",
+  "name": "Clutch",
   "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:mobile": "MOBILE_BUILD=true next build",
+    "mobile:copy": "npm run build:mobile && npx cap copy ios",
+    "mobile:sync": "npm run build:mobile && npx cap sync ios",
+    "mobile:open": "npx cap open ios"
   },
   "dependencies": {
+    "@capacitor/cli": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/ios": "^7.4.2",
     "@supabase/supabase-js": "^2.50.5",
     "next": "14.2.30",
     "react": "18.3.1",

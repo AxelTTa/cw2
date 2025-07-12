@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 import Web3WalletConnect from '../components/Web3WalletConnect'
 
 export default function Rewards() {
@@ -335,53 +336,7 @@ export default function Rewards() {
         </div>
       ))}
 
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(10px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88',
-          cursor: 'pointer',
-          transition: 'all 0.3s ease'
-        }}
-        onMouseEnter={(e) => e.target.style.transform = 'scale(1.1)'}
-        onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Home</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>Community</a>
-          <a href="/about" style={{ color: '#888', textDecoration: 'none', transition: 'color 0.3s ease' }}
-             onMouseEnter={(e) => e.target.style.color = '#00ff88'}
-             onMouseLeave={(e) => e.target.style.color = '#888'}>About</a>
-          <a href="/rewards" style={{ color: '#ffffff', textDecoration: 'none' }}>Rewards</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <section style={{

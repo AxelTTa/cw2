@@ -16,7 +16,7 @@ const logApiRequest = (endpoint, params) => {
     params,
     timestamp: new Date().toISOString(),
     url: `${BASE_URL}${endpoint}`,
-    userAgent: 'ChilizWinner-Backend'
+    userAgent: 'Clutch-Backend'
   })
 }
 
