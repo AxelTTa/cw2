@@ -14,7 +14,7 @@ import {
   Share, 
   Bookmark,
   Heart,
-  Fire,
+  Flame,
   Angry,
   Smile,
   Surprise,
@@ -456,7 +456,7 @@ const GameEventItem = ({ event, onReaction, onCommentClick, isLive = false }) =>
               onClick={() => onReaction(event.id, 'fire')}
               className="flex items-center gap-1 hover:bg-muted px-2 py-1 rounded transition-colors"
             >
-              <Fire className="w-4 h-4" />
+              <Flame className="w-4 h-4" />
               <span>{event.reactions?.fire || 0}</span>
             </button>
             <button
