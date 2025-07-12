@@ -106,6 +106,12 @@ export default function DailyLeaderboard() {
 
   const testTransaction = async () => {
     console.log('🧪 Starting test CHZ transaction...')
+    console.log('🔍 Debug - Current state:', {
+      user: user,
+      user_id: user?.id,
+      walletConnection: walletConnection,
+      walletConnectionAddress: walletConnection?.address
+    })
     
     // Check if user is logged in
     if (!user) {
