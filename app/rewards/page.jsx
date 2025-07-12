@@ -104,7 +104,7 @@ export default function Rewards() {
     setError('Authentication failed')
   }
 
-  const handleWalletConnect = (address) => {
+  const handleWalletConnected = (address) => {
     setWalletAddress(address)
     localStorage.setItem('wallet_address', address)
     console.log('🎯 Frontend: Wallet connected:', address)
@@ -618,7 +618,7 @@ export default function Rewards() {
                     <div style={{ color: '#888', marginBottom: '15px' }}>
                       Connect your wallet to claim CHZ milestone rewards
                     </div>
-                    <Web3WalletConnect onWalletConnect={handleWalletConnect} />
+                    <Web3WalletConnect onWalletConnected={handleWalletConnected} />
                   </div>
                 )}
               </div>
