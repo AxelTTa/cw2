@@ -79,7 +79,7 @@ function AuthCallbackContent() {
         } else {
           // Redirect to community page
           setTimeout(() => {
-            router.push('/community')
+            router.push('/rewards')
           }, 1500)
         }
 

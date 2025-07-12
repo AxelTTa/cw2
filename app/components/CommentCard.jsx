@@ -1,32 +1,53 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) {
-  const [isUpvoted, setIsUpvoted] = useState(false)
-  const [isDownvoted, setIsDownvoted] = useState(false)
+export default function CommentCard({ 
+  comment, 
+  onUpvote, 
+  onDownvote, 
+  onReply, 
+  currentUser,
+  depth = 0,
+  userVotes = {} 
+}) {
+  const [userVote, setUserVote] = useState(userVotes[comment.id] || null) // null, 'upvote', 'downvote'
+  const [showReplyForm, setShowReplyForm] = useState(false)
+  const [replyContent, setReplyContent] = useState('')
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false)
 
-  const handleUpvote = async () => {
-    if (isUpvoted) return
+  const handleVote = async (voteType) => {
+    if (!currentUser) return
     
     try {
-      await onUpvote(comment.id)
-      setIsUpvoted(true)
-      setIsDownvoted(false)
+      const isRemoving = userVote === voteType
+      const newVote = isRemoving ? null : voteType
+      
+      if (voteType === 'upvote') {
+        await onUpvote(comment.id, isRemoving)
+      } else {
+        await onDownvote(comment.id, isRemoving)
+      }
+      
+      setUserVote(newVote)
     } catch (error) {
-      console.error('Error upvoting comment:', error)
+      console.error(`Error ${voteType}ing comment:`, error)
     }
   }
 
-  const handleDownvote = async () => {
-    if (isDownvoted) return
-    
+  const handleReplySubmit = async (e) => {
+    e.preventDefault()
+    if (!replyContent.trim() || !currentUser) return
+
+    setIsSubmittingReply(true)
     try {
-      await onDownvote(comment.id)
-      setIsDownvoted(true)
-      setIsUpvoted(false)
+      await onReply(comment.id, replyContent.trim())
+      setReplyContent('')
+      setShowReplyForm(false)
     } catch (error) {
-      console.error('Error downvoting comment:', error)
+      console.error('Error submitting reply:', error)
+    } finally {
+      setIsSubmittingReply(false)
     }
   }
 
@@ -41,28 +62,36 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
     return `${Math.floor(diffInSeconds / 86400)}d ago`
   }
 
+  const maxDepth = 6
+  const isDeepNested = depth >= maxDepth
+  const indentSize = Math.min(depth, maxDepth) * 16
+  
   return (
     <div style={{
-      backgroundColor: '#1a1a1a',
-      border: '1px solid #333',
-      borderRadius: '8px',
-      padding: '16px',
-      marginBottom: '12px',
-      transition: 'all 0.2s ease',
-      willChange: 'transform, box-shadow',
-      transform: 'translateZ(0)'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
-      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)'
-      e.currentTarget.style.borderColor = '#555'
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
-      e.currentTarget.style.boxShadow = 'none'
-      e.currentTarget.style.borderColor = '#333'
-    }}
-    >
+      marginLeft: `${indentSize}px`,
+      marginBottom: '8px'
+    }}>
+      {/* Reddit-style thread line */}
+      {depth > 0 && (
+        <div style={{
+          position: 'absolute',
+          left: `${indentSize - 8}px`,
+          top: 0,
+          bottom: 0,
+          width: '2px',
+          backgroundColor: '#333',
+          zIndex: 1
+        }} />
+      )}
+      
+      <div style={{
+        backgroundColor: depth % 2 === 0 ? '#1a1a1a' : '#171717',
+        border: `1px solid ${depth > 0 ? '#2a2a2a' : '#333'}`,
+        borderRadius: depth > 0 ? '4px' : '8px',
+        padding: depth > 0 ? '12px' : '16px',
+        position: 'relative',
+        borderLeft: depth > 0 ? '3px solid #00ff88' : '1px solid #333'
+      }}>
       {/* User info */}
       <div style={{
         display: 'flex',
@@ -150,68 +179,185 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        fontSize: '12px'
-      }}>
-        <button
-          onClick={handleUpvote}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: isUpvoted ? '#00ff88' : '#888',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-        >
-          ⬆️ {comment.upvotes || 0}
-        </button>
-
-        <button
-          onClick={handleDownvote}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: isDownvoted ? '#ff4444' : '#888',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-        >
-          ⬇️ {comment.downvotes || 0}
-        </button>
-
-        <button
-          onClick={() => onReply(comment)}
-          style={{
-            backgroundColor: 'transparent',
-            border: 'none',
-            color: '#888',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px'
-          }}
-        >
-          💬 Reply
-        </button>
-
-        {comment.is_meme && (
+        {/* Reddit-style Actions */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '12px',
+          marginTop: '8px'
+        }}>
+          {/* Vote Section */}
           <div style={{
-            backgroundColor: '#00ff88',
-            color: '#000000',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            fontSize: '10px',
-            fontWeight: 'bold'
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: '#2a2a2a',
+            borderRadius: '16px',
+            padding: '4px 8px'
           }}>
-            MEME
+            <button
+              onClick={() => handleVote('upvote')}
+              disabled={!currentUser}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: userVote === 'upvote' ? '#ff6b35' : '#888',
+                cursor: currentUser ? 'pointer' : 'not-allowed',
+                fontSize: '14px',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              title={userVote === 'upvote' ? 'Remove upvote' : 'Upvote'}
+            >
+              ▲
+            </button>
+            
+            <span style={{
+              color: '#fff',
+              fontWeight: 'bold',
+              minWidth: '20px',
+              textAlign: 'center',
+              fontSize: '12px'
+            }}>
+              {((comment.upvotes || 0) - (comment.downvotes || 0))}
+            </span>
+            
+            <button
+              onClick={() => handleVote('downvote')}
+              disabled={!currentUser}
+              style={{
+                backgroundColor: 'transparent',
+                border: 'none',
+                color: userVote === 'downvote' ? '#6666ff' : '#888',
+                cursor: currentUser ? 'pointer' : 'not-allowed',
+                fontSize: '14px',
+                padding: '2px 4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              title={userVote === 'downvote' ? 'Remove downvote' : 'Downvote'}
+            >
+              ▼
+            </button>
+          </div>
+
+          {/* Reply Button */}
+          <button
+            onClick={() => setShowReplyForm(!showReplyForm)}
+            disabled={!currentUser}
+            style={{
+              backgroundColor: 'transparent',
+              border: 'none',
+              color: showReplyForm ? '#00ff88' : '#888',
+              cursor: currentUser ? 'pointer' : 'not-allowed',
+              fontSize: '12px',
+              fontWeight: '500',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            💬 Reply
+          </button>
+
+          {/* Time ago and other info */}
+          <span style={{ color: '#666', fontSize: '11px' }}>
+            {formatTimeAgo(comment.created_at)}
+          </span>
+
+          {comment.is_meme && (
+            <div style={{
+              backgroundColor: '#00ff88',
+              color: '#000000',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold'
+            }}>
+              MEME
+            </div>
+          )}
+        </div>
+
+        {/* Reply Form */}
+        {showReplyForm && currentUser && (
+          <form onSubmit={handleReplySubmit} style={{
+            marginTop: '12px',
+            backgroundColor: '#2a2a2a',
+            border: '1px solid #333',
+            borderRadius: '6px',
+            padding: '12px'
+          }}>
+            <textarea
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+              placeholder="Write a reply..."
+              rows={3}
+              style={{
+                width: '100%',
+                backgroundColor: '#333',
+                border: '1px solid #555',
+                borderRadius: '4px',
+                padding: '8px',
+                color: '#ffffff',
+                fontSize: '13px',
+                resize: 'vertical',
+                marginBottom: '8px'
+              }}
+            />
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShowReplyForm(false)}
+                style={{
+                  backgroundColor: 'transparent',
+                  border: '1px solid #666',
+                  color: '#888',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={!replyContent.trim() || isSubmittingReply}
+                style={{
+                  backgroundColor: replyContent.trim() ? '#00ff88' : '#666',
+                  border: 'none',
+                  color: replyContent.trim() ? '#000' : '#888',
+                  padding: '6px 12px',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  cursor: replyContent.trim() ? 'pointer' : 'not-allowed'
+                }}
+              >
+                {isSubmittingReply ? 'Posting...' : 'Reply'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Replies */}
+        {comment.replies && comment.replies.length > 0 && (
+          <div style={{ marginTop: '12px' }}>
+            {comment.replies.map(reply => (
+              <CommentCard
+                key={reply.id}
+                comment={reply}
+                onUpvote={onUpvote}
+                onDownvote={onDownvote}
+                onReply={onReply}
+                currentUser={currentUser}
+                depth={depth + 1}
+                userVotes={userVotes}
+              />
+            ))}
           </div>
         )}
       </div>
