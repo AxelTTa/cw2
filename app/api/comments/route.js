@@ -229,11 +229,24 @@ export async function POST(request) {
 
     // Award XP to user
     const xpReward = is_meme || image_url ? 15 : 10
+    
+    // Get current user data
+    const { data: currentProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('xp, level')
+      .eq('id', user_id)
+      .single()
+    
+    const currentXp = currentProfile?.xp || 0
+    const currentLevel = currentProfile?.level || 1
+    const newXp = currentXp + xpReward
+    const newLevel = newXp >= currentLevel * 100 ? currentLevel + 1 : currentLevel
+    
     await supabaseAdmin
       .from('profiles')
       .update({ 
-        xp: supabaseAdmin.sql`xp + ${xpReward}`,
-        level: supabaseAdmin.sql`CASE WHEN xp + ${xpReward} >= level * 100 THEN level + 1 ELSE level END`
+        xp: newXp,
+        level: newLevel
       })
       .eq('id', user_id)
 

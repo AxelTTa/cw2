@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Header from '../../components/Header'
 import UniversalComments from '../../components/UniversalComments'
 
 export default function PlayerDetail() {
@@ -112,29 +113,7 @@ export default function PlayerDetail() {
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        {/* Header */}
-        <header style={{
-          padding: '20px',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88'
-          }}>
-            Clutch
-          </div>
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-            <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-            <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-            <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-            <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          </nav>
-        </header>
+        <Header />
 
         <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚽</div>
@@ -152,29 +131,7 @@ export default function PlayerDetail() {
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        {/* Header */}
-        <header style={{
-          padding: '20px',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88'
-          }}>
-            Clutch
-          </div>
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-            <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-            <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-            <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-            <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          </nav>
-        </header>
+        <Header />
 
         <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
