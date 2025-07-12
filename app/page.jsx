@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Header from './components/Header'
 import MatchDiscussion from './community/page'
 import PublicComments from './components/PublicComments'
+import { apiRequest } from './utils/api-config'
 
 export default function Home() {
   const [recentMatches, setRecentMatches] = useState([])
@@ -40,18 +41,9 @@ export default function Home() {
     try {
       console.log('🚀 Frontend: Fetching recent matches...')
       
-      const response = await fetch('/api/matches?status=recent&limit=6', {
+      const data = await apiRequest('/matches?status=recent&limit=6', {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       })
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch matches: ${response.status}`)
-      }
-      
-      const data = await response.json()
       
       console.log('✅ Frontend: Recent matches loaded:', {
         matchesCount: data.matches?.length || 0,
