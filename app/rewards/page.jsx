@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import GoogleAuth from '../components/GoogleAuth'
 import Header from '../components/Header'
-import Web3WalletConnect from '../components/Web3WalletConnect'
 import { sendChzFromAdmin, formatChzAmount } from '../utils/chiliz-token'
 
 export default function Rewards() {
@@ -26,10 +25,21 @@ export default function Rewards() {
       setUser(parsedUser)
       fetchDashboardData(parsedUser.id)
       
-      // Check for existing wallet connection
-      const savedWallet = localStorage.getItem('wallet_address')
-      if (savedWallet) {
-        setWalletAddress(savedWallet)
+      // Check for existing wallet connection from daily leaderboard
+      const savedWalletConnection = localStorage.getItem('wallet_connection')
+      if (savedWalletConnection) {
+        try {
+          const connection = JSON.parse(savedWalletConnection)
+          setWalletAddress(connection.address)
+          console.log('🎯 Frontend: Using saved wallet from daily leaderboard:', connection.address)
+        } catch (error) {
+          console.error('Error parsing saved wallet connection:', error)
+          // Fallback to old method
+          const savedWallet = localStorage.getItem('wallet_address')
+          if (savedWallet) {
+            setWalletAddress(savedWallet)
+          }
+        }
       }
     } else {
       setLoading(false)
@@ -104,16 +114,10 @@ export default function Rewards() {
     setError('Authentication failed')
   }
 
-  const handleWalletConnected = (connection) => {
-    const address = connection.address || connection
-    setWalletAddress(address)
-    localStorage.setItem('wallet_address', address)
-    console.log('🎯 Frontend: Wallet connected:', address)
-  }
 
   const handleClaimMilestone = async (milestone) => {
     if (!walletAddress) {
-      alert('Please connect your wallet first!')
+      alert('Please connect your wallet on the Daily Leaderboard page first!')
       return
     }
 
@@ -582,7 +586,7 @@ export default function Rewards() {
 
           {activeTab === 'milestones' && milestones && (
             <div style={{ display: 'grid', gap: '30px' }}>
-              {/* Wallet Connection Section */}
+              {/* Wallet Status Section */}
               <div style={{
                 backgroundColor: '#111',
                 borderRadius: '12px',
@@ -598,7 +602,7 @@ export default function Rewards() {
                   alignItems: 'center',
                   gap: '10px'
                 }}>
-                  🔗 Wallet Connection
+                  🔗 Wallet Status
                 </h2>
                 {walletAddress ? (
                   <div style={{
@@ -608,18 +612,41 @@ export default function Rewards() {
                     border: '1px solid #00ff88'
                   }}>
                     <div style={{ color: '#00ff88', fontWeight: 'bold', marginBottom: '5px' }}>
-                      ✅ Wallet Connected
+                      ✅ Wallet Connected (from Daily Leaderboard)
                     </div>
                     <div style={{ color: '#888', fontSize: '12px', fontFamily: 'monospace' }}>
                       {walletAddress}
                     </div>
                   </div>
                 ) : (
-                  <div>
-                    <div style={{ color: '#888', marginBottom: '15px' }}>
-                      Connect your wallet to claim CHZ milestone rewards
+                  <div style={{
+                    backgroundColor: '#2e1a1a',
+                    borderRadius: '8px',
+                    padding: '15px',
+                    border: '1px solid #ff6b35'
+                  }}>
+                    <div style={{ color: '#ff6b35', fontWeight: 'bold', marginBottom: '10px' }}>
+                      ⚠️ Wallet Not Connected
                     </div>
-                    <Web3WalletConnect onWalletConnected={handleWalletConnected} currentUser={user} />
+                    <div style={{ color: '#888', marginBottom: '15px' }}>
+                      To claim CHZ milestone rewards, please connect your wallet on the Daily Leaderboard page first.
+                    </div>
+                    <a
+                      href="/daily-leaderboard"
+                      style={{
+                        display: 'inline-block',
+                        backgroundColor: '#00ff88',
+                        color: '#000',
+                        textDecoration: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        fontSize: '14px',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Go to Daily Leaderboard →
+                    </a>
                   </div>
                 )}
               </div>
