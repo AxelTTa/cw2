@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Header from '../../components/Header'
 import GoogleAuth from '../../components/GoogleAuth'
 import UniversalComments from '../../components/UniversalComments'
+import CommentForm from '../../components/CommentForm'
 import { supabase } from '../../utils/supabase'
 
 export default function MatchDetail() {
@@ -15,6 +16,9 @@ export default function MatchDetail() {
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [sortBy, setSortBy] = useState('newest')
+  const [replyTo, setReplyTo] = useState(null)
+  const [commentsLoading, setCommentsLoading] = useState(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -164,6 +168,21 @@ export default function MatchDetail() {
 
   const formatTime = (timestamp) => {
     return new Date(timestamp).toLocaleString()
+  }
+
+  const handleUpvote = async (commentId) => {
+    // Placeholder function for upvote functionality
+    console.log('Upvote comment:', commentId)
+  }
+
+  const handleReaction = async (commentId, reactionType) => {
+    // Placeholder function for reaction functionality
+    console.log('React to comment:', commentId, reactionType)
+  }
+
+  const handleSubmitComment = async (commentData) => {
+    // Placeholder function for comment submission
+    console.log('Submit comment:', commentData)
   }
 
   const CommentComponent = ({ comment, isReply = false }) => (
