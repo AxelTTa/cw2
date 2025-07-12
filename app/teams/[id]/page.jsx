@@ -520,7 +520,7 @@ export default function TeamDetail() {
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <UniversalComments 
             entityType="team"
-            entityId={teamData.team?.id}
+            entityId={teamData.team?.id?.toString() || params.id}
             entityName={teamData.team?.name}
           />
         </div>
