@@ -138,6 +138,40 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
         </div>
       )}
 
+      {/* Image/Video content */}
+      {comment.image_url && (
+        <div style={{
+          backgroundColor: '#2a2a2a',
+          border: '1px solid #444',
+          borderRadius: '6px',
+          padding: '12px',
+          marginBottom: '12px',
+          textAlign: 'center'
+        }}>
+          {comment.image_url.includes('.mp4') || comment.image_url.includes('.webm') || comment.image_url.includes('.ogg') ? (
+            <video
+              src={comment.image_url}
+              controls
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '4px'
+              }}
+            />
+          ) : (
+            <img
+              src={comment.image_url}
+              alt="Uploaded content"
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: '4px'
+              }}
+            />
+          )}
+        </div>
+      )}
+
       {/* Text content */}
       {comment.content && (
         <div style={{
@@ -212,6 +246,19 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
             fontWeight: 'bold'
           }}>
             MEME
+          </div>
+        )}
+
+        {comment.image_url && !comment.is_meme && (
+          <div style={{
+            backgroundColor: '#ff6b35',
+            color: '#ffffff',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            fontSize: '10px',
+            fontWeight: 'bold'
+          }}>
+            {comment.image_url.includes('.mp4') || comment.image_url.includes('.webm') || comment.image_url.includes('.ogg') ? 'VIDEO' : 'IMAGE'}
           </div>
         )}
       </div>
