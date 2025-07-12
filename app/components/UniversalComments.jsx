@@ -15,6 +15,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const [commentType, setCommentType] = useState('text')
   const [selectedMeme, setSelectedMeme] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [filePreview, setFilePreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
   const [userVotes, setUserVotes] = useState({})
 
@@ -69,10 +72,67 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     setLoading(false)
   }
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB')
+      return
+    }
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM, OGG) are allowed')
+      return
+    }
+
+    setSelectedFile(file)
+    setImageUrl('') // Clear manual URL input
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setFilePreview(e.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    setFilePreview(null)
+  }
+
+  const uploadFile = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      setUploading(true)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      return data.url
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmitComment = async (e) => {
     e.preventDefault()
-    if (!user || (!newComment.trim() && !selectedMeme && !imageUrl)) return
-
+    if (!user || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile)) return
 
     if (!entityId) {
       setError('Entity ID is missing. Please refresh the page and try again.')
@@ -80,6 +140,13 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     }
 
     try {
+      let uploadedFileUrl = null
+      
+      // Upload file if selected
+      if (selectedFile) {
+        uploadedFileUrl = await uploadFile(selectedFile)
+      }
+
       const commentData = {
         user_id: user.id,
         entity_type: entityType,
@@ -93,14 +160,14 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       if (selectedMeme) {
         commentData.is_meme = true
         commentData.meme_url = selectedMeme.template_url
-        commentData.meme_caption = newComment.trim() || selectedMeme.caption
+        commentData.meme_caption = newComment.trim() || selectedMeme.title
         commentData.comment_type = 'meme'
       }
 
-      // Add image data if provided
-      if (imageUrl) {
-        commentData.image_url = imageUrl
-        commentData.comment_type = 'image'
+      // Add image data if provided (either upload or URL)
+      if (uploadedFileUrl || imageUrl) {
+        commentData.image_url = uploadedFileUrl || imageUrl
+        commentData.comment_type = selectedMeme ? 'meme' : (uploadedFileUrl && uploadedFileUrl.includes('.mp4') || uploadedFileUrl && uploadedFileUrl.includes('.webm') || uploadedFileUrl && uploadedFileUrl.includes('.ogg') ? 'video' : 'image')
       }
 
       const response = await fetch('/api/comments', {
@@ -118,6 +185,8 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         setCommentType('text')
         setSelectedMeme(null)
         setImageUrl('')
+        setSelectedFile(null)
+        setFilePreview(null)
         await loadComments()
       } else {
         setError(data.error || 'Failed to post comment')
@@ -378,7 +447,10 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             </button>
             <button
               type="button"
-              onClick={() => setCommentType('image')}
+              onClick={() => {
+                setCommentType('image')
+                setSelectedMeme(null)
+              }}
               style={{
                 backgroundColor: commentType === 'image' ? '#0099ff' : '#333',
                 color: commentType === 'image' ? '#000' : '#fff',
@@ -390,6 +462,25 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
               }}
             >
               🖼️ Image
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCommentType('video')
+                setSelectedMeme(null)
+                setImageUrl('')
+              }}
+              style={{
+                backgroundColor: commentType === 'video' ? '#ff4444' : '#333',
+                color: commentType === 'video' ? '#000' : '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              🎥 Video
             </button>
           </div>
 
@@ -405,26 +496,93 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                   borderRadius: '8px'
                 }}>
                   <img 
-                    src={selectedMeme.url} 
-                    alt={selectedMeme.caption}
+                    src={selectedMeme.template_url} 
+                    alt={selectedMeme.title}
                     style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
                   />
                   <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                    {selectedMeme.caption}
+                    {selectedMeme.title}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Image URL Input */}
-          {commentType === 'image' && (
+          {/* File Upload for Images and Videos */}
+          {(commentType === 'image' || commentType === 'video') && (
             <div style={{ marginBottom: '15px' }}>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    type="file"
+                    accept={commentType === 'image' ? 'image/*' : 'video/*'}
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    style={{
+                      backgroundColor: selectedFile ? '#00ff88' : '#444',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%'
+                    }}
+                  >
+                    📎 {selectedFile ? `${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)` : `Upload ${commentType === 'image' ? 'Image' : 'Video'}`}
+                  </label>
+                </div>
+                {selectedFile && (
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    style={{
+                      backgroundColor: '#ff4444',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#888', 
+                textAlign: 'center',
+                marginBottom: '10px'
+              }}>
+                OR
+              </div>
+              
               <input
                 type="url"
-                placeholder="Enter image URL..."
+                placeholder={`Enter ${commentType} URL...`}
                 value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                onChange={(e) => {
+                  setImageUrl(e.target.value)
+                  if (e.target.value) {
+                    setSelectedFile(null)
+                    setFilePreview(null)
+                  }
+                }}
                 style={{
                   width: '100%',
                   backgroundColor: '#2a2a2a',
@@ -435,19 +593,57 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                   fontSize: '14px'
                 }}
               />
-              {imageUrl && (
+              
+              {/* File Preview */}
+              {selectedFile && filePreview && (
+                <div style={{
+                  marginTop: '10px',
+                  textAlign: 'center',
+                  padding: '10px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px'
+                }}>
+                  {selectedFile.type.startsWith('image/') ? (
+                    <img 
+                      src={filePreview} 
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                    />
+                  ) : (
+                    <video
+                      src={filePreview}
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      controls
+                    />
+                  )}
+                </div>
+              )}
+              
+              {/* URL Preview */}
+              {imageUrl && !selectedFile && (
                 <div style={{
                   marginTop: '10px',
                   textAlign: 'center'
                 }}>
-                  <img 
-                    src={imageUrl} 
-                    alt="Preview"
-                    style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                    }}
-                  />
+                  {imageUrl.includes('.mp4') || imageUrl.includes('.webm') || imageUrl.includes('.ogg') ? (
+                    <video
+                      src={imageUrl}
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      controls
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <img 
+                      src={imageUrl} 
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -489,6 +685,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
               placeholder={
                 commentType === 'meme' ? 'Add a caption for your meme...' :
                 commentType === 'image' ? 'Add a description for your image...' :
+                commentType === 'video' ? 'Add a description for your video...' :
                 `Share your thoughts about this ${entityType}...`
               }
               style={{
@@ -505,19 +702,19 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             />
             <button
               type="submit"
-              disabled={!newComment.trim() && !selectedMeme && !imageUrl}
+              disabled={uploading || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile)}
               style={{
-                backgroundColor: (newComment.trim() || selectedMeme || imageUrl) ? '#00ff88' : '#333',
+                backgroundColor: uploading ? '#666' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile) ? '#00ff88' : '#333'),
                 border: 'none',
                 borderRadius: '8px',
                 padding: '12px 20px',
-                color: (newComment.trim() || selectedMeme || imageUrl) ? '#000' : '#666',
+                color: uploading ? '#888' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile) ? '#000' : '#666'),
                 fontSize: '14px',
-                cursor: (newComment.trim() || selectedMeme || imageUrl) ? 'pointer' : 'not-allowed',
+                cursor: uploading ? 'not-allowed' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile) ? 'pointer' : 'not-allowed'),
                 fontWeight: 'bold'
               }}
             >
-              Post (+{commentType === 'meme' || commentType === 'image' ? '15' : '10'} XP)
+              {uploading ? 'Uploading...' : `Post (+${commentType === 'meme' || commentType === 'image' || commentType === 'video' ? '15' : '10'} XP)`}
             </button>
           </div>
         </form>
