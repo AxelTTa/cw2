@@ -11,6 +11,21 @@ const nextConfig = {
     // Skip API routes for mobile build
     experimental: {
       missingSuspenseWithCSRBailout: false,
+    },
+    exportPathMap: async function () {
+      return {
+        '/': { page: '/' },
+        '/about': { page: '/about' },
+        '/competitions': { page: '/competitions' },
+        '/hello': { page: '/hello' },
+        '/live': { page: '/live' },
+        '/login': { page: '/login' },
+        '/matches': { page: '/matches' },
+        '/players': { page: '/players' },
+        '/rewards': { page: '/rewards' },
+        '/teams': { page: '/teams' },
+        '/auth/callback': { page: '/auth/callback' }
+      }
     }
   })
 }

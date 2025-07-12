@@ -7,10 +7,6 @@ import GoogleAuth from '../../components/GoogleAuth'
 import CommentForm from '../../components/CommentForm'
 import { supabase } from '../../utils/supabase'
 
-export async function generateStaticParams() {
-  return []
-}
-
 export default function MatchDetail() {
   const params = useParams()
   const [match, setMatch] = useState(null)

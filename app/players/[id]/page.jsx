@@ -5,10 +5,6 @@ import { useParams, useRouter } from 'next/navigation'
 import Header from '../../components/Header'
 import UniversalComments from '../../components/UniversalComments'
 
-export async function generateStaticParams() {
-  return []
-}
-
 export default function PlayerDetail() {
   const params = useParams()
   const router = useRouter()
