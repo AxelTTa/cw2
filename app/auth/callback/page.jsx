@@ -126,7 +126,7 @@ function AuthCallbackContent() {
         return {
           icon: '✅',
           title: 'Success!',
-          message: 'Authentication successful. Redirecting you to the community page.'
+          message: 'Authentication successful. Redirecting you to the rewards page.'
         }
       case 'error':
         return {

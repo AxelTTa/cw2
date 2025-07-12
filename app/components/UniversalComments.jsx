@@ -37,7 +37,10 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   }
 
   const loadComments = async () => {
-    if (!entityId) return
+    if (!entityId) {
+      console.warn('loadComments called without entityId:', { entityType, entityId })
+      return
+    }
     
     setLoading(true)
     setError(null)
@@ -69,6 +72,19 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleSubmitComment = async (e) => {
     e.preventDefault()
     if (!user || (!newComment.trim() && !selectedMeme && !imageUrl)) return
+
+    // Debug logging
+    console.log('Submitting comment with:', {
+      entityType,
+      entityId,
+      user: user?.id,
+      content: newComment.trim()
+    })
+
+    if (!entityId) {
+      setError('Entity ID is missing. Please refresh the page and try again.')
+      return
+    }
 
     try {
       const commentData = {
@@ -172,6 +188,11 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleReply = async (parentId, content) => {
     if (!user || !content.trim()) return
 
+    if (!entityId) {
+      setError('Entity ID is missing. Please refresh the page and try again.')
+      return
+    }
+
     try {
       const commentData = {
         user_id: user.id,
@@ -253,6 +274,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   }
 
 
+  // Debug info
+  const hasValidProps = entityType && entityId && entityName
+  
   return (
     <div style={{
       backgroundColor: '#1a1a1a',
@@ -261,6 +285,20 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       padding: '25px',
       marginTop: '20px'
     }}>
+      {/* Debug info - remove in production */}
+      {!hasValidProps && (
+        <div style={{
+          backgroundColor: '#664444',
+          border: '1px solid #ff4444',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px',
+          color: '#ff6b6b'
+        }}>
+          <strong>Debug Info:</strong> entityType={entityType}, entityId={entityId}, entityName={entityName}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -276,7 +314,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
           fontSize: '22px',
           fontWeight: 'bold'
         }}>
-          {getEntityIcon(entityType)} {entityName} Discussion ({comments.length})
+          {getEntityIcon(entityType)} {entityName || 'Unknown'} Discussion ({comments.length})
         </h3>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select
