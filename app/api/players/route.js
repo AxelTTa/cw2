@@ -3,12 +3,40 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-const POTENTIAL_LEAGUE_IDS = [
+const CLUB_WORLD_CUP_LEAGUE_IDS = [
   15,   // FIFA Club World Cup - WORKING ✅
   537,  // Alternative ID
   960,  // Alternative Club World Cup ID
   1    // World Cup ID (different tournament but similar format)
 ]
+
+const EUROPEAN_LEAGUE_IDS = [
+  2,    // UEFA Champions League
+  39,   // Premier League (England)
+  140,  // La Liga (Spain)
+  135,  // Serie A (Italy)
+  78,   // Bundesliga (Germany)
+  61,   // Ligue 1 (France)
+]
+
+// All leagues combined for comprehensive player coverage
+const ALL_LEAGUE_IDS = [...CLUB_WORLD_CUP_LEAGUE_IDS, ...EUROPEAN_LEAGUE_IDS]
+
+function getLeagueName(leagueId) {
+  const leagueNames = {
+    15: 'FIFA Club World Cup',
+    537: 'Club World Cup (Alt)',
+    960: 'Club World Cup (Alt 2)',
+    1: 'World Cup',
+    2: 'UEFA Champions League',
+    39: 'Premier League',
+    140: 'La Liga',
+    135: 'Serie A',
+    78: 'Bundesliga',
+    61: 'Ligue 1'
+  }
+  return leagueNames[leagueId] || `League ${leagueId}`
+}
 
 const logApiRequest = (endpoint, params) => {
   console.log(`🚀 Backend API Football Request:`, {
@@ -62,14 +90,16 @@ const logApiError = (endpoint, error) => {
   })
 }
 
-async function fetchAllClubWorldCupTeams() {
-  console.log('🔍 Backend Starting teams fetch to get ALL players...')
+async function fetchAllEuropeanAndClubWorldCupTeams() {
+  console.log('🔍 Backend Starting teams fetch for ALL European clubs + Club World Cup...')
+  const allTeams = []
   
-  for (const leagueId of POTENTIAL_LEAGUE_IDS) {
+  // Fetch teams from all leagues
+  for (const leagueId of ALL_LEAGUE_IDS) {
     try {
       console.log(`🎯 Backend Trying League ID: ${leagueId} for teams`)
       
-      const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2025`, {
+      const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2024`, {
         method: 'GET',
         headers: {
           'X-RapidAPI-Key': API_KEY,
@@ -81,19 +111,32 @@ async function fetchAllClubWorldCupTeams() {
 
       if (response.ok && data.response && data.response.length > 0) {
         console.log(`✅ Backend Found ${data.response.length} teams for League ID ${leagueId}`)
-        return data.response
+        
+        // Add league information to each team
+        const teamsWithLeague = data.response.map(teamData => ({
+          ...teamData,
+          league: {
+            id: leagueId,
+            name: getLeagueName(leagueId)
+          }
+        }))
+        
+        allTeams.push(...teamsWithLeague)
       }
     } catch (error) {
       console.error(`❌ Backend Error with League ID ${leagueId}:`, error.message)
       continue
     }
   }
-
-  const seasons = [2024, 2023]
-  for (const season of seasons) {
-    for (const leagueId of POTENTIAL_LEAGUE_IDS.slice(0, 2)) {
+  
+  console.log(`✅ Backend Total teams collected: ${allTeams.length}`)
+  
+  // If no teams found, try fallback with 2023 season
+  if (allTeams.length === 0) {
+    console.log('⚠️ No teams found for 2024, trying 2023 season...')
+    for (const leagueId of ALL_LEAGUE_IDS) {
       try {
-        const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=${season}`, {
+        const response = await fetch(`${BASE_URL}/teams?league=${leagueId}&season=2023`, {
           method: 'GET',
           headers: {
             'X-RapidAPI-Key': API_KEY,
@@ -103,16 +146,26 @@ async function fetchAllClubWorldCupTeams() {
 
         const data = await response.json()
         if (response.ok && data.response && data.response.length > 0) {
-          console.log(`✅ Backend Found ${data.response.length} teams for League ID ${leagueId}, Season ${season}`)
-          return data.response
+          const teamsWithLeague = data.response.map(teamData => ({
+            ...teamData,
+            league: {
+              id: leagueId,
+              name: getLeagueName(leagueId)
+            }
+          }))
+          allTeams.push(...teamsWithLeague)
         }
       } catch (error) {
         continue
       }
     }
   }
-
-  throw new Error('Unable to fetch teams data')
+  
+  if (allTeams.length === 0) {
+    throw new Error('Unable to fetch teams data from any league')
+  }
+  
+  return allTeams
 }
 
 async function fetchPlayersForTeam(teamId, season = 2025) {
@@ -198,27 +251,25 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   }
 }
 
-async function fetchClubWorldCupPlayers(limit = null) {
-  console.log('🔍 Backend Starting Club World Cup 2025 ALL players fetch...')
+async function fetchAllEuropeanPlayers(limit = null) {
+  console.log('🔍 Backend Starting ALL European + Club World Cup players fetch...')
   console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
-  // First, get all teams
-  const teams = await fetchAllClubWorldCupTeams()
+  // First, get all teams from European leagues and Club World Cup
+  const teams = await fetchAllEuropeanAndClubWorldCupTeams()
   console.log(`📋 Backend Found ${teams.length} teams, now fetching ALL players...`)
   
   const allPlayers = []
   const playerPromises = []
-  
-  // Get the working league ID (15 from logs)
-  const workingLeagueId = 15
   
   // Fetch players for each team
   for (const teamData of teams) {
     const teamId = teamData.team.id
     const teamName = teamData.team.name
     const teamLogo = teamData.team.logo
+    const leagueInfo = teamData.league
     
-    console.log(`🔍 Processing team: ${teamName} (ID: ${teamId})`)
+    console.log(`🔍 Processing team: ${teamName} (ID: ${teamId}) from ${leagueInfo.name}`)
     
     playerPromises.push(
       fetchPlayersForTeam(teamId).then(async (players) => {
@@ -228,8 +279,8 @@ async function fetchClubWorldCupPlayers(limit = null) {
         const playersToProcess = players
         
         for (const player of playersToProcess) {
-          // Fetch detailed stats for each player with multiple fallbacks
-          const stats = await fetchPlayerStatistics(player.id, workingLeagueId, 2025)
+          // Fetch detailed stats for each player using their league
+          const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
           
           // Find the best available stat
           let relevantStat = null
@@ -258,6 +309,7 @@ async function fetchClubWorldCupPlayers(limit = null) {
               name: teamName,
               logo: teamLogo
             },
+            league: leagueInfo,
             statistics: relevantStat ? {
               games: relevantStat.games?.appearences || 0,
               goals: relevantStat.goals?.total || 0,
@@ -329,7 +381,7 @@ export async function GET(request) {
     
     console.log('🔍 Backend Query parameters:', { limit, offset, sort })
     
-    const players = await fetchClubWorldCupPlayers()
+    const players = await fetchAllEuropeanPlayers()
     
     // Apply sorting if requested
     let sortedPlayers = players
