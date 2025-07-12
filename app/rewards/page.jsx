@@ -477,8 +477,9 @@ export default function Rewards() {
           )}
 
           {activeTab === 'activity' && dashboardData && (
-      {/* Daily Rewards Section */}
-      <section style={{
+            <>
+              {/* Daily Rewards Section */}
+              <section style={{
         padding: '40px 20px',
         maxWidth: '1200px',
         margin: '0 auto'
@@ -623,6 +624,7 @@ export default function Rewards() {
                 </div>
               )}
             </div>
+            </>
           )}
 
           {activeTab === 'leaderboard' && (
