@@ -22,6 +22,7 @@ export default function Players() {
   const [floatingTrophies, setFloatingTrophies] = useState([])
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchPlayers()
