@@ -1,53 +1,26 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../utils/supabase'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '../components/Header'
+import { supabase } from '../utils/supabase'
+import { apiFootball } from '../utils/api-football'
+import { switchToChilizChain, getChzBalance, isValidChilizAddress } from '../utils/chiliz-token'
 
-// UI Components
-const Button = ({ children, onClick, variant = 'default', size = 'default', className = '', disabled = false, ...props }) => {
-  const baseStyles = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: '6px',
-    fontWeight: '500',
-    transition: 'all 0.2s',
-    border: 'none',
-    cursor: disabled ? 'not-allowed' : 'pointer',
-    textDecoration: 'none',
-    opacity: disabled ? 0.5 : 1
-  }
-  
+// Simple UI Components with homepage color scheme
+const Button = ({ children, onClick, variant = 'default', disabled = false, className = '' }) => {
   const variants = {
-    default: { backgroundColor: '#2563eb', color: 'white', padding: '10px 16px' },
-    secondary: { backgroundColor: '#e5e7eb', color: '#111827', padding: '10px 16px' },
-    outline: { border: '1px solid #d1d5db', backgroundColor: 'transparent', padding: '9px 15px' },
-    ghost: { backgroundColor: 'transparent', padding: '10px 16px' },
-    destructive: { backgroundColor: '#dc2626', color: 'white', padding: '10px 16px' },
-    success: { backgroundColor: '#16a34a', color: 'white', padding: '10px 16px' },
-    chz: { backgroundColor: '#FF6B35', color: 'white', padding: '10px 16px' }
-  }
-  
-  const sizes = {
-    default: { height: '40px', padding: '10px 16px' },
-    sm: { height: '36px', padding: '8px 12px', fontSize: '14px' },
-    lg: { height: '44px', padding: '12px 32px' }
-  }
-  
-  const combinedStyles = {
-    ...baseStyles,
-    ...variants[variant],
-    ...sizes[size]
+    default: 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white',
+    secondary: 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600',
+    success: 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white',
+    chz: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white'
   }
   
   return (
     <button
-      style={combinedStyles}
       onClick={onClick}
       disabled={disabled}
-      {...props}
+      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -55,16 +28,8 @@ const Button = ({ children, onClick, variant = 'default', size = 'default', clas
 }
 
 const Card = ({ children, className = '' }) => {
-  const cardStyles = {
-    borderRadius: '12px',
-    border: '2px solid #333',
-    backgroundColor: '#111',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-    padding: '20px'
-  }
-  
   return (
-    <div style={cardStyles}>
+    <div className={`bg-gray-900/80 backdrop-blur-lg border border-gray-700 rounded-xl p-6 ${className}`}>
       {children}
     </div>
   )
@@ -72,135 +37,31 @@ const Card = ({ children, className = '' }) => {
 
 const Badge = ({ children, variant = 'default' }) => {
   const variants = {
-    default: { backgroundColor: '#0099ff', color: '#ffffff' },
-    secondary: { backgroundColor: '#333', color: '#ffffff' },
-    destructive: { backgroundColor: '#ef4444', color: '#ffffff' },
-    success: { backgroundColor: '#00ff88', color: '#000000' },
-    warning: { backgroundColor: '#ff6b35', color: '#000000' },
-    live: { backgroundColor: '#ff4444', color: '#ffffff' }
-  }
-  
-  const badgeStyles = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: '4px 12px',
-    borderRadius: '12px',
-    fontSize: '12px',
-    fontWeight: '600',
-    ...variants[variant]
+    default: 'bg-blue-600 text-white',
+    upcoming: 'bg-yellow-600 text-white',
+    live: 'bg-red-600 text-white animate-pulse'
   }
   
   return (
-    <span style={badgeStyles}>
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${variants[variant]}`}>
       {children}
     </span>
   )
 }
 
-// Countdown Timer Component
-const CountdownTimer = ({ expiresAt, onExpired }) => {
-  const [timeLeft, setTimeLeft] = useState(0)
-
-  useEffect(() => {
-    const updateTimer = () => {
-      const now = new Date().getTime()
-      const expiry = new Date(expiresAt).getTime()
-      const difference = expiry - now
-
-      if (difference > 0) {
-        setTimeLeft(Math.floor(difference / 1000))
-      } else {
-        setTimeLeft(0)
-        onExpired && onExpired()
-      }
-    }
-
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-
-    return () => clearInterval(interval)
-  }, [expiresAt, onExpired])
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  const isUrgent = timeLeft <= 30 && timeLeft > 0
-
-  return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      color: isUrgent ? '#dc2626' : timeLeft === 0 ? '#6b7280' : '#16a34a',
-      fontWeight: '600',
-      fontSize: '14px'
-    }}>
-      <span>{timeLeft === 0 ? '⏰' : '⏱️'}</span>
-      <span>{timeLeft === 0 ? 'EXPIRED' : formatTime(timeLeft)}</span>
-    </div>
-  )
-}
-
-// Pool Display Component
-const PoolDisplay = ({ pools, totalStakes }) => {
-  return (
-    <div style={{
-      display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-      gap: '12px',
-      marginTop: '12px'
-    }}>
-      {pools.map((pool) => {
-        const percentage = totalStakes > 0 ? (pool.total_stakes / totalStakes) * 100 : 0
-        const odds = pool.total_stakes > 0 ? (totalStakes / pool.total_stakes).toFixed(2) : '1.00'
-        
-        return (
-          <div key={pool.option_value} style={{
-            padding: '8px 12px',
-            backgroundColor: '#0a0a0a',
-            borderRadius: '6px',
-            textAlign: 'center',
-            border: '1px solid #333'
-          }}>
-            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px', color: '#ffffff' }}>
-              {pool.option_value}
-            </div>
-            <div style={{ fontSize: '12px', color: '#888' }}>
-              {pool.participant_count} bets
-            </div>
-            <div style={{ fontSize: '12px', color: '#888' }}>
-              {percentage.toFixed(1)}% pool
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: '600', color: '#00ff88' }}>
-              {odds}x odds
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// Individual Prediction Card
-const PredictionCard = ({ prediction, onPlaceBet, userBalance, existingBet }) => {
-  const [selectedOption, setSelectedOption] = useState('')
+// Simple Betting Card for Win/Loss
+const BettingCard = ({ match, onPlaceBet, userBalance, user, existingBet }) => {
+  const [selectedTeam, setSelectedTeam] = useState('')
   const [isPlacing, setIsPlacing] = useState(false)
-
-  const totalStakes = prediction.pools?.reduce((sum, pool) => sum + parseFloat(pool.total_stakes || 0), 0) || 0
-  const isExpired = new Date(prediction.expires_at) <= new Date()
-  const isSettled = prediction.status === 'settled'
-  const canBet = !isExpired && !isSettled && !existingBet && user && userBalance >= parseFloat(prediction.stake_amount)
+  const [betAmount, setBetAmount] = useState(10)
 
   const handlePlaceBet = async () => {
-    if (!selectedOption || !canBet || isPlacing) return
-
+    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) return
+    
     setIsPlacing(true)
     try {
-      await onPlaceBet(prediction.id, selectedOption, parseFloat(prediction.stake_amount))
-      setSelectedOption('')
+      await onPlaceBet(match.fixture.id, selectedTeam, betAmount)
+      setSelectedTeam('')
     } catch (error) {
       console.error('Failed to place bet:', error)
     } finally {
@@ -208,420 +69,386 @@ const PredictionCard = ({ prediction, onPlaceBet, userBalance, existingBet }) =>
     }
   }
 
-  const getBetStatusDisplay = () => {
-    if (existingBet) {
-      const statusColors = {
-        active: '#3b82f6',
-        won: '#16a34a',
-        lost: '#dc2626',
-        refunded: '#92400e'
-      }
-      return (
-        <div style={{
-          padding: '8px 12px',
-          backgroundColor: '#f0f9ff',
-          borderRadius: '6px',
-          border: '1px solid #bae6fd',
-          marginTop: '12px'
-        }}>
-          <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
-            Your Bet: {existingBet.selected_option}
-          </div>
-          <div style={{ fontSize: '12px', color: '#6b7280' }}>
-            Stake: {existingBet.stake_amount} CHZ
-          </div>
-          <div style={{ 
-            fontSize: '12px', 
-            fontWeight: '600',
-            color: statusColors[existingBet.status] || '#6b7280'
-          }}>
-            Status: {existingBet.status.toUpperCase()}
-            {existingBet.actual_return > 0 && (
-              <span> (+{existingBet.actual_return} CHZ)</span>
-            )}
-          </div>
-        </div>
-      )
-    }
-    return null
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
+  const canBet = user && userBalance >= betAmount && !existingBet
+
   return (
-    <Card>
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '8px'
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: '600',
-            color: '#111827',
-            margin: 0,
-            flex: 1
-          }}>
-            {prediction.question}
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
-            {isSettled ? (
-              <Badge variant="success">SETTLED</Badge>
-            ) : isExpired ? (
-              <Badge variant="warning">EXPIRED</Badge>
-            ) : (
-              <CountdownTimer 
-                expiresAt={prediction.expires_at} 
-                onExpired={() => window.location.reload()}
-              />
-            )}
-          </div>
+    <Card className="relative overflow-hidden">
+      {/* Match Header */}
+      <div className="flex justify-between items-center mb-4">
+        <Badge variant="upcoming">📅 {formatDate(match.fixture.date)}</Badge>
+        <div className="text-sm text-gray-400">
+          {match.fixture.venue?.name}, {match.fixture.venue?.city}
         </div>
-
-        <div style={{
-          display: 'flex',
-          gap: '16px',
-          fontSize: '14px',
-          color: '#6b7280',
-          marginBottom: '12px'
-        }}>
-          <span>🎯 Stake: {prediction.stake_amount} CHZ</span>
-          <span>💰 Total Pool: {totalStakes.toFixed(2)} CHZ</span>
-          <span>👥 {prediction.pools?.reduce((sum, p) => sum + (p.participant_count || 0), 0) || 0} participants</span>
-        </div>
-
-        {isSettled && prediction.winning_option && (
-          <div style={{
-            padding: '8px 12px',
-            backgroundColor: '#dcfce7',
-            borderRadius: '6px',
-            border: '1px solid #bbf7d0',
-            marginBottom: '12px'
-          }}>
-            <span style={{ fontWeight: '600', color: '#16a34a' }}>
-              ✅ Winner: {prediction.winning_option}
-            </span>
-          </div>
-        )}
       </div>
 
-      {prediction.pools && (
-        <PoolDisplay pools={prediction.pools} totalStakes={totalStakes} />
-      )}
-
-      {getBetStatusDisplay()}
-
-      {canBet && !existingBet && (
-        <div style={{ marginTop: '16px' }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))',
-            gap: '8px',
-            marginBottom: '12px'
-          }}>
-            {prediction.options?.map((option) => (
-              <Button
-                key={option}
-                variant={selectedOption === option ? 'chz' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedOption(option)}
-              >
-                {option}
-              </Button>
-            ))}
+      {/* Teams */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-3">
+          <img 
+            src={match.teams.home.logo} 
+            alt={match.teams.home.name}
+            className="w-12 h-12 rounded-full"
+            onError={(e) => e.target.src = '/default-team-logo.png'}
+          />
+          <div>
+            <h3 className="font-bold text-white">{match.teams.home.name}</h3>
+            <p className="text-sm text-gray-400">{match.teams.home.country}</p>
           </div>
+        </div>
+        
+        <div className="text-2xl font-bold text-gray-400">VS</div>
+        
+        <div className="flex items-center space-x-3">
+          <div className="text-right">
+            <h3 className="font-bold text-white">{match.teams.away.name}</h3>
+            <p className="text-sm text-gray-400">{match.teams.away.country}</p>
+          </div>
+          <img 
+            src={match.teams.away.logo} 
+            alt={match.teams.away.name}
+            className="w-12 h-12 rounded-full"
+            onError={(e) => e.target.src = '/default-team-logo.png'}
+          />
+        </div>
+      </div>
 
-          <Button
-            variant="chz"
-            disabled={!selectedOption || isPlacing}
-            onClick={handlePlaceBet}
-            style={{ width: '100%' }}
-          >
-            {isPlacing ? '🔄 Placing Bet...' : `🎯 Bet ${prediction.stake_amount} CHZ on ${selectedOption || '...'}`}
-          </Button>
+      {/* Existing Bet Display */}
+      {existingBet && (
+        <div className="mb-4 p-4 bg-blue-900/30 border border-blue-600/50 rounded-lg">
+          <div className="flex justify-between items-center">
+            <div>
+              <p className="text-blue-300 font-semibold">Your Bet: {existingBet.team_bet}</p>
+              <p className="text-sm text-gray-400">Amount: {existingBet.amount} CHZ</p>
+            </div>
+            <Badge variant="default">PLACED</Badge>
+          </div>
         </div>
       )}
 
-      {!user && !isSettled && !isExpired && (
-        <div style={{
-          marginTop: '16px',
-          padding: '12px 16px',
-          backgroundColor: '#f0f9ff',
-          borderRadius: '6px',
-          border: '1px solid #bae6fd',
-          textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '8px' }}>
-            🔐 Login required to place bets
+      {/* Betting Interface */}
+      {canBet ? (
+        <div className="space-y-4">
+          {/* Bet Amount */}
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Bet Amount (CHZ)
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={userBalance}
+              value={betAmount}
+              onChange={(e) => setBetAmount(Number(e.target.value))}
+              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
+            />
           </div>
+
+          {/* Team Selection */}
+          <div className="grid grid-cols-2 gap-3">
+            <Button
+              variant={selectedTeam === match.teams.home.name ? 'chz' : 'secondary'}
+              onClick={() => setSelectedTeam(match.teams.home.name)}
+              className="p-4"
+            >
+              <div className="text-center">
+                <div className="font-semibold">{match.teams.home.name}</div>
+                <div className="text-sm opacity-75">Win</div>
+              </div>
+            </Button>
+            
+            <Button
+              variant={selectedTeam === match.teams.away.name ? 'chz' : 'secondary'}
+              onClick={() => setSelectedTeam(match.teams.away.name)}
+              className="p-4"
+            >
+              <div className="text-center">
+                <div className="font-semibold">{match.teams.away.name}</div>
+                <div className="text-sm opacity-75">Win</div>
+              </div>
+            </Button>
+          </div>
+
+          {/* Place Bet Button */}
+          <Button
+            variant="success"
+            onClick={handlePlaceBet}
+            disabled={!selectedTeam || isPlacing || betAmount > userBalance}
+            className="w-full"
+          >
+            {isPlacing ? (
+              '🔄 Placing Bet...'
+            ) : selectedTeam ? (
+              `🎯 Bet ${betAmount} CHZ on ${selectedTeam}`
+            ) : (
+              'Select a team to bet'
+            )}
+          </Button>
+        </div>
+      ) : !user ? (
+        <div className="text-center p-6 bg-gray-800/50 rounded-lg">
+          <p className="text-gray-400 mb-4">🔐 Login required to place bets</p>
           <Button variant="chz" onClick={() => window.location.href = '/login'}>
             Login to Bet
           </Button>
         </div>
-      )}
-
-      {user && !canBet && !existingBet && !isSettled && !isExpired && (
-        <div style={{
-          marginTop: '16px',
-          padding: '8px 12px',
-          backgroundColor: '#fef2f2',
-          borderRadius: '6px',
-          fontSize: '14px',
-          color: '#991b1b'
-        }}>
-          ⚠️ Insufficient CHZ balance ({userBalance} CHZ available)
+      ) : userBalance < betAmount ? (
+        <div className="text-center p-6 bg-red-900/30 border border-red-600/50 rounded-lg">
+          <p className="text-red-300">⚠️ Insufficient CHZ balance</p>
+          <p className="text-sm text-gray-400">You have {userBalance} CHZ, need {betAmount} CHZ</p>
+        </div>
+      ) : (
+        <div className="text-center p-6 bg-gray-800/50 rounded-lg">
+          <p className="text-gray-400">✅ Bet already placed for this match</p>
         </div>
       )}
     </Card>
   )
 }
 
-// Main Prediction Grid Component
+// Wallet Connection Component
+const WalletConnector = ({ user, onWalletConnect }) => {
+  const [walletAddress, setWalletAddress] = useState('')
+  const [walletBalance, setWalletBalance] = useState(0)
+  const [connecting, setConnecting] = useState(false)
+
+  const connectWallet = async () => {
+    try {
+      setConnecting(true)
+      
+      if (!window.ethereum) {
+        alert('❌ MetaMask not found. Please install MetaMask to connect your Chiliz wallet.')
+        return
+      }
+
+      // Switch to Chiliz Chain
+      await switchToChilizChain()
+      
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const address = accounts[0]
+      
+      // Get CHZ balance
+      const balance = await getChzBalance(address)
+      
+      setWalletAddress(address)
+      setWalletBalance(parseFloat(balance))
+      
+      // Save wallet address to user profile
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ wallet_address: address })
+          .eq('id', user.id)
+
+        if (error) {
+          console.error('Failed to save wallet address:', error)
+        }
+      }
+      
+      onWalletConnect(address, balance)
+      
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      alert('❌ Failed to connect wallet: ' + error.message)
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const disconnectWallet = () => {
+    setWalletAddress('')
+    setWalletBalance(0)
+    onWalletConnect('', 0)
+  }
+
+  if (walletAddress) {
+    return (
+      <Card className="mb-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-white mb-2">🔗 Chiliz Wallet Connected</h3>
+            <p className="text-sm text-gray-400">
+              {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+            </p>
+            <p className="text-green-400 font-semibold">
+              💰 {walletBalance.toFixed(4)} CHZ on-chain
+            </p>
+          </div>
+          <Button variant="secondary" onClick={disconnectWallet}>
+            Disconnect
+          </Button>
+        </div>
+      </Card>
+    )
+  }
+
+  return (
+    <Card className="mb-6">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold text-white mb-2">🔗 Connect Chiliz Wallet</h3>
+        <p className="text-gray-400 mb-4">
+          Connect your MetaMask wallet to Chiliz Chain for enhanced betting rewards
+        </p>
+        <Button 
+          variant="chz" 
+          onClick={connectWallet}
+          disabled={connecting}
+        >
+          {connecting ? '🔄 Connecting...' : '🦊 Connect MetaMask'}
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
 export default function PredictionGrid() {
   const [user, setUser] = useState(null)
-  const [predictions, setPredictions] = useState([])
+  const [matches, setMatches] = useState([])
   const [userBets, setUserBets] = useState({})
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [selectedMatch, setSelectedMatch] = useState(null)
-  const [liveMatches, setLiveMatches] = useState([])
   const [userBalance, setUserBalance] = useState(0)
+  const [walletConnected, setWalletConnected] = useState(false)
+  const [walletAddress, setWalletAddress] = useState('')
+  const [walletBalance, setWalletBalance] = useState(0)
   const router = useRouter()
 
-  // Initialize user and data
   useEffect(() => {
-    const initializeApp = async () => {
-      await checkUser()
-      await loadLiveMatches()
-    }
     initializeApp()
   }, [])
 
-  // Auto-refresh predictions every 10 seconds
-  useEffect(() => {
-    if (selectedMatch) {
-      loadPredictions()
-      const interval = setInterval(loadPredictions, 10000)
-      return () => clearInterval(interval)
-    }
-  }, [selectedMatch])
-
-  const checkUser = async () => {
+  const initializeApp = async () => {
     try {
-      console.log('🔍 Checking user authentication...')
-      
-      // Try to get user session, but don't redirect if not found
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError) {
-        console.error('❌ Session error:', sessionError)
-        // Don't throw error, just continue without auth
-      }
-      
-      if (!session) {
-        console.log('⚠️ No active session found, continuing as guest')
-        setUser(null)
-        setUserBalance(0)
-        return
-      }
-      
-      console.log('✅ Session found, getting user details')
-      const { data: { user }, error } = await supabase.auth.getUser()
-      if (error) {
-        console.error('❌ User error:', error)
-        setUser(null)
-        setUserBalance(0)
-        return
-      }
-
-      if (!user) {
-        console.log('⚠️ No user found, continuing as guest')
-        setUser(null)
-        setUserBalance(0)
-        return
-      }
-
-      console.log('✅ User authenticated:', user.email)
-      setUser(user)
-      
-      // Get user profile and balance
-      console.log('🔍 Fetching user profile and balance...')
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('fan_tokens, username')
-        .eq('id', user.id)
-        .single()
-
-      if (profileError) {
-        console.error('❌ Profile error:', profileError)
-        setUserBalance(0)
-        return
-      }
-      
-      console.log('✅ User profile loaded, balance:', profile.fan_tokens)
-      setUserBalance(parseFloat(profile.fan_tokens || 0))
-
+      await checkUser()
+      await loadMatches()
     } catch (error) {
-      console.error('❌ Auth error:', error)
-      setUser(null)
-      setUserBalance(0)
-    }
-  }
-
-  const loadLiveMatches = async () => {
-    try {
-      console.log('🔍 Loading matches for predictions...')
-      
-      // Get live matches first
-      const { data: liveMatches, error: liveError } = await supabase
-        .from('matches')
-        .select(`
-          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
-          home_team_logo, away_team_logo, league
-        `)
-        .in('status', ['1H', '2H', 'HT', 'ET', 'P'])
-        .order('match_date', { ascending: true })
-        .limit(5)
-
-      // Get upcoming matches (next 7 days) 
-      const { data: upcomingMatches, error: upcomingError } = await supabase
-        .from('matches')
-        .select(`
-          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
-          home_team_logo, away_team_logo, league
-        `)
-        .eq('status', 'ns')
-        .gte('match_date', new Date().toISOString())
-        .lte('match_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
-        .order('match_date', { ascending: true })
-        .limit(5)
-
-      // Get recent finished matches as backup
-      const { data: recentMatches, error: recentError } = await supabase
-        .from('matches')
-        .select(`
-          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
-          home_team_logo, away_team_logo, league
-        `)
-        .eq('status', 'ft')
-        .order('match_date', { ascending: false })
-        .limit(3)
-
-      if (liveError && upcomingError && recentError) {
-        console.error('❌ All match queries failed')
-        throw new Error('Failed to load any matches')
-      }
-      
-      // Combine all matches with priority: live > upcoming > recent
-      const allMatches = [
-        ...(liveMatches || []),
-        ...(upcomingMatches || []),
-        ...(recentMatches || [])
-      ]
-      
-      console.log('✅ Matches loaded:', {
-        live: liveMatches?.length || 0,
-        upcoming: upcomingMatches?.length || 0,
-        recent: recentMatches?.length || 0,
-        total: allMatches.length
-      })
-      
-      setLiveMatches(allMatches)
-      
-      // Auto-select first match
-      if (allMatches && allMatches.length > 0 && !selectedMatch) {
-        console.log('🎯 Auto-selecting first match:', allMatches[0].home_team, 'vs', allMatches[0].away_team)
-        setSelectedMatch(allMatches[0])
-      }
-      
-      // Always set loading to false after loading matches
-      setLoading(false)
-      
-    } catch (error) {
-      console.error('❌ Failed to load matches:', error)
-      setLoading(false)
-      setError(error.message)
-    }
-  }
-
-  const loadPredictions = async () => {
-    if (!selectedMatch) return
-
-    try {
-      setLoading(true)
-      console.log('🔍 Loading predictions for match:', selectedMatch.home_team, 'vs', selectedMatch.away_team)
-
-      // Load active predictions for the match
-      const { data: predictionsData, error: predictionsError } = await supabase
-        .from('prediction_markets')
-        .select(`
-          *,
-          pools:prediction_pools(
-            id, option_value, total_stakes, participant_count
-          )
-        `)
-        .eq('match_id', selectedMatch.id)
-        .eq('prediction_type', 'micro')
-        .in('status', ['active', 'settled'])
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (predictionsError) throw predictionsError
-
-      setPredictions(predictionsData || [])
-
-      // Load user's existing bets (only if user is logged in)
-      if (user) {
-        const { data: betsData, error: betsError } = await supabase
-          .from('prediction_stakes')
-          .select('*')
-          .eq('user_id', user.id)
-          .in('market_id', (predictionsData || []).map(p => p.id))
-
-        if (betsError) throw betsError
-
-        // Create map of market_id -> bet
-        const betsMap = {}
-        betsData?.forEach(bet => {
-          betsMap[bet.market_id] = bet
-        })
-        setUserBets(betsMap)
-      } else {
-        // Clear bets if no user
-        setUserBets({})
-      }
-
-    } catch (error) {
-      console.error('Failed to load predictions:', error)
+      console.error('Failed to initialize app:', error)
       setError(error.message)
     } finally {
       setLoading(false)
     }
   }
 
-  const placeBet = async (marketId, selectedOption, stakeAmount) => {
+  const checkUser = async () => {
     try {
-      const response = await fetch('/api/predictions/place-bet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          marketId,
-          selectedOption,
-          stakeAmount
-        })
-      })
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) throw sessionError
 
-      const result = await response.json()
-      
-      if (!result.success) {
-        throw new Error(result.error)
+      if (!session) {
+        setUser(null)
+        setUserBalance(0)
+        return
       }
 
-      // Refresh data
-      await loadPredictions()
-      await checkUser() // Refresh balance
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) throw error
 
-      // Show success message
-      alert(`✅ Bet placed successfully! ${result.message}`)
+      setUser(user)
+
+      // Get user balance
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('fan_tokens')
+        .eq('id', user.id)
+        .single()
+
+      if (profileError) throw profileError
+      setUserBalance(parseFloat(profile.fan_tokens || 0))
+
+    } catch (error) {
+      console.error('Auth error:', error)
+      setUser(null)
+      setUserBalance(0)
+    }
+  }
+
+  const loadMatches = async () => {
+    try {
+      console.log('🔍 Loading Club World Cup matches...')
+      const clubWorldCupMatches = await apiFootball.fetchClubWorldCupMatches()
+      
+      console.log('✅ Loaded matches:', clubWorldCupMatches.length)
+      setMatches(clubWorldCupMatches)
+
+      // Load existing bets if user is logged in
+      if (user) {
+        await loadUserBets(clubWorldCupMatches.map(m => m.fixture.id))
+      }
+
+    } catch (error) {
+      console.error('Failed to load matches:', error)
+      setError('Failed to load matches: ' + error.message)
+    }
+  }
+
+  const loadUserBets = async (matchIds) => {
+    if (!user || matchIds.length === 0) return
+
+    try {
+      const { data: betsData, error } = await supabase
+        .from('match_bets')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('match_id', matchIds)
+
+      if (error) throw error
+
+      const betsMap = {}
+      betsData?.forEach(bet => {
+        betsMap[bet.match_id] = bet
+      })
+      setUserBets(betsMap)
+
+    } catch (error) {
+      console.error('Failed to load user bets:', error)
+    }
+  }
+
+  const placeBet = async (matchId, teamBet, amount) => {
+    try {
+      // Insert bet into database
+      const { data, error } = await supabase
+        .from('match_bets')
+        .insert({
+          user_id: user.id,
+          match_id: matchId,
+          team_bet: teamBet,
+          amount: amount,
+          status: 'active'
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      // Update user balance
+      const { error: balanceError } = await supabase
+        .from('profiles')
+        .update({ fan_tokens: userBalance - amount })
+        .eq('id', user.id)
+
+      if (balanceError) throw balanceError
+
+      // Refresh data
+      await checkUser()
+      await loadUserBets([matchId])
+
+      // Show enhanced message if wallet is connected
+      const successMessage = walletConnected 
+        ? `✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}. Rewards will be distributed to your connected Chiliz wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
+        : `✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}`
+
+      alert(successMessage)
 
     } catch (error) {
       console.error('Failed to place bet:', error)
@@ -630,119 +457,37 @@ export default function PredictionGrid() {
     }
   }
 
-  const generateNewPrediction = async () => {
-    if (!selectedMatch) return
-
-    try {
-      const response = await fetch('/api/predictions/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          matchId: selectedMatch.id
-        })
-      })
-
-      const result = await response.json()
-      
-      if (result.success) {
-        await loadPredictions()
-        alert('🎯 New prediction generated!')
-      } else {
-        alert(`⚠️ ${result.error}`)
-      }
-    } catch (error) {
-      console.error('Failed to generate prediction:', error)
-      alert('❌ Failed to generate new prediction')
-    }
+  const handleWalletConnect = (address, balance) => {
+    setWalletConnected(!!address)
+    setWalletAddress(address)
+    setWalletBalance(parseFloat(balance))
   }
 
-  const createTestMatch = async () => {
-    try {
-      console.log('🧪 Creating test match...')
-      const { data: testMatch, error } = await supabase
-        .from('matches')
-        .insert({
-          home_team: 'Test FC',
-          away_team: 'Demo United',
-          league: 'Test League',
-          match_date: new Date().toISOString(),
-          status: '1H', // First half
-          home_score: 1,
-          away_score: 0
-        })
-        .select()
-        .single()
-
-      if (error) {
-        console.error('❌ Failed to create test match:', error)
-        alert('❌ Failed to create test match: ' + error.message)
-        return
-      }
-
-      console.log('✅ Test match created:', testMatch)
-      await loadLiveMatches()
-      alert('🧪 Test match created successfully!')
-    } catch (error) {
-      console.error('❌ Error creating test match:', error)
-      alert('❌ Error creating test match')
-    }
-  }
-
-  if (loading && !predictions.length) {
+  if (loading) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        padding: '20px',
-        backgroundColor: '#f9fafb',
-        fontFamily: 'system-ui, sans-serif'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '24px', marginBottom: '16px' }}>🎯</div>
-            <h2>Loading Prediction Grid...</h2>
-            {error && (
-              <div style={{
-                marginTop: '16px',
-                padding: '12px',
-                backgroundColor: '#fef2f2',
-                borderRadius: '6px',
-                color: '#991b1b'
-              }}>
-                ⚠️ {error}
-              </div>
-            )}
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        <Header />
+        <div className="container mx-auto px-6 py-20">
+          <div className="text-center">
+            <div className="text-6xl mb-6">⚽</div>
+            <h2 className="text-2xl font-bold text-white mb-4">Loading Club World Cup...</h2>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
           </div>
         </div>
       </div>
     )
   }
 
-  if (error && !loading) {
+  if (error) {
     return (
-      <div style={{ 
-        minHeight: '100vh', 
-        padding: '20px',
-        backgroundColor: '#f9fafb',
-        fontFamily: 'system-ui, sans-serif'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', padding: '40px' }}>
-            <div style={{ fontSize: '24px', marginBottom: '16px' }}>❌</div>
-            <h2>Error Loading Prediction Grid</h2>
-            <div style={{
-              marginTop: '16px',
-              padding: '12px',
-              backgroundColor: '#fef2f2',
-              borderRadius: '6px',
-              color: '#991b1b'
-            }}>
-              {error}
-            </div>
-            <Button 
-              variant="chz" 
-              onClick={() => window.location.reload()}
-              style={{ marginTop: '16px' }}
-            >
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+        <Header />
+        <div className="container mx-auto px-6 py-20">
+          <div className="text-center">
+            <div className="text-6xl mb-6">❌</div>
+            <h2 className="text-2xl font-bold text-white mb-4">Error Loading Matches</h2>
+            <p className="text-red-400 mb-8">{error}</p>
+            <Button onClick={() => window.location.reload()}>
               Try Again
             </Button>
           </div>
@@ -752,209 +497,112 @@ export default function PredictionGrid() {
   }
 
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      backgroundColor: '#0a0a0a',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      color: '#ffffff'
-    }}>
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
       <Header />
       
-      {/* Prediction Grid Header */}
-      <div style={{
-        backgroundColor: '#111',
-        borderBottom: '2px solid #333',
-        padding: '16px 20px'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center'
-          }}>
-            <div>
-              <h1 style={{
-                fontSize: '24px',
-                fontWeight: '700',
-                color: '#ffffff',
-                margin: 0,
-                marginBottom: '4px'
-              }}>
-                🎯 Prediction Grid
-              </h1>
-              <p style={{
-                color: '#cccccc',
-                margin: 0,
-                fontSize: '14px'
-              }}>
-                Bet CHZ on live match micro-events
-              </p>
-            </div>
+      {/* Hero Section */}
+      <div className="relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20"></div>
+        <div className="container mx-auto px-6 py-20 relative z-10">
+          <div className="text-center">
+            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
+              🏆 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                Club World Cup 2025
+              </span>
+            </h1>
+            <p className="text-xl text-gray-300 mb-8">
+              Bet CHZ on your favorite teams to win upcoming matches
+            </p>
             
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px'
-            }}>
-              {user ? (
-                <div style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#00ff88',
-                  color: '#000',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  fontSize: '14px'
-                }}>
-                  💰 {userBalance.toFixed(2)} CHZ
-                </div>
-              ) : (
-                <Button variant="chz" onClick={() => window.location.href = '/login'}>
-                  🔐 Login
-                </Button>
-              )}
-              <Button variant="outline" onClick={() => router.push('/')}>
-                ← Back to Matches
+            {user ? (
+              <div className="inline-flex items-center bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg px-6 py-3">
+                <span className="text-green-400 font-semibold text-lg">
+                  💰 {userBalance.toFixed(2)} CHZ Available
+                </span>
+              </div>
+            ) : (
+              <Button variant="chz" onClick={() => router.push('/login')}>
+                🔐 Login to Start Betting
               </Button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
-        {/* Match Selection */}
-        <Card style={{ marginBottom: '24px' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '16px' }}>⚽ Available Matches</h3>
-          
-          {liveMatches.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px' }}>
-              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏟️</div>
-              <h3 style={{ marginBottom: '8px', color: '#111827' }}>No Matches Available</h3>
-              <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                No matches found for predictions. Try creating a test match or refreshing.
+      {/* Wallet Connector */}
+      {user && (
+        <div className="container mx-auto px-6 py-6">
+          <WalletConnector 
+            user={user} 
+            onWalletConnect={handleWalletConnect}
+          />
+        </div>
+      )}
+
+      {/* Matches Grid */}
+      <div className="container mx-auto px-6 py-12">
+        {matches.length === 0 ? (
+          <Card className="text-center py-12">
+            <div className="text-6xl mb-6">🏟️</div>
+            <h3 className="text-2xl font-bold text-white mb-4">No Upcoming Matches</h3>
+            <p className="text-gray-400 mb-8">
+              No Club World Cup matches found. The tournament will begin soon!
+            </p>
+            <Button onClick={loadMatches}>
+              🔄 Refresh Matches
+            </Button>
+          </Card>
+        ) : (
+          <>
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-white mb-4">
+                📅 Upcoming Matches
+              </h2>
+              <p className="text-gray-400">
+                {matches.length} matches available for betting
               </p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                <Button variant="outline" onClick={loadLiveMatches}>
-                  🔄 Refresh Matches
-                </Button>
-                <Button variant="chz" onClick={createTestMatch}>
-                  🧪 Create Test Match
-                </Button>
-              </div>
             </div>
-          ) : (
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-              gap: '12px'
-            }}>
-              {liveMatches.map((match) => (
-                <Button
-                  key={match.id}
-                  variant={selectedMatch?.id === match.id ? 'chz' : 'outline'}
-                  onClick={() => setSelectedMatch(match)}
-                  style={{
-                    padding: '12px',
-                    height: 'auto',
-                    textAlign: 'left',
-                    justifyContent: 'flex-start'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                      {match.home_team} vs {match.away_team}
-                    </div>
-                    <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                      {match.status === 'ns' ? (
-                        <Badge variant="secondary">📅 Upcoming</Badge>
-                      ) : match.status === 'ft' ? (
-                        <Badge variant="success">✅ Finished</Badge>
-                      ) : (
-                        <Badge variant="live">🔴 {match.status}</Badge>
-                      )}
-                      {match.league && (
-                        <span style={{ marginLeft: '8px', fontSize: '11px', color: '#6b7280' }}>
-                          {match.league}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </Button>
+            
+            <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
+              {matches.map((match) => (
+                <BettingCard
+                  key={match.fixture.id}
+                  match={match}
+                  onPlaceBet={placeBet}
+                  userBalance={userBalance}
+                  user={user}
+                  existingBet={userBets[match.fixture.id]}
+                />
               ))}
             </div>
-          )}
-        </Card>
-
-        {selectedMatch && (
-          <>
-            {/* Match Info & Controls */}
-            <Card style={{ marginBottom: '24px' }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <div>
-                  <h2 style={{ margin: 0, marginBottom: '8px' }}>
-                    {selectedMatch.home_team} vs {selectedMatch.away_team}
-                  </h2>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    {selectedMatch.status === 'ns' ? (
-                      <Badge variant="secondary">📅 Upcoming</Badge>
-                    ) : selectedMatch.status === 'ft' ? (
-                      <Badge variant="success">✅ Finished</Badge>
-                    ) : (
-                      <Badge variant="live">🔴 LIVE</Badge>
-                    )}
-                    <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                      {predictions.length} active predictions
-                    </span>
-                  </div>
-                </div>
-                
-                <div style={{ display: 'flex', gap: '12px' }}>
-                  <Button variant="outline" onClick={loadPredictions}>
-                    🔄 Refresh
-                  </Button>
-                  <Button variant="chz" onClick={generateNewPrediction}>
-                    ⚡ Generate Prediction
-                  </Button>
-                </div>
-              </div>
-            </Card>
-
-            {/* Predictions Grid */}
-            {predictions.length === 0 ? (
-              <Card>
-                <div style={{ textAlign: 'center', padding: '40px' }}>
-                  <div style={{ fontSize: '48px', marginBottom: '16px' }}>🎯</div>
-                  <h3 style={{ marginBottom: '8px' }}>No Active Predictions</h3>
-                  <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                    Generate a new prediction to start betting on this match
-                  </p>
-                  <Button variant="chz" onClick={generateNewPrediction}>
-                    ⚡ Generate First Prediction
-                  </Button>
-                </div>
-              </Card>
-            ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))',
-                gap: '20px'
-              }}>
-                {predictions.map((prediction) => (
-                  <PredictionCard
-                    key={prediction.id}
-                    prediction={prediction}
-                    onPlaceBet={placeBet}
-                    userBalance={userBalance}
-                    existingBet={userBets[prediction.id]}
-                  />
-                ))}
-              </div>
-            )}
           </>
         )}
+      </div>
+
+      {/* Footer Info */}
+      <div className="container mx-auto px-6 py-12">
+        <Card className="text-center">
+          <h3 className="text-xl font-bold text-white mb-4">
+            🎯 How Betting Works
+          </h3>
+          <div className="grid md:grid-cols-3 gap-6 text-gray-300">
+            <div>
+              <div className="text-3xl mb-2">💰</div>
+              <h4 className="font-semibold mb-2">Simple Win/Loss</h4>
+              <p className="text-sm">Choose which team will win the match and bet your CHZ</p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">⚡</div>
+              <h4 className="font-semibold mb-2">CHZ Rewards</h4>
+              <p className="text-sm">Win CHZ tokens based on match outcomes and odds</p>
+            </div>
+            <div>
+              <div className="text-3xl mb-2">🏆</div>
+              <h4 className="font-semibold mb-2">Club World Cup</h4>
+              <p className="text-sm">Bet on the biggest club tournament featuring top teams worldwide</p>
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   )
