@@ -17,11 +17,11 @@ async function fetchPlayerDetails(playerId) {
   console.log(`🔍 Backend: Fetching detailed stats for player ${playerId}`)
   
   // Start with current season first for faster response
-  const seasons = [2025, 2024]
+  const seasons = [2025, 2024, 2023, 2022, 2021, 2020]
   let allStatistics = []
   let playerInfo = null
   
-  // Try to get player info and stats from seasons (limited to 2 most recent)
+  // Try to get player info and stats from seasons
   for (const season of seasons) {
     try {
       const response = await fetch(`${BASE_URL}/players?id=${playerId}&season=${season}`, {
@@ -74,7 +74,8 @@ async function fetchPlayerDetails(playerId) {
   }
   
   if (!playerInfo) {
-    throw new Error('Player not found')
+    console.log(`⚠️ Player ${playerId} not found in any season`)
+    return null
   }
   
   // Calculate summary statistics
@@ -213,6 +214,15 @@ export async function GET(request, { params }) {
       fetchPlayerDetails(playerId),
       findPlayerTeam(playerId)
     ])
+    
+    // Check if player was found
+    if (!playerDetails) {
+      return NextResponse.json({
+        success: false,
+        error: `Player with ID ${playerId} not found in any available season`,
+        timestamp: new Date().toISOString()
+      }, { status: 404 })
+    }
     
     playerDetails.team = teamInfo
     
