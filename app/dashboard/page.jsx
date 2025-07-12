@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import GoogleAuth from '../components/GoogleAuth'
+import Header from '../components/Header'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -99,29 +100,7 @@ export default function Dashboard() {
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        {/* Header */}
-        <header style={{
-          padding: '20px',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88'
-          }}>
-            Clutch
-          </div>
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-            <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-            <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-            <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
-            <a href="/dashboard" style={{ color: '#00ff88', textDecoration: 'none' }}>Dashboard</a>
-          </nav>
-        </header>
+        <Header />
 
         <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ maxWidth: '600px', margin: '0 auto' }}>
@@ -160,29 +139,7 @@ export default function Dashboard() {
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        {/* Header */}
-        <header style={{
-          padding: '20px',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88'
-          }}>
-            Clutch
-          </div>
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-            <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-            <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-            <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
-            <a href="/dashboard" style={{ color: '#00ff88', textDecoration: 'none' }}>Dashboard</a>
-          </nav>
-        </header>
+        <Header />
 
         <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
@@ -200,29 +157,7 @@ export default function Dashboard() {
         minHeight: '100vh',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        {/* Header */}
-        <header style={{
-          padding: '20px',
-          borderBottom: '1px solid #333',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <div style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88'
-          }}>
-            Clutch
-          </div>
-          <nav style={{ display: 'flex', gap: '30px' }}>
-            <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-            <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-            <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-            <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
-            <a href="/dashboard" style={{ color: '#00ff88', textDecoration: 'none' }}>Dashboard</a>
-          </nav>
-        </header>
+        <Header />
 
         <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
@@ -256,29 +191,7 @@ export default function Dashboard() {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div style={{
-          fontSize: '24px',
-          fontWeight: 'bold',
-          color: '#00ff88'
-        }}>
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/competitions" style={{ color: '#888', textDecoration: 'none' }}>Competitions</a>
-          <a href="/dashboard" style={{ color: '#00ff88', textDecoration: 'none' }}>Dashboard</a>
-        </nav>
-      </header>
+      <Header />
 
       {/* Main Content */}
       <main style={{ padding: '40px 20px' }}>
