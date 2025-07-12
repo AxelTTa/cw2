@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 
 export default function Teams() {
   const [teams, setTeams] = useState([])
@@ -421,6 +422,80 @@ export default function Teams() {
           transform: scale(1.2) rotate(5deg);
           filter: brightness(1.2);
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-teams-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-team-card {
+            padding: 20px !important;
+            margin: 0 !important;
+          }
+          
+          .mobile-header-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-header-text {
+            font-size: 16px !important;
+            margin: 0 auto 25px !important;
+          }
+          
+          .mobile-main-content {
+            padding: 30px 15px !important;
+          }
+          
+          .mobile-filters {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: stretch !important;
+          }
+          
+          .mobile-search-input {
+            min-width: 100% !important;
+            max-width: 100% !important;
+          }
+          
+          .mobile-confederation-select {
+            min-width: 100% !important;
+          }
+          
+          .mobile-team-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-stats-overview {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-header-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-header-text {
+            font-size: 15px !important;
+          }
+          
+          .mobile-team-card {
+            padding: 15px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Flags */}
@@ -452,88 +527,16 @@ export default function Teams() {
         />
       ))}
 
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(15px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100,
-        animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => window.location.href = '/'}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.15)'
-            e.target.style.textShadow = '0 0 25px #00ff88'
-            e.target.style.filter = 'brightness(1.2)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1)'
-            e.target.style.textShadow = 'none'
-            e.target.style.filter = 'brightness(1)'
-          }}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          {[
-            { href: '/', label: 'Home' },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams', active: true },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '8px 0'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <Header />
 
       {/* Teams Content */}
-      <main className="hero-bg" style={{ padding: '60px 20px' }}>
+      <main className="hero-bg mobile-main-content" style={{ padding: '60px 20px' }}>
         <div style={{
           textAlign: 'center',
           marginBottom: '60px',
           animation: isVisible ? 'slideInUp 0.8s ease-out 0.2s both' : 'none'
         }}>
-          <h1 style={{
+          <h1 className="mobile-header-title" style={{
             fontSize: '56px',
             fontWeight: '900',
             marginBottom: '25px',
@@ -547,7 +550,7 @@ export default function Teams() {
           }}>
             🏆 Club World Cup Teams
           </h1>
-          <p style={{
+          <p className="mobile-header-text" style={{
             fontSize: '22px',
             color: '#cccccc',
             maxWidth: '700px',
@@ -570,7 +573,7 @@ export default function Teams() {
             borderRadius: '16px',
             animation: isVisible ? 'slideInUp 0.8s ease-out 0.6s both' : 'none'
           }}>
-            <div style={{
+            <div className="mobile-filters" style={{
               display: 'flex',
               gap: '25px',
               flexWrap: 'wrap',
@@ -578,7 +581,7 @@ export default function Teams() {
               justifyContent: 'center'
             }}>
               {/* Search Input */}
-              <div style={{ flex: '1', minWidth: '350px', maxWidth: '450px' }}>
+              <div className="mobile-search-input" style={{ flex: '1', minWidth: '350px', maxWidth: '450px' }}>
                 <input
                   type="text"
                   placeholder="🔍 Search teams or countries..."
@@ -601,7 +604,7 @@ export default function Teams() {
               </div>
 
               {/* Confederation Filter */}
-              <div style={{ minWidth: '250px' }}>
+              <div className="mobile-confederation-select" style={{ minWidth: '250px' }}>
                 <select
                   value={selectedConfederation}
                   onChange={(e) => setSelectedConfederation(e.target.value)}
@@ -824,7 +827,7 @@ export default function Teams() {
 
         {!loading && !error && filteredTeams.length > 0 && (
           <>
-            <div style={{
+            <div className="mobile-teams-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))',
               gap: '35px',
@@ -838,7 +841,7 @@ export default function Teams() {
                 return (
                   <div 
                     key={team.id || index} 
-                    className="card-hover"
+                    className="card-hover mobile-team-card"
                     style={{
                       backgroundColor: '#111',
                       border: '2px solid #333',

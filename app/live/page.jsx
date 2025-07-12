@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 
 export default function LiveMatches() {
   const [liveMatches, setLiveMatches] = useState([])
@@ -254,38 +255,9 @@ export default function LiveMatches() {
       minHeight: '100vh',
       fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center'
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer'
-          }}
-          onClick={() => window.location.href = '/'}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          <a href="/" style={{ color: '#888', textDecoration: 'none' }}>Home</a>
-          <a href="/live" style={{ color: '#ffffff', textDecoration: 'none' }}>Live</a>
-          <a href="/players" style={{ color: '#888', textDecoration: 'none' }}>Players</a>
-          <a href="/stats" style={{ color: '#888', textDecoration: 'none' }}>Stats</a>
-          <a href="/teams" style={{ color: '#888', textDecoration: 'none' }}>Teams</a>
-          <a href="/community" style={{ color: '#888', textDecoration: 'none' }}>Community</a>
-          <a href="/about" style={{ color: '#888', textDecoration: 'none' }}>About</a>
-          <a href="/rewards" style={{ color: '#888', textDecoration: 'none' }}>Rewards</a>
-        </nav>
-      </header>
+      <Header />
 
-      <main style={{ padding: '40px 20px' }}>
+      <main className="mobile-main" style={{ padding: '40px 20px' }}>
         {/* Page Header */}
         <div style={{
           textAlign: 'center',
@@ -411,7 +383,7 @@ export default function LiveMatches() {
                   </div>
                 </div>
               ) : (
-                <div style={{
+                <div className="mobile-live-grid mobile-upcoming-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                   gap: '20px'
@@ -451,7 +423,7 @@ export default function LiveMatches() {
                   </div>
                 </div>
               ) : (
-                <div style={{
+                <div className="mobile-live-grid mobile-upcoming-grid" style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
                   gap: '20px'
@@ -500,6 +472,31 @@ export default function LiveMatches() {
           0% { opacity: 1; }
           50% { opacity: 0.5; }
           100% { opacity: 1; }
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-main {
+            padding: 20px 15px !important;
+          }
+          
+          .mobile-live-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-upcoming-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-page-title {
+            font-size: 32px !important;
+          }
+          
+          .mobile-page-text {
+            font-size: 16px !important;
+          }
         }
       `}</style>
     </div>
