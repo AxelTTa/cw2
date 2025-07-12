@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Header from './components/Header'
-import PublicComments from './components/PublicComments'
+import UniversalComments from './components/UniversalComments'
 import { apiRequest } from './utils/api-config'
 
 export default function Home() {
