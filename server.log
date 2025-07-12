@@ -1066,3 +1066,495 @@
 }
  GET /api/players?limit=1 200 in 30220ms
  ✓ Compiled in 634ms (202 modules)
+TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+ ⨯ unhandledRejection: TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+ ⨯ unhandledRejection: TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+ ⨯ unhandledRejection: TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+ ⨯ unhandledRejection: TypeError: Cannot read properties of undefined (reading 'baseUrl')
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:461:92
+    at Array.forEach (<anonymous>)
+    at /Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:452:174
+    at Array.forEach (<anonymous>)
+    at Watchpack.<anonymous> (/Users/judeowona/cw2/node_modules/next/dist/server/lib/router-utils/setup-dev-bundler.js:445:141)
+ ✓ Compiled /api/players in 95ms (56 modules)
+🎯 Backend API Route /api/players called
+📅 Backend Current time: 2025-07-12T21:51:23.333Z
+🔍 Backend Query parameters: { limit: 1, offset: 0, sort: null }
+🔍 Backend Starting Champions League + Club World Cup players fetch...
+🎯 Backend Player limit requested: No limit
+🔍 Backend Starting teams fetch for Champions League + Club World Cup only...
+🎯 Backend Trying League ID: 2 for teams
+🎯 Backend Trying League ID: 15 for teams
+✅ Backend Found 32 teams for League ID 15
+✅ Backend Total teams collected: 32
+📋 Backend Found 32 teams, now fetching players...
+🎯 Backend Processing 32 Champions League + Club World Cup teams
+🔍 Processing team: Chelsea (ID: 49) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 49 (attempt 1)
+🔍 Processing team: Manchester City (ID: 50) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 50 (attempt 1)
+🔍 Processing team: Paris Saint Germain (ID: 85) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 85 (attempt 1)
+🔍 Processing team: Botafogo (ID: 120) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 120 (attempt 1)
+🔍 Processing team: Palmeiras (ID: 121) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 121 (attempt 1)
+🔍 Processing team: Fluminense (ID: 124) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 124 (attempt 1)
+🔍 Processing team: Flamengo (ID: 127) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 127 (attempt 1)
+🔍 Processing team: Bayern München (ID: 157) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 157 (attempt 1)
+🔍 Processing team: Borussia Dortmund (ID: 165) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 165 (attempt 1)
+🔍 Processing team: Benfica (ID: 211) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 211 (attempt 1)
+🔍 Processing team: FC Porto (ID: 212) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 212 (attempt 1)
+🔍 Processing team: Urawa (ID: 287) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 287 (attempt 1)
+🔍 Processing team: River Plate (ID: 435) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 435 (attempt 1)
+🔍 Processing team: Boca Juniors (ID: 451) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 451 (attempt 1)
+🔍 Processing team: Juventus (ID: 496) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 496 (attempt 1)
+🔍 Processing team: Inter (ID: 505) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 505 (attempt 1)
+🔍 Processing team: Atletico Madrid (ID: 530) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 530 (attempt 1)
+🔍 Processing team: Real Madrid (ID: 541) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 541 (attempt 1)
+🔍 Processing team: Red Bull Salzburg (ID: 571) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 571 (attempt 1)
+🔍 Processing team: Wydad AC (ID: 968) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 968 (attempt 1)
+🔍 Processing team: ES Tunis (ID: 980) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 980 (attempt 1)
+🔍 Processing team: Al Ahly (ID: 1577) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 1577 (attempt 1)
+🔍 Processing team: Seattle Sounders (ID: 1595) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 1595 (attempt 1)
+🔍 Processing team: Los Angeles FC (ID: 1616) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 1616 (attempt 1)
+🔍 Processing team: Monterrey (ID: 2282) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2282 (attempt 1)
+🔍 Processing team: Pachuca (ID: 2292) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2292 (attempt 1)
+🔍 Processing team: Auckland City (ID: 2537) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2537 (attempt 1)
+🔍 Processing team: Mamelodi Sundowns (ID: 2699) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2699 (attempt 1)
+🔍 Processing team: Ulsan Hyundai FC (ID: 2767) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2767 (attempt 1)
+🔍 Processing team: Al Ain (ID: 2865) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2865 (attempt 1)
+🔍 Processing team: Al-Hilal Saudi FC (ID: 2932) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 2932 (attempt 1)
+🔍 Processing team: Inter Miami (ID: 9568) from FIFA Club World Cup
+🏃 Backend Fetching players for team: 9568 (attempt 1)
+🔍 Squad API response for team 50: { responseLength: 1, playersCount: 39, firstPlayer: 'S. Ortega' }
+🔍 Squad API response for team 85: { responseLength: 1, playersCount: 32, firstPlayer: 'G. Donnarumma' }
+🔍 Squad API response for team 157: { responseLength: 1, playersCount: 36, firstPlayer: 'Leon Klanac' }
+🔍 Squad API response for team 165: { responseLength: 1, playersCount: 34, firstPlayer: 'D. Ramaj' }
+🚫 Backend Rate limit hit for team 211, retry 1/2
+🏃 Backend Fetching players for team: 211 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 211
+🚫 Backend Rate limit hit for team 496, retry 1/2
+🏃 Backend Fetching players for team: 496 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 496
+🔍 Squad API response for team 505: { responseLength: 1, playersCount: 43, firstPlayer: 'R. Di Gennaro' }
+🔍 Squad API response for team 530: {
+  responseLength: 1,
+  playersCount: 33,
+  firstPlayer: 'Salvador Esquivel'
+}
+🚫 Backend Rate limit hit for team 541, retry 1/2
+🏃 Backend Fetching players for team: 541 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 541
+🚫 Backend Rate limit hit for team 571, retry 1/2
+🏃 Backend Fetching players for team: 571 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 571
+📋 Found 39 players for Manchester City
+📋 Found 32 players for Paris Saint Germain
+📋 Found 36 players for Bayern München
+📋 Found 34 players for Borussia Dortmund
+📋 Found 43 players for Inter
+📋 Found 33 players for Atletico Madrid
+🔍 Squad API response for team 120: { responseLength: 1, playersCount: 61, firstPlayer: 'Luiz Pereira' }
+📋 Found 61 players for Botafogo
+🔍 Squad API response for team 124: { responseLength: 1, playersCount: 65, firstPlayer: 'Kevyn' }
+📋 Found 65 players for Fluminense
+🚫 Backend Rate limit hit for team 121, retry 1/2
+🏃 Backend Fetching players for team: 121 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 121
+🚫 Backend Rate limit hit for team 49, retry 1/2
+🏃 Backend Fetching players for team: 49 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 49
+🔍 Squad API response for team 435: { responseLength: 1, playersCount: 48, firstPlayer: 'J. Ledesma' }
+📋 Found 48 players for River Plate
+🔍 Squad API response for team 127: { responseLength: 1, playersCount: 67, firstPlayer: 'Dyogo' }
+📋 Found 67 players for Flamengo
+🔍 Squad API response for team 287: { responseLength: 1, playersCount: 37, firstPlayer: 'A. Malcolm' }
+📋 Found 37 players for Urawa
+🔍 Squad API response for team 212: { responseLength: 1, playersCount: 43, firstPlayer: 'Samuel' }
+📋 Found 43 players for FC Porto
+🚫 Backend Rate limit hit for team 451, retry 1/2
+🏃 Backend Fetching players for team: 451 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 451
+🔍 Squad API response for team 1577: {
+  responseLength: 1,
+  playersCount: 41,
+  firstPlayer: 'Mohamed El Shenawy'
+}
+📋 Found 41 players for Al Ahly
+🚫 Backend Rate limit hit for team 980, retry 1/2
+🏃 Backend Fetching players for team: 980 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 980
+🔍 Squad API response for team 968: { responseLength: 1, playersCount: 50, firstPlayer: 'O. Aqzdaou' }
+📋 Found 50 players for Wydad AC
+🚫 Backend Rate limit hit for team 2292, retry 1/2
+🏃 Backend Fetching players for team: 2292 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2292
+🚫 Backend Rate limit hit for team 1595, retry 1/2
+🏃 Backend Fetching players for team: 1595 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 1595
+🚫 Backend Rate limit hit for team 2282, retry 1/2
+🏃 Backend Fetching players for team: 2282 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2282
+🚫 Backend Rate limit hit for team 1616, retry 1/2
+🏃 Backend Fetching players for team: 1616 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 1616
+🚫 Backend Rate limit hit for team 2537, retry 1/2
+🏃 Backend Fetching players for team: 2537 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2537
+🚫 Backend Rate limit hit for team 2699, retry 1/2
+🏃 Backend Fetching players for team: 2699 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2699
+🚫 Backend Rate limit hit for team 2932, retry 1/2
+🏃 Backend Fetching players for team: 2932 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2932
+🚫 Backend Rate limit hit for team 2865, retry 1/2
+🏃 Backend Fetching players for team: 2865 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2865
+🚫 Backend Rate limit hit for team 2767, retry 1/2
+🏃 Backend Fetching players for team: 2767 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 2767
+🚫 Backend Rate limit hit for team 9568, retry 1/2
+🏃 Backend Fetching players for team: 9568 (attempt 2)
+⏳ Backend Waiting 10000ms before retry for team 9568
+📊 Found meaningful stats for player 24894: {
+  goals: 0,
+  assists: null,
+  games: 2,
+  season: 2023,
+  league: 'Eerste Divisie'
+}
+📊 Found meaningful stats for player 2465: { goals: 0, assists: 0, games: 11, season: 2023, league: 'Serie A' }
+📊 Found meaningful stats for player 1146: { goals: 0, assists: 0, games: 16, season: 2023, league: 'Ligue 1' }
+📊 Found meaningful stats for player 36656: {
+  goals: 0,
+  assists: null,
+  games: 1,
+  season: 2023,
+  league: "King's Cup"
+}
+📊 Found meaningful stats for player 972: { goals: 4, assists: 1, games: 31, season: 2023, league: 'Bundesliga' }
+📊 Found meaningful stats for player 11756: {
+  goals: 0,
+  assists: null,
+  games: 12,
+  season: 2024,
+  league: 'Carioca - 1'
+}
+📊 Found meaningful stats for player 162012: { goals: 0, assists: 3, games: 30, season: 2024, league: 'Serie A' }
+📊 Found meaningful stats for player 57169: { goals: 1, assists: 1, games: 33, season: 2023, league: 'J1 League' }
+📊 Found meaningful stats for player 26243: { goals: 0, assists: 4, games: 23, season: 2024, league: 'Bundesliga' }
+📊 Found meaningful stats for player 262: { goals: 0, assists: 0, games: 2, season: 2024, league: 'Ligue 1' }
+📊 Found meaningful stats for player 48: { goals: 1, assists: 6, games: 24, season: 2024, league: 'La Liga' }
+📊 Found meaningful stats for player 1159: { goals: 1, assists: 0, games: 26, season: 2024, league: 'Bundesliga' }
+📊 Found meaningful stats for player 161904: { goals: 14, assists: 10, games: 34, season: 2024, league: 'Ligue 1' }
+📊 Found meaningful stats for player 633: { goals: 5, assists: 9, games: 36, season: 2023, league: 'La Liga' }
+📊 Found meaningful stats for player 10163: {
+  goals: 1,
+  assists: null,
+  games: 12,
+  season: 2024,
+  league: 'Gaúcho - 1'
+}
+📊 Found meaningful stats for player 631: {
+  goals: 19,
+  assists: 8,
+  games: 35,
+  season: 2023,
+  league: 'Premier League'
+}
+✅ Processed 32 players for Paris Saint Germain
+✅ Processed 33 players for Atletico Madrid
+✅ Processed 34 players for Borussia Dortmund
+✅ Processed 36 players for Bayern München
+✅ Processed 39 players for Manchester City
+✅ Processed 43 players for Inter
+📊 Found meaningful stats for player 130256: {
+  goals: 0,
+  assists: 1,
+  games: 15,
+  season: 2023,
+  league: 'Primeira Liga'
+}
+📊 Found meaningful stats for player 294298: {
+  goals: 0,
+  assists: null,
+  games: 2,
+  season: 2023,
+  league: 'Botola Pro'
+}
+📊 Found meaningful stats for player 41197: { goals: 3, assists: 2, games: 11, season: 2024, league: 'Pro League' }
+📊 Found meaningful stats for player 266267: { goals: 4, assists: 1, games: 32, season: 2024, league: 'Serie A' }
+📊 Found meaningful stats for player 317334: { goals: 5, assists: 1, games: 30, season: 2024, league: 'J1 League' }
+📊 Found meaningful stats for player 152497: {
+  goals: 0,
+  assists: null,
+  games: 15,
+  season: 2024,
+  league: 'Botola Pro'
+}
+📊 Found meaningful stats for player 326: { goals: 3, assists: 4, games: 23, season: 2023, league: 'Pro League' }
+✅ Processed 37 players for Urawa
+✅ Processed 41 players for Al Ahly
+✅ Processed 43 players for FC Porto
+📊 Found meaningful stats for player 2216: { goals: 3, assists: 0, games: 16, season: 2024, league: 'Serie B' }
+📊 Found meaningful stats for player 377174: {
+  goals: 0,
+  assists: null,
+  games: 1,
+  season: 2024,
+  league: 'Paulista Série B'
+}
+📊 Found meaningful stats for player 403300: {
+  goals: 0,
+  assists: null,
+  games: 2,
+  season: 2024,
+  league: 'Carioca - 1'
+}
+✅ Processed 48 players for River Plate
+📊 Found meaningful stats for player 382989: {
+  goals: 0,
+  assists: null,
+  games: 2,
+  season: 2023,
+  league: 'Africa Cup of Nations'
+}
+✅ Processed 50 players for Wydad AC
+📊 Found meaningful stats for player 315569: {
+  goals: 11,
+  assists: null,
+  games: 35,
+  season: 2024,
+  league: 'Primera División - Clausura'
+}
+📊 Found meaningful stats for player 10432: { goals: 7, assists: 1, games: 37, season: 2023, league: 'Serie A' }
+📊 Found meaningful stats for player 22238: {
+  goals: 1,
+  assists: null,
+  games: 13,
+  season: 2024,
+  league: 'Carioca - 1'
+}
+✅ Processed 61 players for Botafogo
+📊 Found meaningful stats for player 10364: { goals: 4, assists: 1, games: 12, season: 2024, league: 'Serie A' }
+✅ Processed 65 players for Fluminense
+📊 Found meaningful stats for player 10180: {
+  goals: 2,
+  assists: null,
+  games: 13,
+  season: 2024,
+  league: 'Carioca - 1'
+}
+✅ Processed 67 players for Flamengo
+🚫 Backend Rate limit hit for team 211, retry 2/2
+🏃 Backend Fetching players for team: 211 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 211
+🚫 Backend Rate limit hit for team 496, retry 2/2
+🏃 Backend Fetching players for team: 496 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 496
+🚫 Backend Rate limit hit for team 541, retry 2/2
+🏃 Backend Fetching players for team: 541 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 541
+🚫 Backend Rate limit hit for team 571, retry 2/2
+🏃 Backend Fetching players for team: 571 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 571
+🚫 Backend Rate limit hit for team 121, retry 2/2
+🏃 Backend Fetching players for team: 121 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 121
+🚫 Backend Rate limit hit for team 49, retry 2/2
+🏃 Backend Fetching players for team: 49 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 49
+🚫 Backend Rate limit hit for team 451, retry 2/2
+🏃 Backend Fetching players for team: 451 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 451
+🚫 Backend Rate limit hit for team 980, retry 2/2
+🏃 Backend Fetching players for team: 980 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 980
+🚫 Backend Rate limit hit for team 2292, retry 2/2
+🏃 Backend Fetching players for team: 2292 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2292
+🚫 Backend Rate limit hit for team 1595, retry 2/2
+🏃 Backend Fetching players for team: 1595 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 1595
+🚫 Backend Rate limit hit for team 2282, retry 2/2
+🏃 Backend Fetching players for team: 2282 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2282
+🚫 Backend Rate limit hit for team 1616, retry 2/2
+🏃 Backend Fetching players for team: 1616 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 1616
+🚫 Backend Rate limit hit for team 2537, retry 2/2
+🏃 Backend Fetching players for team: 2537 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2537
+🚫 Backend Rate limit hit for team 2699, retry 2/2
+🏃 Backend Fetching players for team: 2699 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2699
+🚫 Backend Rate limit hit for team 2932, retry 2/2
+🏃 Backend Fetching players for team: 2932 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2932
+🚫 Backend Rate limit hit for team 2865, retry 2/2
+🏃 Backend Fetching players for team: 2865 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2865
+🚫 Backend Rate limit hit for team 2767, retry 2/2
+🏃 Backend Fetching players for team: 2767 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 2767
+🚫 Backend Rate limit hit for team 9568, retry 2/2
+🏃 Backend Fetching players for team: 9568 (attempt 3)
+⏳ Backend Waiting 20000ms before retry for team 9568
+🚫 Backend Rate limit hit for team 211, retry 3/2
+❌ Backend Max retries exceeded for team 211 due to rate limiting
+📋 Found 0 players for Benfica
+✅ Processed 0 players for Benfica
+🚫 Backend Rate limit hit for team 496, retry 3/2
+❌ Backend Max retries exceeded for team 496 due to rate limiting
+📋 Found 0 players for Juventus
+✅ Processed 0 players for Juventus
+🚫 Backend Rate limit hit for team 541, retry 3/2
+❌ Backend Max retries exceeded for team 541 due to rate limiting
+📋 Found 0 players for Real Madrid
+✅ Processed 0 players for Real Madrid
+🚫 Backend Rate limit hit for team 571, retry 3/2
+❌ Backend Max retries exceeded for team 571 due to rate limiting
+📋 Found 0 players for Red Bull Salzburg
+✅ Processed 0 players for Red Bull Salzburg
+🚫 Backend Rate limit hit for team 121, retry 3/2
+❌ Backend Max retries exceeded for team 121 due to rate limiting
+📋 Found 0 players for Palmeiras
+✅ Processed 0 players for Palmeiras
+🚫 Backend Rate limit hit for team 49, retry 3/2
+❌ Backend Max retries exceeded for team 49 due to rate limiting
+📋 Found 0 players for Chelsea
+✅ Processed 0 players for Chelsea
+🚫 Backend Rate limit hit for team 451, retry 3/2
+❌ Backend Max retries exceeded for team 451 due to rate limiting
+📋 Found 0 players for Boca Juniors
+✅ Processed 0 players for Boca Juniors
+🚫 Backend Rate limit hit for team 980, retry 3/2
+❌ Backend Max retries exceeded for team 980 due to rate limiting
+📋 Found 0 players for ES Tunis
+✅ Processed 0 players for ES Tunis
+🚫 Backend Rate limit hit for team 2292, retry 3/2
+❌ Backend Max retries exceeded for team 2292 due to rate limiting
+📋 Found 0 players for Pachuca
+✅ Processed 0 players for Pachuca
+🚫 Backend Rate limit hit for team 1595, retry 3/2
+❌ Backend Max retries exceeded for team 1595 due to rate limiting
+📋 Found 0 players for Seattle Sounders
+✅ Processed 0 players for Seattle Sounders
+🚫 Backend Rate limit hit for team 2282, retry 3/2
+❌ Backend Max retries exceeded for team 2282 due to rate limiting
+📋 Found 0 players for Monterrey
+✅ Processed 0 players for Monterrey
+🚫 Backend Rate limit hit for team 1616, retry 3/2
+❌ Backend Max retries exceeded for team 1616 due to rate limiting
+📋 Found 0 players for Los Angeles FC
+✅ Processed 0 players for Los Angeles FC
+🚫 Backend Rate limit hit for team 2537, retry 3/2
+❌ Backend Max retries exceeded for team 2537 due to rate limiting
+📋 Found 0 players for Auckland City
+✅ Processed 0 players for Auckland City
+🚫 Backend Rate limit hit for team 2699, retry 3/2
+❌ Backend Max retries exceeded for team 2699 due to rate limiting
+📋 Found 0 players for Mamelodi Sundowns
+✅ Processed 0 players for Mamelodi Sundowns
+🚫 Backend Rate limit hit for team 2932, retry 3/2
+❌ Backend Max retries exceeded for team 2932 due to rate limiting
+📋 Found 0 players for Al-Hilal Saudi FC
+✅ Processed 0 players for Al-Hilal Saudi FC
+🚫 Backend Rate limit hit for team 2865, retry 3/2
+❌ Backend Max retries exceeded for team 2865 due to rate limiting
+📋 Found 0 players for Al Ain
+✅ Processed 0 players for Al Ain
+🚫 Backend Rate limit hit for team 2767, retry 3/2
+❌ Backend Max retries exceeded for team 2767 due to rate limiting
+📋 Found 0 players for Ulsan Hyundai FC
+✅ Processed 0 players for Ulsan Hyundai FC
+🚫 Backend Rate limit hit for team 9568, retry 3/2
+❌ Backend Max retries exceeded for team 9568 due to rate limiting
+📋 Found 0 players for Inter Miami
+✅ Processed 0 players for Inter Miami
+✅ Backend Successfully fetched 629 total players from 32 teams
+📊 Backend Sample players: [
+  {
+    name: 'S. Ortega',
+    team: 'Manchester City',
+    position: 'Goalkeeper',
+    goals: 0
+  },
+  {
+    name: 'M. Bettinelli',
+    team: 'Manchester City',
+    position: 'Goalkeeper',
+    goals: 0
+  },
+  {
+    name: 'Ederson',
+    team: 'Manchester City',
+    position: 'Goalkeeper',
+    goals: 0
+  }
+]
+📊 Backend Pagination applied: 1 players (offset: 0, limit: 1)
+✅ Backend Successfully processed players request: {
+  totalPlayersCount: 629,
+  returnedPlayersCount: 1,
+  firstPlayer: 'S. Ortega',
+  timestamp: '2025-07-12T21:51:53.473Z',
+  pagination: { limit: 1, offset: 0 },
+  sort: null
+}
+ GET /api/players?limit=1 200 in 30283ms
+ ✓ Compiled in 59ms (202 modules)
+ ✓ Compiled in 93ms (202 modules)

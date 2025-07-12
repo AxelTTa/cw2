@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../utils/supabase'
 import { useRouter } from 'next/navigation'
+import Header from '../components/Header'
 
 // UI Components
 const Button = ({ children, onClick, variant = 'default', size = 'default', className = '', disabled = false, ...props }) => {
@@ -55,10 +56,10 @@ const Button = ({ children, onClick, variant = 'default', size = 'default', clas
 
 const Card = ({ children, className = '' }) => {
   const cardStyles = {
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+    borderRadius: '12px',
+    border: '2px solid #333',
+    backgroundColor: '#111',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
     padding: '20px'
   }
   
@@ -71,12 +72,12 @@ const Card = ({ children, className = '' }) => {
 
 const Badge = ({ children, variant = 'default' }) => {
   const variants = {
-    default: { backgroundColor: '#dbeafe', color: '#1e40af' },
-    secondary: { backgroundColor: '#f3f4f6', color: '#374151' },
-    destructive: { backgroundColor: '#fecaca', color: '#dc2626' },
-    success: { backgroundColor: '#dcfce7', color: '#16a34a' },
-    warning: { backgroundColor: '#fef3c7', color: '#92400e' },
-    live: { backgroundColor: '#ff4444', color: 'white' }
+    default: { backgroundColor: '#0099ff', color: '#ffffff' },
+    secondary: { backgroundColor: '#333', color: '#ffffff' },
+    destructive: { backgroundColor: '#ef4444', color: '#ffffff' },
+    success: { backgroundColor: '#00ff88', color: '#000000' },
+    warning: { backgroundColor: '#ff6b35', color: '#000000' },
+    live: { backgroundColor: '#ff4444', color: '#ffffff' }
   }
   
   const badgeStyles = {
@@ -159,20 +160,21 @@ const PoolDisplay = ({ pools, totalStakes }) => {
         return (
           <div key={pool.option_value} style={{
             padding: '8px 12px',
-            backgroundColor: '#f9fafb',
+            backgroundColor: '#0a0a0a',
             borderRadius: '6px',
-            textAlign: 'center'
+            textAlign: 'center',
+            border: '1px solid #333'
           }}>
-            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px' }}>
+            <div style={{ fontWeight: '600', fontSize: '14px', marginBottom: '4px', color: '#ffffff' }}>
               {pool.option_value}
             </div>
-            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            <div style={{ fontSize: '12px', color: '#888' }}>
               {pool.participant_count} bets
             </div>
-            <div style={{ fontSize: '12px', color: '#6b7280' }}>
+            <div style={{ fontSize: '12px', color: '#888' }}>
               {percentage.toFixed(1)}% pool
             </div>
-            <div style={{ fontSize: '12px', fontWeight: '600', color: '#16a34a' }}>
+            <div style={{ fontSize: '12px', fontWeight: '600', color: '#00ff88' }}>
               {odds}x odds
             </div>
           </div>
@@ -752,13 +754,16 @@ export default function PredictionGrid() {
   return (
     <div style={{ 
       minHeight: '100vh', 
-      backgroundColor: '#f9fafb',
-      fontFamily: 'system-ui, sans-serif'
+      backgroundColor: '#0a0a0a',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      color: '#ffffff'
     }}>
-      {/* Header */}
+      <Header />
+      
+      {/* Prediction Grid Header */}
       <div style={{
-        backgroundColor: 'white',
-        borderBottom: '1px solid #e5e7eb',
+        backgroundColor: '#111',
+        borderBottom: '2px solid #333',
         padding: '16px 20px'
       }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -771,14 +776,14 @@ export default function PredictionGrid() {
               <h1 style={{
                 fontSize: '24px',
                 fontWeight: '700',
-                color: '#111827',
+                color: '#ffffff',
                 margin: 0,
                 marginBottom: '4px'
               }}>
                 🎯 Prediction Grid
               </h1>
               <p style={{
-                color: '#6b7280',
+                color: '#cccccc',
                 margin: 0,
                 fontSize: '14px'
               }}>
@@ -794,8 +799,8 @@ export default function PredictionGrid() {
               {user ? (
                 <div style={{
                   padding: '8px 16px',
-                  backgroundColor: '#FF6B35',
-                  color: 'white',
+                  backgroundColor: '#00ff88',
+                  color: '#000',
                   borderRadius: '8px',
                   fontWeight: '600',
                   fontSize: '14px'

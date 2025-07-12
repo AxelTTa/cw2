@@ -15,8 +15,15 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const [commentType, setCommentType] = useState('text')
   const [selectedMeme, setSelectedMeme] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [filePreview, setFilePreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
   const [error, setError] = useState(null)
   const [userVotes, setUserVotes] = useState({})
+  const [gifSearchTerm, setGifSearchTerm] = useState('')
+  const [gifs, setGifs] = useState([])
+  const [loadingGifs, setLoadingGifs] = useState(false)
+  const [selectedGif, setSelectedGif] = useState(null)
 
   useEffect(() => {
     getCurrentUser()
@@ -69,10 +76,103 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     setLoading(false)
   }
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size must be less than 10MB')
+      return
+    }
+
+    // Check file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'video/mp4', 'video/webm', 'video/ogg']
+    if (!allowedTypes.includes(file.type)) {
+      setError('Only images (JPEG, PNG, GIF, WebP) and videos (MP4, WebM, OGG) are allowed')
+      return
+    }
+
+    setSelectedFile(file)
+    setImageUrl('') // Clear manual URL input
+    
+    // Create preview
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      setFilePreview(e.target.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const removeFile = () => {
+    setSelectedFile(null)
+    setFilePreview(null)
+  }
+
+  const searchGifs = async (query) => {
+    if (!query.trim()) {
+      setGifs([])
+      return
+    }
+
+    setLoadingGifs(true)
+    try {
+      // Using Giphy API with a public key (you should replace with your own API key)
+      const apiKey = 'GlVGYHkr3WSBnllca54iNt0yFbjz7L65' // Public demo key
+      const response = await fetch(
+        `https://api.giphy.com/v1/gifs/search?api_key=${apiKey}&q=${encodeURIComponent(query)}&limit=12&rating=g`
+      )
+      
+      if (response.ok) {
+        const data = await response.json()
+        setGifs(data.data || [])
+      } else {
+        console.error('Failed to fetch GIFs')
+        setGifs([])
+      }
+    } catch (error) {
+      console.error('Error searching GIFs:', error)
+      setGifs([])
+    } finally {
+      setLoadingGifs(false)
+    }
+  }
+
+  const selectGif = (gif) => {
+    setSelectedGif(gif)
+    setImageUrl(gif.images.original.url)
+    setSelectedFile(null)
+    setFilePreview(null)
+  }
+
+  const uploadFile = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      setUploading(true)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!response.ok) {
+        throw new Error('Upload failed')
+      }
+
+      const data = await response.json()
+      return data.url
+    } catch (error) {
+      console.error('Upload error:', error)
+      throw error
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const handleSubmitComment = async (e) => {
     e.preventDefault()
-    if (!user || (!newComment.trim() && !selectedMeme && !imageUrl)) return
-
+    if (!user || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif)) return
 
     if (!entityId) {
       setError('Entity ID is missing. Please refresh the page and try again.')
@@ -80,6 +180,13 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     }
 
     try {
+      let uploadedFileUrl = null
+      
+      // Upload file if selected
+      if (selectedFile) {
+        uploadedFileUrl = await uploadFile(selectedFile)
+      }
+
       const commentData = {
         user_id: user.id,
         entity_type: entityType,
@@ -93,14 +200,33 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       if (selectedMeme) {
         commentData.is_meme = true
         commentData.meme_url = selectedMeme.template_url
-        commentData.meme_caption = newComment.trim() || selectedMeme.caption
+        commentData.meme_caption = newComment.trim() || selectedMeme.title
         commentData.comment_type = 'meme'
       }
 
-      // Add image data if provided
-      if (imageUrl) {
-        commentData.image_url = imageUrl
-        commentData.comment_type = 'image'
+      // Add GIF data if selected
+      if (selectedGif) {
+        commentData.image_url = selectedGif.images.original.url
+        commentData.comment_type = 'gif'
+        commentData.is_gif = true
+        commentData.gif_title = selectedGif.title
+      }
+
+      // Add image data if provided (either upload or URL)
+      if ((uploadedFileUrl || imageUrl) && !selectedGif) {
+        commentData.image_url = uploadedFileUrl || imageUrl
+        const isVideo = (uploadedFileUrl && (uploadedFileUrl.includes('.mp4') || uploadedFileUrl.includes('.webm') || uploadedFileUrl.includes('.ogg'))) || 
+                       (imageUrl && (imageUrl.includes('.mp4') || imageUrl.includes('.webm') || imageUrl.includes('.ogg')))
+        const isGif = (uploadedFileUrl && uploadedFileUrl.includes('.gif')) || (imageUrl && imageUrl.includes('.gif'))
+        
+        if (isGif) {
+          commentData.comment_type = 'gif'
+          commentData.is_gif = true
+        } else if (isVideo) {
+          commentData.comment_type = 'video'
+        } else {
+          commentData.comment_type = selectedMeme ? 'meme' : 'image'
+        }
       }
 
       const response = await fetch('/api/comments', {
@@ -118,6 +244,11 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         setCommentType('text')
         setSelectedMeme(null)
         setImageUrl('')
+        setSelectedFile(null)
+        setFilePreview(null)
+        setSelectedGif(null)
+        setGifSearchTerm('')
+        setGifs([])
         await loadComments()
       } else {
         setError(data.error || 'Failed to post comment')
@@ -348,6 +479,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                 setCommentType('text')
                 setSelectedMeme(null)
                 setImageUrl('')
+                setSelectedGif(null)
+                setGifSearchTerm('')
+                setGifs([])
               }}
               style={{
                 backgroundColor: commentType === 'text' ? '#00ff88' : '#333',
@@ -363,7 +497,13 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             </button>
             <button
               type="button"
-              onClick={() => setCommentType('meme')}
+              onClick={() => {
+                setCommentType('meme')
+                setSelectedGif(null)
+                setImageUrl('')
+                setGifSearchTerm('')
+                setGifs([])
+              }}
               style={{
                 backgroundColor: commentType === 'meme' ? '#ff6b35' : '#333',
                 color: commentType === 'meme' ? '#000' : '#fff',
@@ -378,7 +518,34 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             </button>
             <button
               type="button"
-              onClick={() => setCommentType('image')}
+              onClick={() => {
+                setCommentType('gif')
+                setSelectedMeme(null)
+                setSelectedFile(null)
+                setFilePreview(null)
+                setImageUrl('')
+              }}
+              style={{
+                backgroundColor: commentType === 'gif' ? '#ff00ff' : '#333',
+                color: commentType === 'gif' ? '#000' : '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              🎬 GIF
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCommentType('image')
+                setSelectedMeme(null)
+                setSelectedGif(null)
+                setGifSearchTerm('')
+                setGifs([])
+              }}
               style={{
                 backgroundColor: commentType === 'image' ? '#0099ff' : '#333',
                 color: commentType === 'image' ? '#000' : '#fff',
@@ -390,6 +557,28 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
               }}
             >
               🖼️ Image
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setCommentType('video')
+                setSelectedMeme(null)
+                setSelectedGif(null)
+                setImageUrl('')
+                setGifSearchTerm('')
+                setGifs([])
+              }}
+              style={{
+                backgroundColor: commentType === 'video' ? '#ff4444' : '#333',
+                color: commentType === 'video' ? '#000' : '#fff',
+                border: 'none',
+                borderRadius: '20px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                cursor: 'pointer'
+              }}
+            >
+              🎥 Video
             </button>
           </div>
 
@@ -405,26 +594,253 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                   borderRadius: '8px'
                 }}>
                   <img 
-                    src={selectedMeme.url} 
-                    alt={selectedMeme.caption}
+                    src={selectedMeme.template_url} 
+                    alt={selectedMeme.title}
                     style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
                   />
                   <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
-                    {selectedMeme.caption}
+                    {selectedMeme.title}
                   </div>
                 </div>
               )}
             </div>
           )}
 
-          {/* Image URL Input */}
-          {commentType === 'image' && (
+          {/* GIF Selector */}
+          {commentType === 'gif' && (
             <div style={{ marginBottom: '15px' }}>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginBottom: '10px'
+              }}>
+                <input
+                  type="text"
+                  placeholder="Search for GIFs..."
+                  value={gifSearchTerm}
+                  onChange={(e) => {
+                    setGifSearchTerm(e.target.value)
+                    if (e.target.value.length > 2) {
+                      searchGifs(e.target.value)
+                    } else {
+                      setGifs([])
+                    }
+                  }}
+                  style={{
+                    flex: 1,
+                    backgroundColor: '#2a2a2a',
+                    border: '1px solid #333',
+                    borderRadius: '8px',
+                    padding: '12px',
+                    color: '#ffffff',
+                    fontSize: '14px'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => searchGifs(gifSearchTerm)}
+                  disabled={!gifSearchTerm.trim() || loadingGifs}
+                  style={{
+                    backgroundColor: '#ff00ff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 16px',
+                    color: '#000',
+                    fontSize: '14px',
+                    cursor: loadingGifs ? 'not-allowed' : 'pointer',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {loadingGifs ? '🔄' : '🔍'}
+                </button>
+              </div>
+              
+              {/* Popular GIF searches */}
+              <div style={{
+                display: 'flex',
+                gap: '5px',
+                marginBottom: '10px',
+                flexWrap: 'wrap'
+              }}>
+                {['football', 'celebration', 'reaction', 'excited', 'goal', 'win', 'epic'].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setGifSearchTerm(term)
+                      searchGifs(term)
+                    }}
+                    style={{
+                      backgroundColor: '#444',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '4px 8px',
+                      color: '#fff',
+                      fontSize: '11px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+
+              {/* GIF Grid */}
+              {gifs.length > 0 && (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: '8px',
+                  maxHeight: '300px',
+                  overflowY: 'auto',
+                  padding: '10px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px'
+                }}>
+                  {gifs.map((gif) => (
+                    <button
+                      key={gif.id}
+                      type="button"
+                      onClick={() => selectGif(gif)}
+                      style={{
+                        backgroundColor: 'transparent',
+                        border: selectedGif?.id === gif.id ? '2px solid #ff00ff' : '2px solid transparent',
+                        borderRadius: '6px',
+                        padding: '4px',
+                        cursor: 'pointer',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <img
+                        src={gif.images.fixed_height_small.url}
+                        alt={gif.title}
+                        style={{
+                          width: '100%',
+                          height: '80px',
+                          objectFit: 'cover',
+                          borderRadius: '4px'
+                        }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {selectedGif && (
+                <div style={{
+                  marginTop: '10px',
+                  padding: '10px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px',
+                  textAlign: 'center'
+                }}>
+                  <img 
+                    src={selectedGif.images.fixed_height.url}
+                    alt={selectedGif.title}
+                    style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: '#888', marginTop: '5px' }}>
+                    {selectedGif.title}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedGif(null)
+                      setImageUrl('')
+                    }}
+                    style={{
+                      backgroundColor: '#666',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '6px 12px',
+                      color: '#fff',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      marginTop: '8px'
+                    }}
+                  >
+                    Remove GIF
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* File Upload for Images and Videos */}
+          {(commentType === 'image' || commentType === 'video') && (
+            <div style={{ marginBottom: '15px' }}>
+              <div style={{
+                display: 'flex',
+                gap: '10px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ position: 'relative', flex: 1 }}>
+                  <input
+                    type="file"
+                    accept={commentType === 'image' ? 'image/*' : 'video/*'}
+                    onChange={handleFileSelect}
+                    style={{ display: 'none' }}
+                    id="file-upload"
+                  />
+                  <label
+                    htmlFor="file-upload"
+                    style={{
+                      backgroundColor: selectedFile ? '#00ff88' : '#444',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%'
+                    }}
+                  >
+                    📎 {selectedFile ? `${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)` : `Upload ${commentType === 'image' ? 'Image' : 'Video'}`}
+                  </label>
+                </div>
+                {selectedFile && (
+                  <button
+                    type="button"
+                    onClick={removeFile}
+                    style={{
+                      backgroundColor: '#ff4444',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+              
+              <div style={{ 
+                fontSize: '12px', 
+                color: '#888', 
+                textAlign: 'center',
+                marginBottom: '10px'
+              }}>
+                OR
+              </div>
+              
               <input
                 type="url"
-                placeholder="Enter image URL..."
+                placeholder={`Enter ${commentType} URL...`}
                 value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
+                onChange={(e) => {
+                  setImageUrl(e.target.value)
+                  if (e.target.value) {
+                    setSelectedFile(null)
+                    setFilePreview(null)
+                  }
+                }}
                 style={{
                   width: '100%',
                   backgroundColor: '#2a2a2a',
@@ -435,19 +851,57 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                   fontSize: '14px'
                 }}
               />
-              {imageUrl && (
+              
+              {/* File Preview */}
+              {selectedFile && filePreview && (
+                <div style={{
+                  marginTop: '10px',
+                  textAlign: 'center',
+                  padding: '10px',
+                  backgroundColor: '#2a2a2a',
+                  borderRadius: '8px'
+                }}>
+                  {selectedFile.type.startsWith('image/') ? (
+                    <img 
+                      src={filePreview} 
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                    />
+                  ) : (
+                    <video
+                      src={filePreview}
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      controls
+                    />
+                  )}
+                </div>
+              )}
+              
+              {/* URL Preview */}
+              {imageUrl && !selectedFile && (
                 <div style={{
                   marginTop: '10px',
                   textAlign: 'center'
                 }}>
-                  <img 
-                    src={imageUrl} 
-                    alt="Preview"
-                    style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
-                    onError={(e) => {
-                      e.target.style.display = 'none'
-                    }}
-                  />
+                  {imageUrl.includes('.mp4') || imageUrl.includes('.webm') || imageUrl.includes('.ogg') ? (
+                    <video
+                      src={imageUrl}
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      controls
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  ) : (
+                    <img 
+                      src={imageUrl} 
+                      alt="Preview"
+                      style={{ maxWidth: '200px', maxHeight: '150px', borderRadius: '4px' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none'
+                      }}
+                    />
+                  )}
                 </div>
               )}
             </div>
@@ -488,7 +942,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
               onChange={(e) => setNewComment(e.target.value)}
               placeholder={
                 commentType === 'meme' ? 'Add a caption for your meme...' :
+                commentType === 'gif' ? 'Add a caption for your GIF...' :
                 commentType === 'image' ? 'Add a description for your image...' :
+                commentType === 'video' ? 'Add a description for your video...' :
                 `Share your thoughts about this ${entityType}...`
               }
               style={{
@@ -505,19 +961,19 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             />
             <button
               type="submit"
-              disabled={!newComment.trim() && !selectedMeme && !imageUrl}
+              disabled={uploading || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif)}
               style={{
-                backgroundColor: (newComment.trim() || selectedMeme || imageUrl) ? '#00ff88' : '#333',
+                backgroundColor: uploading ? '#666' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile || selectedGif) ? '#00ff88' : '#333'),
                 border: 'none',
                 borderRadius: '8px',
                 padding: '12px 20px',
-                color: (newComment.trim() || selectedMeme || imageUrl) ? '#000' : '#666',
+                color: uploading ? '#888' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile || selectedGif) ? '#000' : '#666'),
                 fontSize: '14px',
-                cursor: (newComment.trim() || selectedMeme || imageUrl) ? 'pointer' : 'not-allowed',
+                cursor: uploading ? 'not-allowed' : ((newComment.trim() || selectedMeme || imageUrl || selectedFile || selectedGif) ? 'pointer' : 'not-allowed'),
                 fontWeight: 'bold'
               }}
             >
-              Post (+{commentType === 'meme' || commentType === 'image' ? '15' : '10'} XP)
+              {uploading ? 'Uploading...' : `Post (+${commentType === 'meme' || commentType === 'gif' || commentType === 'image' || commentType === 'video' ? '15' : '10'} XP)`}
             </button>
           </div>
         </form>
