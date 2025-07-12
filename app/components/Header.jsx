@@ -12,6 +12,17 @@ export default function Header() {
 
   useEffect(() => {
     getCurrentUser()
+    
+    // Listen for user profile updates from other pages
+    const handleUserProfileUpdate = (event) => {
+      setUserProfile(event.detail)
+    }
+    
+    window.addEventListener('userProfileUpdated', handleUserProfileUpdate)
+    
+    return () => {
+      window.removeEventListener('userProfileUpdated', handleUserProfileUpdate)
+    }
   }, [])
 
   const getCurrentUser = async () => {
@@ -50,7 +61,7 @@ export default function Header() {
     { href: '/players', label: 'Players', paths: ['/players'] },
     { href: '/matches', label: 'Matches', paths: ['/matches'] },
     { href: '/live', label: 'Live', paths: ['/live'] },
-    { href: '/dashboard', label: 'Dashboard', paths: ['/dashboard'] }
+    { href: '/rewards', label: 'Rewards', paths: ['/rewards'] }
   ]
 
   const isActivePath = (item) => {
