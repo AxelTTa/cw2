@@ -49,10 +49,11 @@ export default function Players() {
       setLoading(true)
       setError(null)
       
-      console.log('🚀 Frontend: Starting players fetch from API...')
+      console.log('🚀 Frontend: Starting players fetch from API (first 25)...')
       console.log('📅 Frontend: Current time:', new Date().toISOString())
       
-      const response = await fetch('/api/players', {
+      // Load first 25 players
+      const response = await fetch(`/api/players?limit=${playersPerPage}&offset=0`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -85,12 +86,10 @@ export default function Players() {
       
       const playersData = apiData.players
       
-      console.log('✅ Frontend: Successfully received players data:', {
+      console.log('✅ Frontend: Successfully received first 25 players:', {
         playersCount: playersData?.length || 0,
         firstPlayer: playersData?.[0]?.player?.name || 'None',
         timestamp: new Date().toISOString(),
-        fullPlayersData: playersData,
-        playersDataStructure: playersData?.length > 0 ? Object.keys(playersData[0]) : [],
         firstFewPlayers: playersData?.slice(0, 3)
       })
       
@@ -100,14 +99,18 @@ export default function Players() {
         return
       }
       
-      // Extract unique teams
+      // Extract unique teams from first batch
       const uniqueTeams = [...new Set(playersData.map(p => p.team?.name).filter(Boolean))]
         .sort()
       setTeams(uniqueTeams)
       
-      setAllPlayers(playersData)
+      setLoadedPlayers(playersData)
       setFilteredPlayers(playersData)
-      setDisplayedPlayers(playersData.slice(0, playersPerPage))
+      setDisplayedPlayers(playersData)
+      
+      // Start loading remaining players in background
+      loadRemainingPlayersInBackground()
+      
     } catch (err) {
       console.error('❌ Frontend: Error loading players:', {
         error: err.message,
@@ -131,7 +134,53 @@ export default function Players() {
       setError(errorMessage)
     } finally {
       setLoading(false)
-      console.log('🏁 Frontend: Players fetch completed')
+      console.log('🏁 Frontend: Initial players fetch completed')
+    }
+  }
+
+  async function loadRemainingPlayersInBackground() {
+    try {
+      setBackgroundLoading(true)
+      console.log('🔄 Frontend: Loading remaining players in background...')
+      
+      // Load all players
+      const response = await fetch('/api/players', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        console.warn('Failed to load all players in background')
+        return
+      }
+      
+      const apiData = await response.json()
+      const allPlayersData = apiData.players
+      
+      if (allPlayersData && allPlayersData.length > playersPerPage) {
+        console.log('✅ Frontend: All players loaded in background:', {
+          totalPlayers: allPlayersData.length,
+          additionalPlayers: allPlayersData.length - playersPerPage
+        })
+        
+        // Extract all unique teams
+        const allUniqueTeams = [...new Set(allPlayersData.map(p => p.team?.name).filter(Boolean))]
+          .sort()
+        setTeams(allUniqueTeams)
+        
+        setAllPlayers(allPlayersData)
+        
+        // If user hasn't filtered yet, update the filtered players to include all
+        if (loadedPlayers.length === filteredPlayers.length && !searchTerm && !selectedTeam && !selectedPosition) {
+          setFilteredPlayers(allPlayersData)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load all players in background:', err)
+    } finally {
+      setBackgroundLoading(false)
     }
   }
 
@@ -141,8 +190,8 @@ export default function Players() {
     const datasetToFilter = allPlayers.length > 0 ? allPlayers : loadedPlayers
     let filtered = datasetToFilter
 
-    // Check if we're searching for something not in loaded players
-    if (searchTerm && allPlayers.length === 0) {
+    // Show loading indicator if searching but all players aren't loaded yet
+    if ((searchTerm || selectedTeam || selectedPosition) && allPlayers.length === 0) {
       setSearchLoading(true)
     } else {
       setSearchLoading(false)
@@ -680,7 +729,6 @@ export default function Players() {
             { href: '/players', label: 'Players', active: true },
             { href: '/stats', label: 'Stats' },
             { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
             { href: '/about', label: 'About' },
             { href: '/rewards', label: 'Rewards' }
           ].map((item, index) => (
@@ -718,7 +766,6 @@ export default function Players() {
             { href: '/players', label: 'Players', active: true },
             { href: '/stats', label: 'Stats' },
             { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
             { href: '/about', label: 'About' },
             { href: '/rewards', label: 'Rewards' }
           ].map((item, index) => (
@@ -1307,9 +1354,11 @@ export default function Players() {
                     border: '2px solid #00ff88'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#00ff88' }}>
-                      {allPlayers.length}
+                      {allPlayers.length > 0 ? allPlayers.length : `${loadedPlayers.length}+`}
                     </div>
-                    <div style={{ fontSize: '16px', color: '#888' }}>Total Players</div>
+                    <div style={{ fontSize: '16px', color: '#888' }}>
+                      {allPlayers.length > 0 ? 'Total Players' : 'Players Loaded'}
+                    </div>
                   </div>
                   <div style={{
                     padding: '20px',
@@ -1329,7 +1378,7 @@ export default function Players() {
                     border: '2px solid #ff6b35'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ff6b35' }}>
-                      {allPlayers.filter(p => p.player?.position === 'Goalkeeper').length}
+                      {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Goalkeeper').length}
                     </div>
                     <div style={{ fontSize: '16px', color: '#888' }}>Goalkeepers</div>
                   </div>
@@ -1340,7 +1389,7 @@ export default function Players() {
                     border: '2px solid #ef4444'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444' }}>
-                      {allPlayers.filter(p => p.player?.position === 'Attacker').length}
+                      {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Attacker').length}
                     </div>
                     <div style={{ fontSize: '16px', color: '#888' }}>Attackers</div>
                   </div>
