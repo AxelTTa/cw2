@@ -335,7 +335,25 @@ export async function POST(request) {
 // Manual test endpoint for devs
 export async function PUT(request) {
   try {
-    const { action, amount = 0.001, user_id, wallet_address } = await request.json() // Default test amount is 0.001 CHZ
+    // Debug: Log raw request body
+    const rawBody = await request.text()
+    console.log('🔍 Raw request body:', rawBody)
+    console.log('🔍 Raw body length:', rawBody.length)
+    
+    // Parse the JSON
+    let parsedBody
+    try {
+      parsedBody = JSON.parse(rawBody)
+      console.log('🔍 Parsed body:', parsedBody)
+    } catch (parseError) {
+      console.error('❌ JSON parse error:', parseError)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Invalid JSON in request body' 
+      }, { status: 400 })
+    }
+    
+    const { action, amount = 0.001, user_id, wallet_address } = parsedBody
     
     console.log(`🧪 Test transaction request:`, {
       action,

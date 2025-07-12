@@ -145,11 +145,15 @@ export default function DailyLeaderboard() {
         ...requestBody,
         wallet_address: `${requestBody.wallet_address.slice(0, 6)}...${requestBody.wallet_address.slice(-4)}`
       })
+      
+      const bodyString = JSON.stringify(requestBody)
+      console.log('📦 Request body string:', bodyString)
+      console.log('📦 Request body length:', bodyString.length)
 
       const response = await fetch('/api/daily-rewards', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody)
+        body: bodyString
       })
       
       const data = await response.json()
