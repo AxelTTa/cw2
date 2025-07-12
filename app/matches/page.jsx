@@ -89,8 +89,8 @@ export default function Matches() {
       <Header />
 
       {/* Main Content */}
-      <main style={{ padding: '40px 20px' }}>
-        <h1 style={{
+      <main className="mobile-main" style={{ padding: '40px 20px' }}>
+        <h1 className="mobile-page-title" style={{
           fontSize: '36px',
           fontWeight: '700',
           marginBottom: '30px',
@@ -157,9 +157,9 @@ export default function Matches() {
 
         {/* Matches Grid */}
         {!loading && !error && (
-          <div style={{
+          <div className="mobile-matches-grid" style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
             gap: '20px'
           }}>
             {matches.map((match) => (
@@ -325,6 +325,39 @@ export default function Matches() {
           </div>
         )}
       </main>
+
+      <style jsx>{`
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-main {
+            padding: 20px 15px !important;
+          }
+          
+          .mobile-matches-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-match-card {
+            padding: 15px !important;
+          }
+          
+          .mobile-page-title {
+            font-size: 32px !important;
+          }
+          
+          .mobile-filters {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-page-title {
+            font-size: 28px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

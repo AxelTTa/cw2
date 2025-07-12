@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.yourname.Clutch',
+  appId: 'app.cw2.clutch',
   appName: 'Clutch',
   webDir: 'dist',
   server: {
