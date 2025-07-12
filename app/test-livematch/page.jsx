@@ -45,11 +45,11 @@ const Button = ({ children, onClick, variant = 'default', size = 'default', clas
   }
   
   const variants = {
-    default: { backgroundColor: '#2563eb', color: 'white', padding: '10px 16px' },
-    secondary: { backgroundColor: '#e5e7eb', color: '#111827', padding: '10px 16px' },
-    outline: { border: '1px solid #d1d5db', backgroundColor: 'transparent', padding: '9px 15px' },
-    ghost: { backgroundColor: 'transparent', padding: '10px 16px' },
-    destructive: { backgroundColor: '#dc2626', color: 'white', padding: '10px 16px' }
+    default: { backgroundColor: '#00ff88', color: '#000', padding: '10px 16px' },
+    secondary: { backgroundColor: '#333', color: '#ffffff', padding: '10px 16px' },
+    outline: { border: '2px solid #00ff88', backgroundColor: 'transparent', color: '#00ff88', padding: '9px 15px' },
+    ghost: { backgroundColor: 'transparent', color: '#ffffff', padding: '10px 16px' },
+    destructive: { backgroundColor: '#ff4444', color: 'white', padding: '10px 16px' }
   }
   
   const sizes = {
@@ -77,11 +77,11 @@ const Button = ({ children, onClick, variant = 'default', size = 'default', clas
 
 const Card = ({ children, className = '' }) => {
   const cardStyles = {
-    borderRadius: '8px',
-    border: '1px solid #e5e7eb',
-    backgroundColor: 'white',
-    boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-    padding: '16px'
+    borderRadius: '12px',
+    border: '2px solid #333',
+    backgroundColor: '#111',
+    boxShadow: '0 4px 6px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)',
+    padding: '24px'
   }
   
   return (
@@ -93,10 +93,10 @@ const Card = ({ children, className = '' }) => {
 
 const Badge = ({ children, variant = 'default', className = '' }) => {
   const variants = {
-    default: { backgroundColor: '#dbeafe', color: '#1e40af' },
-    secondary: { backgroundColor: '#f3f4f6', color: '#374151' },
-    destructive: { backgroundColor: '#fecaca', color: '#dc2626' },
-    success: { backgroundColor: '#dcfce7', color: '#16a34a' }
+    default: { backgroundColor: '#0099ff40', color: '#0099ff' },
+    secondary: { backgroundColor: '#333', color: '#ffffff' },
+    destructive: { backgroundColor: '#ff444440', color: '#ff4444' },
+    success: { backgroundColor: '#00ff8840', color: '#00ff88' }
   }
   
   const badgeStyles = {
@@ -118,8 +118,8 @@ const Badge = ({ children, variant = 'default', className = '' }) => {
 
 const Skeleton = ({ className = '', style = {} }) => {
   const skeletonStyles = {
-    backgroundColor: '#e5e7eb',
-    borderRadius: '4px',
+    backgroundColor: '#333',
+    borderRadius: '8px',
     ...style
   }
   
@@ -714,7 +714,7 @@ function TestLiveMatchContent() {
   if (loading) {
     logger.info('Rendering loading state')
     return (
-      <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#f9fafb' }}>
+      <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#0a0a0a' }}>
         <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
           <Skeleton style={{ height: '32px', width: '256px', marginBottom: '24px' }} />
           <Skeleton style={{ height: '256px', width: '100%', marginBottom: '24px' }} />
@@ -741,17 +741,18 @@ function TestLiveMatchContent() {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '16px',
-        backgroundColor: '#f9fafb'
+        backgroundColor: '#0a0a0a'
       }}>
         <div style={{ textAlign: 'center', maxWidth: '28rem' }}>
           <div style={{ fontSize: '60px', marginBottom: '16px' }}>⚠️</div>
           <h1 style={{
             fontSize: '24px',
             fontWeight: '700',
-            marginBottom: '8px'
+            marginBottom: '8px',
+            color: '#ffffff'
           }}>Unable to load match</h1>
           <p style={{
-            color: '#4b5563',
+            color: '#cccccc',
             marginBottom: '24px'
           }}>{error}</p>
           <div style={{
@@ -775,7 +776,8 @@ function TestLiveMatchContent() {
   
   const containerStyles = {
     minHeight: '100vh',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#0a0a0a',
+    color: '#ffffff',
     fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
   }
   
@@ -783,8 +785,8 @@ function TestLiveMatchContent() {
     <div style={containerStyles}>
       {/* Header Navigation */}
       <div style={{
-        borderBottom: '1px solid #e5e7eb',
-        backgroundColor: 'white',
+        borderBottom: '1px solid #333',
+        backgroundColor: '#111',
         position: 'sticky',
         top: 0,
         zIndex: 40
@@ -845,16 +847,16 @@ function TestLiveMatchContent() {
 
         {/* Debug Information Panel */}
         <div style={{
-          backgroundColor: '#eff6ff',
-          border: '1px solid #bfdbfe',
-          borderRadius: '8px',
-          padding: '16px',
+          backgroundColor: '#111',
+          border: '2px solid #333',
+          borderRadius: '12px',
+          padding: '20px',
           marginBottom: '24px'
         }}>
           <h3 style={{
             fontSize: '18px',
             fontWeight: '600',
-            color: '#1e40af',
+            color: '#00ff88',
             marginBottom: '8px'
           }}>🐛 Debug Information</h3>
           <div style={{
@@ -892,9 +894,9 @@ function TestLiveMatchContent() {
             <div style={{
               marginTop: '8px',
               padding: '8px',
-              backgroundColor: '#fecaca',
-              color: '#991b1b',
-              borderRadius: '4px',
+              backgroundColor: '#ff444440',
+              color: '#ff4444',
+              borderRadius: '8px',
               fontSize: '14px'
             }}>
               <strong>Error Details:</strong> {error}
@@ -1048,35 +1050,36 @@ class ErrorBoundary extends React.Component {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '16px',
-          backgroundColor: '#f9fafb'
+          backgroundColor: '#0a0a0a'
         }}>
           <div style={{ textAlign: 'center', maxWidth: '32rem' }}>
             <div style={{ fontSize: '60px', marginBottom: '16px' }}>💥</div>
             <h1 style={{
               fontSize: '24px',
               fontWeight: '700',
-              marginBottom: '8px'
+              marginBottom: '8px',
+              color: '#ffffff'
             }}>Component Error</h1>
             <p style={{
-              color: '#4b5563',
+              color: '#cccccc',
               marginBottom: '16px'
             }}>The test-livematch component encountered an error.</p>
             <div style={{
-              backgroundColor: '#fef2f2',
-              border: '1px solid #fecaca',
-              borderRadius: '8px',
+              backgroundColor: '#ff444420',
+              border: '2px solid #ff4444',
+              borderRadius: '12px',
               padding: '16px',
               textAlign: 'left',
               marginBottom: '16px'
             }}>
               <h3 style={{
                 fontWeight: '600',
-                color: '#991b1b',
+                color: '#ff4444',
                 marginBottom: '8px'
               }}>Error Details:</h3>
               <pre style={{
                 fontSize: '14px',
-                color: '#b91c1c',
+                color: '#ff8888',
                 whiteSpace: 'pre-wrap',
                 fontFamily: 'monospace'
               }}>
@@ -1088,13 +1091,13 @@ class ErrorBoundary extends React.Component {
             <button 
               onClick={() => window.location.reload()}
               style={{
-                padding: '10px 16px',
-                backgroundColor: '#2563eb',
-                color: 'white',
-                borderRadius: '6px',
+                padding: '12px 24px',
+                backgroundColor: '#00ff88',
+                color: '#000',
+                borderRadius: '8px',
                 border: 'none',
                 cursor: 'pointer',
-                fontWeight: '500'
+                fontWeight: '600'
               }}
             >
               Reload Page
@@ -1113,22 +1116,22 @@ export default function TestLiveMatch() {
   logger.info('TestLiveMatch wrapper component rendering')
   
   const suspenseFallback = (
-    <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#f9fafb' }}>
+    <div style={{ minHeight: '100vh', padding: '16px', backgroundColor: '#0a0a0a' }}>
       <div style={{ maxWidth: '80rem', margin: '0 auto' }}>
         <div style={{
-          backgroundColor: '#fefce8',
-          border: '1px solid #facc15',
-          borderRadius: '8px',
-          padding: '16px',
+          backgroundColor: '#111',
+          border: '2px solid #ffdd00',
+          borderRadius: '12px',
+          padding: '20px',
           marginBottom: '24px'
         }}>
           <h3 style={{
             fontSize: '18px',
             fontWeight: '600',
-            color: '#a16207',
+            color: '#ffdd00',
             marginBottom: '8px'
           }}>⏳ Loading Test LiveMatch...</h3>
-          <p style={{ color: '#a16207' }}>Initializing component and fetching match data...</p>
+          <p style={{ color: '#cccccc' }}>Initializing component and fetching match data...</p>
         </div>
         <Skeleton style={{ height: '32px', width: '256px', marginBottom: '24px' }} />
         <Skeleton style={{ height: '256px', width: '100%', marginBottom: '24px' }} />

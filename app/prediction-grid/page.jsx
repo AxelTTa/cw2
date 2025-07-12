@@ -370,8 +370,11 @@ export default function PredictionGrid() {
 
   // Initialize user and data
   useEffect(() => {
-    checkUser()
-    loadLiveMatches()
+    const initializeApp = async () => {
+      await checkUser()
+      await loadLiveMatches()
+    }
+    initializeApp()
   }, [])
 
   // Auto-refresh predictions every 10 seconds
@@ -408,6 +411,7 @@ export default function PredictionGrid() {
     } catch (error) {
       console.error('Auth error:', error)
       setError(error.message)
+      setLoading(false)
     }
   }
 
@@ -432,8 +436,15 @@ export default function PredictionGrid() {
       if (matches && matches.length > 0 && !selectedMatch) {
         setSelectedMatch(matches[0])
       }
+      
+      // Set loading to false if no matches or user not authenticated
+      if (!matches || matches.length === 0 || !user) {
+        setLoading(false)
+      }
     } catch (error) {
       console.error('Failed to load live matches:', error)
+      setLoading(false)
+      setError(error.message)
     }
   }
 
@@ -556,6 +567,51 @@ export default function PredictionGrid() {
           <div style={{ textAlign: 'center', padding: '40px' }}>
             <div style={{ fontSize: '24px', marginBottom: '16px' }}>🎯</div>
             <h2>Loading Prediction Grid...</h2>
+            {error && (
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                backgroundColor: '#fef2f2',
+                borderRadius: '6px',
+                color: '#991b1b'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (error && !loading) {
+    return (
+      <div style={{ 
+        minHeight: '100vh', 
+        padding: '20px',
+        backgroundColor: '#f9fafb',
+        fontFamily: 'system-ui, sans-serif'
+      }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '24px', marginBottom: '16px' }}>❌</div>
+            <h2>Error Loading Prediction Grid</h2>
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#fef2f2',
+              borderRadius: '6px',
+              color: '#991b1b'
+            }}>
+              {error}
+            </div>
+            <Button 
+              variant="chz" 
+              onClick={() => window.location.reload()}
+              style={{ marginTop: '16px' }}
+            >
+              Try Again
+            </Button>
           </div>
         </div>
       </div>
@@ -628,8 +684,15 @@ export default function PredictionGrid() {
           <h3 style={{ marginTop: 0, marginBottom: '16px' }}>🔴 Live Matches</h3>
           
           {liveMatches.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#6b7280' }}>
-              No live matches available for predictions
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏟️</div>
+              <h3 style={{ marginBottom: '8px', color: '#111827' }}>No Live Matches</h3>
+              <p style={{ color: '#6b7280', marginBottom: '24px' }}>
+                There are currently no live matches available for predictions.
+              </p>
+              <Button variant="outline" onClick={loadLiveMatches}>
+                🔄 Refresh Matches
+              </Button>
             </div>
           ) : (
             <div style={{
