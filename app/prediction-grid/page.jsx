@@ -190,7 +190,7 @@ const PredictionCard = ({ prediction, onPlaceBet, userBalance, existingBet }) =>
   const totalStakes = prediction.pools?.reduce((sum, pool) => sum + parseFloat(pool.total_stakes || 0), 0) || 0
   const isExpired = new Date(prediction.expires_at) <= new Date()
   const isSettled = prediction.status === 'settled'
-  const canBet = !isExpired && !isSettled && !existingBet && userBalance >= parseFloat(prediction.stake_amount)
+  const canBet = !isExpired && !isSettled && !existingBet && user && userBalance >= parseFloat(prediction.stake_amount)
 
   const handlePlaceBet = async () => {
     if (!selectedOption || !canBet || isPlacing) return
@@ -340,7 +340,25 @@ const PredictionCard = ({ prediction, onPlaceBet, userBalance, existingBet }) =>
         </div>
       )}
 
-      {!canBet && !existingBet && !isSettled && !isExpired && (
+      {!user && !isSettled && !isExpired && (
+        <div style={{
+          marginTop: '16px',
+          padding: '12px 16px',
+          backgroundColor: '#f0f9ff',
+          borderRadius: '6px',
+          border: '1px solid #bae6fd',
+          textAlign: 'center'
+        }}>
+          <div style={{ fontSize: '14px', color: '#0369a1', marginBottom: '8px' }}>
+            🔐 Login required to place bets
+          </div>
+          <Button variant="chz" onClick={() => window.location.href = '/login'}>
+            Login to Bet
+          </Button>
+        </div>
+      )}
+
+      {user && !canBet && !existingBet && !isSettled && !isExpired && (
         <div style={{
           marginTop: '16px',
           padding: '8px 12px',
@@ -388,71 +406,147 @@ export default function PredictionGrid() {
 
   const checkUser = async () => {
     try {
+      console.log('🔍 Checking user authentication...')
+      
+      // Try to get user session, but don't redirect if not found
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError) {
+        console.error('❌ Session error:', sessionError)
+        // Don't throw error, just continue without auth
+      }
+      
+      if (!session) {
+        console.log('⚠️ No active session found, continuing as guest')
+        setUser(null)
+        setUserBalance(0)
+        return
+      }
+      
+      console.log('✅ Session found, getting user details')
       const { data: { user }, error } = await supabase.auth.getUser()
-      if (error) throw error
-
-      if (!user) {
-        router.push('/login')
+      if (error) {
+        console.error('❌ User error:', error)
+        setUser(null)
+        setUserBalance(0)
         return
       }
 
+      if (!user) {
+        console.log('⚠️ No user found, continuing as guest')
+        setUser(null)
+        setUserBalance(0)
+        return
+      }
+
+      console.log('✅ User authenticated:', user.email)
       setUser(user)
       
       // Get user profile and balance
+      console.log('🔍 Fetching user profile and balance...')
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('fan_tokens, username')
         .eq('id', user.id)
         .single()
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('❌ Profile error:', profileError)
+        setUserBalance(0)
+        return
+      }
+      
+      console.log('✅ User profile loaded, balance:', profile.fan_tokens)
       setUserBalance(parseFloat(profile.fan_tokens || 0))
 
     } catch (error) {
-      console.error('Auth error:', error)
-      setError(error.message)
-      setLoading(false)
+      console.error('❌ Auth error:', error)
+      setUser(null)
+      setUserBalance(0)
     }
   }
 
   const loadLiveMatches = async () => {
     try {
-      const { data: matches, error } = await supabase
+      console.log('🔍 Loading matches for predictions...')
+      
+      // Get live matches first
+      const { data: liveMatches, error: liveError } = await supabase
         .from('matches')
         .select(`
-          id, home_team, away_team, date, status,
-          home_team_info:teams!matches_home_team_fkey(name, logo),
-          away_team_info:teams!matches_away_team_fkey(name, logo)
+          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
+          home_team_logo, away_team_logo, league
         `)
         .in('status', ['1H', '2H', 'HT', 'ET', 'P'])
-        .order('date', { ascending: true })
-        .limit(10)
+        .order('match_date', { ascending: true })
+        .limit(5)
 
-      if (error) throw error
-      
-      setLiveMatches(matches || [])
-      
-      // Auto-select first live match
-      if (matches && matches.length > 0 && !selectedMatch) {
-        setSelectedMatch(matches[0])
+      // Get upcoming matches (next 7 days) 
+      const { data: upcomingMatches, error: upcomingError } = await supabase
+        .from('matches')
+        .select(`
+          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
+          home_team_logo, away_team_logo, league
+        `)
+        .eq('status', 'ns')
+        .gte('match_date', new Date().toISOString())
+        .lte('match_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('match_date', { ascending: true })
+        .limit(5)
+
+      // Get recent finished matches as backup
+      const { data: recentMatches, error: recentError } = await supabase
+        .from('matches')
+        .select(`
+          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
+          home_team_logo, away_team_logo, league
+        `)
+        .eq('status', 'ft')
+        .order('match_date', { ascending: false })
+        .limit(3)
+
+      if (liveError && upcomingError && recentError) {
+        console.error('❌ All match queries failed')
+        throw new Error('Failed to load any matches')
       }
       
-      // Set loading to false if no matches or user not authenticated
-      if (!matches || matches.length === 0 || !user) {
-        setLoading(false)
+      // Combine all matches with priority: live > upcoming > recent
+      const allMatches = [
+        ...(liveMatches || []),
+        ...(upcomingMatches || []),
+        ...(recentMatches || [])
+      ]
+      
+      console.log('✅ Matches loaded:', {
+        live: liveMatches?.length || 0,
+        upcoming: upcomingMatches?.length || 0,
+        recent: recentMatches?.length || 0,
+        total: allMatches.length
+      })
+      
+      setLiveMatches(allMatches)
+      
+      // Auto-select first match
+      if (allMatches && allMatches.length > 0 && !selectedMatch) {
+        console.log('🎯 Auto-selecting first match:', allMatches[0].home_team, 'vs', allMatches[0].away_team)
+        setSelectedMatch(allMatches[0])
       }
+      
+      // Always set loading to false after loading matches
+      setLoading(false)
+      
     } catch (error) {
-      console.error('Failed to load live matches:', error)
+      console.error('❌ Failed to load matches:', error)
       setLoading(false)
       setError(error.message)
     }
   }
 
   const loadPredictions = async () => {
-    if (!selectedMatch || !user) return
+    if (!selectedMatch) return
 
     try {
       setLoading(true)
+      console.log('🔍 Loading predictions for match:', selectedMatch.home_team, 'vs', selectedMatch.away_team)
 
       // Load active predictions for the match
       const { data: predictionsData, error: predictionsError } = await supabase
@@ -473,21 +567,26 @@ export default function PredictionGrid() {
 
       setPredictions(predictionsData || [])
 
-      // Load user's existing bets
-      const { data: betsData, error: betsError } = await supabase
-        .from('prediction_stakes')
-        .select('*')
-        .eq('user_id', user.id)
-        .in('market_id', (predictionsData || []).map(p => p.id))
+      // Load user's existing bets (only if user is logged in)
+      if (user) {
+        const { data: betsData, error: betsError } = await supabase
+          .from('prediction_stakes')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('market_id', (predictionsData || []).map(p => p.id))
 
-      if (betsError) throw betsError
+        if (betsError) throw betsError
 
-      // Create map of market_id -> bet
-      const betsMap = {}
-      betsData?.forEach(bet => {
-        betsMap[bet.market_id] = bet
-      })
-      setUserBets(betsMap)
+        // Create map of market_id -> bet
+        const betsMap = {}
+        betsData?.forEach(bet => {
+          betsMap[bet.market_id] = bet
+        })
+        setUserBets(betsMap)
+      } else {
+        // Clear bets if no user
+        setUserBets({})
+      }
 
     } catch (error) {
       console.error('Failed to load predictions:', error)
@@ -552,6 +651,38 @@ export default function PredictionGrid() {
     } catch (error) {
       console.error('Failed to generate prediction:', error)
       alert('❌ Failed to generate new prediction')
+    }
+  }
+
+  const createTestMatch = async () => {
+    try {
+      console.log('🧪 Creating test match...')
+      const { data: testMatch, error } = await supabase
+        .from('matches')
+        .insert({
+          home_team: 'Test FC',
+          away_team: 'Demo United',
+          league: 'Test League',
+          match_date: new Date().toISOString(),
+          status: '1H', // First half
+          home_score: 1,
+          away_score: 0
+        })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Failed to create test match:', error)
+        alert('❌ Failed to create test match: ' + error.message)
+        return
+      }
+
+      console.log('✅ Test match created:', testMatch)
+      await loadLiveMatches()
+      alert('🧪 Test match created successfully!')
+    } catch (error) {
+      console.error('❌ Error creating test match:', error)
+      alert('❌ Error creating test match')
     }
   }
 
@@ -660,16 +791,22 @@ export default function PredictionGrid() {
               alignItems: 'center',
               gap: '16px'
             }}>
-              <div style={{
-                padding: '8px 16px',
-                backgroundColor: '#FF6B35',
-                color: 'white',
-                borderRadius: '8px',
-                fontWeight: '600',
-                fontSize: '14px'
-              }}>
-                💰 {userBalance.toFixed(2)} CHZ
-              </div>
+              {user ? (
+                <div style={{
+                  padding: '8px 16px',
+                  backgroundColor: '#FF6B35',
+                  color: 'white',
+                  borderRadius: '8px',
+                  fontWeight: '600',
+                  fontSize: '14px'
+                }}>
+                  💰 {userBalance.toFixed(2)} CHZ
+                </div>
+              ) : (
+                <Button variant="chz" onClick={() => window.location.href = '/login'}>
+                  🔐 Login
+                </Button>
+              )}
               <Button variant="outline" onClick={() => router.push('/')}>
                 ← Back to Matches
               </Button>
@@ -681,18 +818,23 @@ export default function PredictionGrid() {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         {/* Match Selection */}
         <Card style={{ marginBottom: '24px' }}>
-          <h3 style={{ marginTop: 0, marginBottom: '16px' }}>🔴 Live Matches</h3>
+          <h3 style={{ marginTop: 0, marginBottom: '16px' }}>⚽ Available Matches</h3>
           
           {liveMatches.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px' }}>
               <div style={{ fontSize: '48px', marginBottom: '16px' }}>🏟️</div>
-              <h3 style={{ marginBottom: '8px', color: '#111827' }}>No Live Matches</h3>
+              <h3 style={{ marginBottom: '8px', color: '#111827' }}>No Matches Available</h3>
               <p style={{ color: '#6b7280', marginBottom: '24px' }}>
-                There are currently no live matches available for predictions.
+                No matches found for predictions. Try creating a test match or refreshing.
               </p>
-              <Button variant="outline" onClick={loadLiveMatches}>
-                🔄 Refresh Matches
-              </Button>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <Button variant="outline" onClick={loadLiveMatches}>
+                  🔄 Refresh Matches
+                </Button>
+                <Button variant="chz" onClick={createTestMatch}>
+                  🧪 Create Test Match
+                </Button>
+              </div>
             </div>
           ) : (
             <div style={{
@@ -714,10 +856,21 @@ export default function PredictionGrid() {
                 >
                   <div>
                     <div style={{ fontWeight: '600', marginBottom: '4px' }}>
-                      {match.home_team_info?.name || match.home_team} vs {match.away_team_info?.name || match.away_team}
+                      {match.home_team} vs {match.away_team}
                     </div>
                     <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                      <Badge variant="live">🔴 {match.status}</Badge>
+                      {match.status === 'ns' ? (
+                        <Badge variant="secondary">📅 Upcoming</Badge>
+                      ) : match.status === 'ft' ? (
+                        <Badge variant="success">✅ Finished</Badge>
+                      ) : (
+                        <Badge variant="live">🔴 {match.status}</Badge>
+                      )}
+                      {match.league && (
+                        <span style={{ marginLeft: '8px', fontSize: '11px', color: '#6b7280' }}>
+                          {match.league}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </Button>
@@ -737,10 +890,16 @@ export default function PredictionGrid() {
               }}>
                 <div>
                   <h2 style={{ margin: 0, marginBottom: '8px' }}>
-                    {selectedMatch.home_team_info?.name || selectedMatch.home_team} vs {selectedMatch.away_team_info?.name || selectedMatch.away_team}
+                    {selectedMatch.home_team} vs {selectedMatch.away_team}
                   </h2>
                   <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <Badge variant="live">🔴 LIVE</Badge>
+                    {selectedMatch.status === 'ns' ? (
+                      <Badge variant="secondary">📅 Upcoming</Badge>
+                    ) : selectedMatch.status === 'ft' ? (
+                      <Badge variant="success">✅ Finished</Badge>
+                    ) : (
+                      <Badge variant="live">🔴 LIVE</Badge>
+                    )}
                     <span style={{ fontSize: '14px', color: '#6b7280' }}>
                       {predictions.length} active predictions
                     </span>
