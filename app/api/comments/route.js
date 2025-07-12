@@ -55,9 +55,11 @@ export async function GET(request) {
       }, { status: 500 })
     }
 
-    // Get replies for each comment
+    // Get replies for each comment and user votes
+    const userId = searchParams.get('user_id') // Optional user ID for vote tracking
     const commentsWithReplies = await Promise.all(
       (comments || []).map(async (comment) => {
+        // Get replies recursively
         const { data: replies } = await supabaseAdmin
           .from('comments')
           .select(`
@@ -75,6 +77,33 @@ export async function GET(request) {
           .eq('parent_id', comment.id)
           .order('created_at', { ascending: true })
 
+        // Get replies with their nested replies (up to a reasonable depth)
+        const repliesWithNested = await Promise.all(
+          (replies || []).map(async (reply) => {
+            const { data: nestedReplies } = await supabaseAdmin
+              .from('comments')
+              .select(`
+                *,
+                profiles:user_id (
+                  id,
+                  username,
+                  display_name,
+                  avatar_url,
+                  level,
+                  xp,
+                  fan_tokens
+                )
+              `)
+              .eq('parent_id', reply.id)
+              .order('created_at', { ascending: true })
+
+            return {
+              ...reply,
+              replies: nestedReplies || []
+            }
+          })
+        )
+
         // Get reactions for this comment
         const { data: reactions } = await supabaseAdmin
           .from('reactions')
@@ -83,15 +112,45 @@ export async function GET(request) {
 
         return {
           ...comment,
-          replies: replies || [],
+          replies: repliesWithNested || [],
           reactions: reactions || []
         }
       })
     )
 
+    // Get user votes if user ID is provided
+    let userVotes = {}
+    if (userId) {
+      const allCommentIds = []
+      const collectCommentIds = (comments) => {
+        comments.forEach(comment => {
+          allCommentIds.push(comment.id)
+          if (comment.replies) {
+            collectCommentIds(comment.replies)
+          }
+        })
+      }
+      collectCommentIds(commentsWithReplies)
+
+      if (allCommentIds.length > 0) {
+        const { data: votes } = await supabaseAdmin
+          .from('comment_votes')
+          .select('comment_id, vote_type')
+          .eq('user_id', userId)
+          .in('comment_id', allCommentIds)
+
+        if (votes) {
+          votes.forEach(vote => {
+            userVotes[vote.comment_id] = vote.vote_type
+          })
+        }
+      }
+    }
+
     return NextResponse.json({
       success: true,
       comments: commentsWithReplies,
+      user_votes: userVotes,
       entity_type: entityType,
       entity_id: entityId
     })
@@ -184,6 +243,8 @@ export async function POST(request) {
       user_id,
       parent_id,
       is_meme,
+      meme_url,
+      meme_caption,
       image_url,
       comment_type
     })
@@ -276,17 +337,87 @@ export async function PATCH(request) {
 
     let result = {}
     
-    if (action === 'upvote') {
-      // Get current upvotes and increment
+    if (action === 'upvote' || action === 'downvote') {
+      if (!user_id) {
+        return NextResponse.json({ 
+          success: false, 
+          error: 'User ID is required for voting' 
+        }, { status: 400 })
+      }
+
+      // Check if user has already voted on this comment
+      const { data: existingVote } = await supabaseAdmin
+        .from('comment_votes')
+        .select('vote_type')
+        .eq('user_id', user_id)
+        .eq('comment_id', comment_id)
+        .single()
+
+      const isRemoving = existingVote && existingVote.vote_type === action
+      const isChangingVote = existingVote && existingVote.vote_type !== action
+
+      // Get current vote counts
       const { data: currentComment } = await supabaseAdmin
         .from('comments')
-        .select('upvotes')
+        .select('upvotes, downvotes')
         .eq('id', comment_id)
         .single()
-      
+
+      let newUpvotes = currentComment?.upvotes || 0
+      let newDownvotes = currentComment?.downvotes || 0
+
+      if (isRemoving) {
+        // Remove the vote
+        await supabaseAdmin
+          .from('comment_votes')
+          .delete()
+          .eq('user_id', user_id)
+          .eq('comment_id', comment_id)
+
+        if (action === 'upvote') {
+          newUpvotes = Math.max(0, newUpvotes - 1)
+        } else {
+          newDownvotes = Math.max(0, newDownvotes - 1)
+        }
+      } else if (isChangingVote) {
+        // Update the existing vote
+        await supabaseAdmin
+          .from('comment_votes')
+          .update({ vote_type: action })
+          .eq('user_id', user_id)
+          .eq('comment_id', comment_id)
+
+        if (action === 'upvote') {
+          newUpvotes += 1
+          newDownvotes = Math.max(0, newDownvotes - 1)
+        } else {
+          newDownvotes += 1
+          newUpvotes = Math.max(0, newUpvotes - 1)
+        }
+      } else {
+        // Add new vote
+        await supabaseAdmin
+          .from('comment_votes')
+          .insert({
+            user_id,
+            comment_id,
+            vote_type: action
+          })
+
+        if (action === 'upvote') {
+          newUpvotes += 1
+        } else {
+          newDownvotes += 1
+        }
+      }
+
+      // Update comment vote counts
       const { data: comment, error } = await supabaseAdmin
         .from('comments')
-        .update({ upvotes: (currentComment?.upvotes || 0) + 1 })
+        .update({ 
+          upvotes: newUpvotes,
+          downvotes: newDownvotes
+        })
         .eq('id', comment_id)
         .select(`
           *,
@@ -303,36 +434,11 @@ export async function PATCH(request) {
         .single()
 
       if (error) throw error
-      result = { comment }
-
-    } else if (action === 'downvote') {
-      // Get current downvotes and increment
-      const { data: currentComment } = await supabaseAdmin
-        .from('comments')
-        .select('downvotes')
-        .eq('id', comment_id)
-        .single()
-      
-      const { data: comment, error } = await supabaseAdmin
-        .from('comments')
-        .update({ downvotes: (currentComment?.downvotes || 0) + 1 })
-        .eq('id', comment_id)
-        .select(`
-          *,
-          profiles:user_id (
-            id,
-            username,
-            display_name,
-            avatar_url,
-            level,
-            xp,
-            fan_tokens
-          )
-        `)
-        .single()
-
-      if (error) throw error
-      result = { comment }
+      result = { 
+        comment,
+        action: isRemoving ? 'removed' : (isChangingVote ? 'changed' : 'added'),
+        vote_type: action
+      }
 
     } else if (action === 'reaction') {
       // Add or toggle reaction

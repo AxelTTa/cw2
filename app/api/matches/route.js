@@ -63,19 +63,28 @@ async function fetchAllMatches() {
   console.log('🏆 Backend Starting matches fetch from multiple competitions...')
   
   try {
-    // Try to get recent/current matches for 2025 season
+    // Prioritize Club World Cup for 2025 season
     const seasons = [2025, 2024, 2023]
     
     for (const season of seasons) {
       console.log(`🎯 Backend Trying season ${season} for Club World Cup matches`)
       
-      // Try to get matches from multiple leagues
+      // Try Club World Cup first, then other competitions
       const allMatches = []
-      const leagueIds = Object.values(LEAGUE_IDS)
+      const prioritizedLeagueIds = [
+        LEAGUE_IDS.CLUB_WORLD_CUP,
+        LEAGUE_IDS.CHAMPIONS_LEAGUE,
+        LEAGUE_IDS.PREMIER_LEAGUE,
+        LEAGUE_IDS.LA_LIGA,
+        LEAGUE_IDS.BUNDESLIGA
+      ]
       
-      for (const leagueId of leagueIds.slice(0, 5)) { // Limit to first 5 leagues to avoid API limits
+      for (const leagueId of prioritizedLeagueIds) {
         const endpoint = `/fixtures`
-        const url = `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=10`
+        // For Club World Cup, get more matches; for others, get recent and upcoming
+        const url = leagueId === LEAGUE_IDS.CLUB_WORLD_CUP 
+          ? `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&next=20`
+          : `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=5&next=5`
         
         logApiRequest(endpoint, { league: leagueId, season })
         
@@ -97,7 +106,7 @@ async function fetchAllMatches() {
           }
           
           // Small delay to avoid hitting rate limits
-          await new Promise(resolve => setTimeout(resolve, 100))
+          await new Promise(resolve => setTimeout(resolve, 150))
         } catch (err) {
           console.warn(`⚠️ Backend Failed to fetch from league ${leagueId}:`, err.message)
         }
@@ -129,11 +138,16 @@ async function fetchAllMatches() {
           venue: match.fixture.venue?.name || 'Unknown Venue',
           round: match.league.round,
           league: match.league.name,
-          season: match.league.season
+          season: match.league.season,
+          isClubWorldCup: match.league.id === LEAGUE_IDS.CLUB_WORLD_CUP
         }))
         
-        // Sort by date (most recent first)
-        matches.sort((a, b) => new Date(b.date) - new Date(a.date))
+        // Sort by priority: Club World Cup first, then by date
+        matches.sort((a, b) => {
+          if (a.isClubWorldCup && !b.isClubWorldCup) return -1
+          if (!a.isClubWorldCup && b.isClubWorldCup) return 1
+          return new Date(b.date) - new Date(a.date)
+        })
         
         console.log('📊 Backend Sample matches:', matches.slice(0, 3).map(m => ({
           id: m.id,
@@ -142,7 +156,8 @@ async function fetchAllMatches() {
           score: `${m.score.home}-${m.score.away}`,
           status: m.status,
           date: m.date,
-          league: m.league
+          league: m.league,
+          isClubWorldCup: m.isClubWorldCup
         })))
         
         return matches
@@ -176,29 +191,65 @@ function getMockMatches() {
     { id: 541, name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png' },
     { id: 496, name: 'Juventus', logo: 'https://media.api-sports.io/football/teams/496.png' },
     { id: 127, name: 'Flamengo', logo: 'https://media.api-sports.io/football/teams/127.png' },
-    { id: 9568, name: 'Inter Miami', logo: 'https://media.api-sports.io/football/teams/9568.png' }
+    { id: 9568, name: 'Inter Miami', logo: 'https://media.api-sports.io/football/teams/9568.png' },
+    { id: 128, name: 'River Plate', logo: 'https://media.api-sports.io/football/teams/128.png' },
+    { id: 131, name: 'Boca Juniors', logo: 'https://media.api-sports.io/football/teams/131.png' },
+    { id: 2274, name: 'Al Hilal', logo: 'https://media.api-sports.io/football/teams/2274.png' },
+    { id: 2281, name: 'Al Nassr', logo: 'https://media.api-sports.io/football/teams/2281.png' }
   ]
   
-  const statuses = ['ft', 'live', 'ns']
   const rounds = ['Group Stage', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final']
+  const competitions = [
+    { name: 'FIFA Club World Cup', isClubWorldCup: true, weight: 0.6 },
+    { name: 'UEFA Champions League', isClubWorldCup: false, weight: 0.2 },
+    { name: 'Premier League', isClubWorldCup: false, weight: 0.1 },
+    { name: 'La Liga', isClubWorldCup: false, weight: 0.05 },
+    { name: 'Bundesliga', isClubWorldCup: false, weight: 0.05 }
+  ]
   
   const matches = []
   
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 20; i++) {
     const homeTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
     let awayTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
     while (awayTeam.id === homeTeam.id) {
       awayTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
     }
     
-    const status = statuses[Math.floor(Math.random() * statuses.length)]
+    // Weight towards upcoming matches and Club World Cup
+    const isUpcoming = Math.random() < 0.7 // 70% chance of upcoming matches
+    const status = isUpcoming ? 'ns' : (Math.random() < 0.8 ? 'ft' : 'live')
     const homeScore = status === 'ns' ? null : Math.floor(Math.random() * 4)
     const awayScore = status === 'ns' ? null : Math.floor(Math.random() * 4)
     
-    // Create dates ranging from 3 days ago to 7 days in the future
+    // Weight competition selection towards Club World Cup
+    const randomValue = Math.random()
+    let selectedCompetition = competitions[competitions.length - 1] // default
+    let cumulativeWeight = 0
+    for (const comp of competitions) {
+      cumulativeWeight += comp.weight
+      if (randomValue <= cumulativeWeight) {
+        selectedCompetition = comp
+        break
+      }
+    }
+    
+    // Create dates based on status
     const baseDate = new Date()
-    const daysOffset = Math.floor(Math.random() * 11) - 3 // -3 to +7 days
-    const matchDate = new Date(baseDate.getTime() + (daysOffset * 24 * 60 * 60 * 1000))
+    let matchDate
+    if (status === 'ns') {
+      // Upcoming matches: 1 to 30 days in the future
+      const daysOffset = Math.floor(Math.random() * 30) + 1
+      matchDate = new Date(baseDate.getTime() + (daysOffset * 24 * 60 * 60 * 1000))
+    } else if (status === 'live') {
+      // Live matches: happening now (within last hour)
+      const minutesOffset = Math.floor(Math.random() * 60) - 30
+      matchDate = new Date(baseDate.getTime() + (minutesOffset * 60 * 1000))
+    } else {
+      // Recent matches: 1 to 7 days ago
+      const daysOffset = -(Math.floor(Math.random() * 7) + 1)
+      matchDate = new Date(baseDate.getTime() + (daysOffset * 24 * 60 * 60 * 1000))
+    }
     
     matches.push({
       id: 1000000 + i,
@@ -211,15 +262,32 @@ function getMockMatches() {
       status,
       statusLong: status === 'ft' ? 'Match Finished' : status === 'live' ? 'In Play' : 'Not Started',
       date: matchDate.toISOString(),
-      venue: 'Mercedes-Benz Stadium',
+      venue: selectedCompetition.isClubWorldCup ? 'Mercedes-Benz Stadium' : 'Stadium',
       round: rounds[Math.floor(Math.random() * rounds.length)],
-      league: ['FIFA Club World Cup', 'UEFA Champions League', 'Premier League', 'La Liga', 'Bundesliga'][Math.floor(Math.random() * 5)],
-      season: 2025
+      league: selectedCompetition.name,
+      season: 2025,
+      isClubWorldCup: selectedCompetition.isClubWorldCup
     })
   }
   
-  // Sort by date (most recent first)
-  matches.sort((a, b) => new Date(b.date) - new Date(a.date))
+  // Sort by priority: Club World Cup first, then by date (upcoming first for ns status)
+  matches.sort((a, b) => {
+    // Prioritize Club World Cup
+    if (a.isClubWorldCup && !b.isClubWorldCup) return -1
+    if (!a.isClubWorldCup && b.isClubWorldCup) return 1
+    
+    // For same competition type, sort by date appropriately
+    const dateA = new Date(a.date)
+    const dateB = new Date(b.date)
+    
+    // For upcoming matches, sort by earliest first
+    if (a.status === 'ns' && b.status === 'ns') {
+      return dateA - dateB
+    }
+    
+    // For non-upcoming, sort by most recent first
+    return dateB - dateA
+  })
   
   return matches
 }

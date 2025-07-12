@@ -79,7 +79,7 @@ function AuthCallbackContent() {
         } else {
           // Redirect to community page
           setTimeout(() => {
-            router.push('/community')
+            router.push('/rewards')
           }, 1500)
         }
 
@@ -126,7 +126,7 @@ function AuthCallbackContent() {
         return {
           icon: '✅',
           title: 'Success!',
-          message: 'Authentication successful. Redirecting you to the community page.'
+          message: 'Authentication successful. Redirecting you to the rewards page.'
         }
       case 'error':
         return {

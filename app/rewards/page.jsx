@@ -1,193 +1,147 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import GoogleAuth from '../components/GoogleAuth'
 import Header from '../components/Header'
-import Web3WalletConnect from '../components/Web3WalletConnect'
 
 export default function Rewards() {
-  const [isVisible, setIsVisible] = useState(false)
-  const [celebratingTier, setCelebratingTier] = useState(null)
-  const [animatingReward, setAnimatingReward] = useState(null)
-  const [floatingCoins, setFloatingCoins] = useState([])
+  const router = useRouter()
   const [user, setUser] = useState(null)
-  const [userRewards, setUserRewards] = useState(null)
+  const [dashboardData, setDashboardData] = useState(null)
+  const [leaderboard, setLeaderboard] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [walletConnected, setWalletConnected] = useState(false)
-  const [claiming, setClaiming] = useState(false)
-  const [claimingReward, setClaimingReward] = useState(null)
+  const [activeTab, setActiveTab] = useState('overview')
+  const [error, setError] = useState(null)
 
-  // Load user data and rewards
   useEffect(() => {
-    loadUserData()
-  }, [])
-
-  const loadUserData = async () => {
-    try {
-      setLoading(true)
-      
-      // Get user from localStorage
-      const userData = localStorage.getItem('user_profile')
-      if (!userData) {
-        setError('Please log in to view your rewards')
-        setLoading(false)
-        return
-      }
-
+    const userData = localStorage.getItem('user_profile')
+    if (userData) {
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
+      fetchDashboardData(parsedUser.id)
+    } else {
+      setLoading(false)
+    }
+  }, [])
 
-      // Fetch user rewards data
-      const response = await fetch(`/api/rewards?user_id=${parsedUser.id}`)
-      const data = await response.json()
+  const fetchDashboardData = async (userId) => {
+    try {
+      setLoading(true)
+      console.log('🎯 Frontend: Fetching dashboard data for user:', userId)
+      
+      const [dashboardResponse, leaderboardResponse] = await Promise.all([
+        fetch(`/api/dashboard/${userId}`),
+        fetch('/api/leaderboard?limit=10')
+      ])
 
-      if (data.success) {
-        setUserRewards(data.data)
-      } else {
-        setError(data.error || 'Failed to load rewards data')
+      if (dashboardResponse.ok) {
+        const dashboardResult = await dashboardResponse.json()
+        if (dashboardResult.success) {
+          setDashboardData(dashboardResult.data)
+          
+          // Update localStorage with fresh XP and level data
+          const updatedUser = {
+            ...JSON.parse(localStorage.getItem('user_profile')),
+            xp: dashboardResult.data.xp,
+            level: dashboardResult.data.level
+          }
+          localStorage.setItem('user_profile', JSON.stringify(updatedUser))
+          
+          // Dispatch custom event to update header
+          window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
+            detail: updatedUser 
+          }))
+        } else {
+          throw new Error(dashboardResult.error || 'Failed to load dashboard data')
+        }
       }
 
-    } catch (error) {
-      console.error('Error loading user data:', error)
-      setError('Failed to load rewards data')
+      if (leaderboardResponse.ok) {
+        const leaderboardResult = await leaderboardResponse.json()
+        if (leaderboardResult.success) {
+          setLeaderboard(leaderboardResult.leaderboard || [])
+        }
+      }
+
+    } catch (err) {
+      console.error('❌ Frontend: Error loading dashboard:', err)
+      setError(err.message)
     } finally {
       setLoading(false)
     }
   }
 
-  const handleWalletConnected = (connection) => {
-    setWalletConnected(true)
-    console.log('Wallet connected:', connection)
+  const handleAuthSuccess = (userData) => {
+    setUser(userData)
+    localStorage.setItem('user_profile', JSON.stringify(userData))
+    fetchDashboardData(userData.id)
   }
 
-  const handleWalletDisconnected = () => {
-    setWalletConnected(false)
-    console.log('Wallet disconnected')
+  const handleAuthError = (error) => {
+    console.error('Auth error:', error)
+    setError('Authentication failed')
   }
 
-  const handleClaimReward = async (reward) => {
-    if (!walletConnected || !user) {
-      alert('Please connect your wallet first')
-      return
-    }
-
-    setClaiming(true)
-    setClaimingReward(reward.milestone_id)
-
-    try {
-      const walletConnection = JSON.parse(localStorage.getItem('wallet_connection'))
-      
-      const response = await fetch('/api/rewards/claim', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          milestone_id: reward.milestone_id,
-          wallet_address: walletConnection.address
-        })
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        // Show success animation
-        setCelebratingTier(reward.milestone_id)
-        setTimeout(() => setCelebratingTier(null), 3000)
-        
-        // Reload rewards data
-        await loadUserData()
-        
-        alert(`Successfully claimed ${data.data.chz_amount} CHZ tokens!`)
-      } else {
-        alert(`Failed to claim reward: ${data.error}`)
-      }
-
-    } catch (error) {
-      console.error('Error claiming reward:', error)
-      alert('Failed to claim reward')
-    } finally {
-      setClaiming(false)
-      setClaimingReward(null)
-    }
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
-  // Calculate derived stats from real data
-  const userStats = userRewards ? {
-    totalLikes: userRewards.stats.total_upvotes,
-    totalComments: userRewards.stats.total_comments,
-    tokensEarned: userRewards.stats.total_claimed_chz,
-    currentStreak: userRewards.user.streak_count,
-    level: `Level ${userRewards.user.level}`,
-    availableTokens: userRewards.stats.total_unclaimed_chz,
-    nextMilestone: userRewards.milestones.next_milestones.level ? userRewards.milestones.next_milestones.level.threshold_value : 'Max Level',
-    progress: userRewards.milestones.next_milestones.level ? userRewards.milestones.next_milestones.level.progress : 100
-  } : {
-    totalLikes: 0,
-    totalComments: 0,
-    tokensEarned: 0,
-    currentStreak: 0,
-    level: 'Level 1',
-    availableTokens: 0,
-    nextMilestone: 'Loading...',
-    progress: 0
+  const getLevelColor = (level) => {
+    if (level >= 50) return '#FFD700' // Gold
+    if (level >= 25) return '#C0C0C0' // Silver  
+    if (level >= 10) return '#CD7F32' // Bronze
+    return '#00ff88' // Default green
   }
 
-  // Convert real rewards data to display format
-  const rewardTiers = userRewards ? userRewards.eligible_rewards.map(reward => ({
-    milestone_id: reward.milestone_id,
-    threshold: reward.threshold_value,
-    reward: parseFloat(reward.chz_reward),
-    icon: reward.icon,
-    name: reward.title,
-    description: reward.description,
-    color: reward.milestone_type === 'level' ? '#00ff88' : 
-           reward.milestone_type === 'comments' ? '#0099ff' :
-           reward.milestone_type === 'upvotes' ? '#ff6b35' : '#ff6b35',
-    unlocked: reward.user_current_value >= reward.threshold_value,
-    already_claimed: reward.already_claimed,
-    milestone_type: reward.milestone_type
-  })) : []
+  const getRankColor = (rank) => {
+    if (rank === 1) return '#FFD700' // Gold
+    if (rank === 2) return '#C0C0C0' // Silver
+    if (rank === 3) return '#CD7F32' // Bronze
+    return '#888'
+  }
 
-  const recentRewards = userRewards ? userRewards.claim_history.slice(0, 3).map(claim => ({
-    milestone_type: claim.claim_type,
-    chz_amount: parseFloat(claim.chz_amount),
-    time: new Date(claim.claimed_at).toLocaleDateString(),
-    tier: `${claim.claim_type} milestone`,
-    new: new Date(claim.claimed_at) > new Date(Date.now() - 24 * 60 * 60 * 1000),
-    transaction_hash: claim.transaction_hash,
-    wallet_address: claim.wallet_address
-  })) : []
+  if (!user) {
+    return (
+      <div style={{
+        backgroundColor: '#0a0a0a',
+        color: '#ffffff',
+        minHeight: '100vh',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+      }}>
+        <Header />
 
-  useEffect(() => {
-    setIsVisible(true)
-    
-    // Celebrate achievement animation
-    const celebrationInterval = setInterval(() => {
-      setCelebratingTier(Math.floor(Math.random() * 3))
-      setTimeout(() => setCelebratingTier(null), 2000)
-    }, 8000)
-
-    // Floating coins animation
-    const coinsInterval = setInterval(() => {
-      const newCoin = {
-        id: Date.now(),
-        x: Math.random() * 100,
-        delay: Math.random() * 2
-      }
-      setFloatingCoins(prev => [...prev.slice(-4), newCoin])
-    }, 3000)
-
-    return () => {
-      clearInterval(celebrationInterval)
-      clearInterval(coinsInterval)
-    }
-  }, [])
-
-  const handleRewardClick = (index) => {
-    setAnimatingReward(index)
-    setTimeout(() => setAnimatingReward(null), 1000)
+        <main style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🎯</div>
+            <h1 style={{ fontSize: '32px', marginBottom: '20px', color: '#ffffff' }}>
+              Chiliz XP Rewards
+            </h1>
+            <p style={{ fontSize: '18px', color: '#888', marginBottom: '40px' }}>
+              Track your progress, XP, level, and see how you rank against other users!
+            </p>
+            <div style={{
+              backgroundColor: '#111',
+              borderRadius: '16px',
+              padding: '40px',
+              border: '2px solid #333'
+            }}>
+              <p style={{ fontSize: '16px', color: '#888', marginBottom: '30px' }}>
+                Please sign in to view your XP rewards
+              </p>
+              <GoogleAuth 
+                onAuthSuccess={handleAuthSuccess}
+                onAuthError={handleAuthError}
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   if (loading) {
@@ -196,16 +150,14 @@ export default function Rewards() {
         backgroundColor: '#0a0a0a',
         color: '#ffffff',
         minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '48px', marginBottom: '20px' }}>🏆</div>
-          <div style={{ fontSize: '24px', marginBottom: '10px' }}>Loading your rewards...</div>
-          <div style={{ color: '#888' }}>Please wait while we calculate your achievements</div>
-        </div>
+        <Header />
+
+        <main style={{ padding: '40px 20px', textAlign: 'center' }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚡</div>
+          <div style={{ fontSize: '18px', color: '#888' }}>Loading your XP rewards...</div>
+        </main>
       </div>
     )
   }
@@ -216,17 +168,17 @@ export default function Rewards() {
         backgroundColor: '#0a0a0a',
         color: '#ffffff',
         minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
         fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
       }}>
-        <div style={{ textAlign: 'center' }}>
+        <Header />
+
+        <main style={{ padding: '40px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>⚠️</div>
-          <div style={{ fontSize: '24px', marginBottom: '10px', color: '#ff4444' }}>Error loading rewards</div>
-          <div style={{ color: '#888', marginBottom: '20px' }}>{error}</div>
-          <button
-            onClick={() => window.location.href = '/login'}
+          <div style={{ fontSize: '18px', color: '#ef4444', marginBottom: '20px' }}>
+            {error}
+          </div>
+          <button 
+            onClick={() => window.location.reload()}
             style={{
               backgroundColor: '#00ff88',
               color: '#000',
@@ -238,9 +190,9 @@ export default function Rewards() {
               cursor: 'pointer'
             }}
           >
-            Go to Login
+            Retry
           </button>
-        </div>
+        </main>
       </div>
     )
   }
@@ -250,433 +202,281 @@ export default function Rewards() {
       backgroundColor: '#0a0a0a',
       color: '#ffffff',
       minHeight: '100vh',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-      position: 'relative',
-      overflow: 'hidden'
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
     }}>
-      <style jsx>{`
-        @keyframes coinFloat {
-          0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
-          10% { opacity: 1; }
-          90% { opacity: 1; }
-          100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
-        }
-        @keyframes celebrate {
-          0%, 100% { transform: scale(1) rotate(0deg); }
-          25% { transform: scale(1.2) rotate(-5deg); }
-          50% { transform: scale(1.3) rotate(5deg); }
-          75% { transform: scale(1.1) rotate(-2deg); }
-        }
-        @keyframes shimmer {
-          0% { background-position: -200% 0; }
-          100% { background-position: 200% 0; }
-        }
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-10px); }
-          60% { transform: translateY(-5px); }
-        }
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), 0 0 40px rgba(0, 255, 136, 0.1); }
-          50% { box-shadow: 0 0 30px rgba(0, 255, 136, 0.6), 0 0 60px rgba(0, 255, 136, 0.2); }
-        }
-        @keyframes progressFill {
-          from { width: 0%; }
-          to { width: ${userStats.progress}%; }
-        }
-        @keyframes sparkle {
-          0%, 100% { opacity: 0; transform: scale(0); }
-          50% { opacity: 1; transform: scale(1); }
-        }
-        .floating-coin {
-          position: fixed;
-          font-size: 24px;
-          animation: coinFloat 6s linear infinite;
-          pointer-events: none;
-          z-index: 1;
-        }
-        .reward-card {
-          transition: all 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .reward-card:hover {
-          transform: translateY(-10px) scale(1.02);
-          box-shadow: 0 20px 40px rgba(0, 255, 136, 0.2);
-        }
-        .tier-unlocked {
-          background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
-          background-size: 200% 100%;
-          animation: shimmer 2s infinite;
-        }
-        .celebrate-animation {
-          animation: celebrate 0.6s ease-in-out;
-        }
-        .sparkle {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          background: #00ff88;
-          border-radius: 50%;
-          animation: sparkle 1.5s infinite;
-        }
-      `}</style>
-
-      {/* Floating Coins */}
-      {floatingCoins.map(coin => (
-        <div
-          key={coin.id}
-          className="floating-coin"
-          style={{
-            left: `${coin.x}%`,
-            animationDelay: `${coin.delay}s`
-          }}
-        >
-          🪙
-        </div>
-      ))}
-
       <Header />
 
-      {/* Hero Section */}
-      <section style={{
-        padding: '100px 20px 60px',
-        textAlign: 'center',
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)',
-        position: 'relative'
-      }}>
-        {/* Sparkles */}
-        {[...Array(12)].map((_, i) => (
-          <div
-            key={i}
-            className="sparkle"
-            style={{
-              top: `${20 + Math.random() * 60}%`,
-              left: `${10 + Math.random() * 80}%`,
-              animationDelay: `${Math.random() * 2}s`
-            }}
-          />
-        ))}
-
-        <div style={{
-          opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(50px)',
-          transition: 'all 1s ease-out'
-        }}>
-          <h1 style={{
-            fontSize: '64px',
-            fontWeight: '900',
-            marginBottom: '20px',
-            background: 'linear-gradient(45deg, #00ff88, #0099ff, #ff6b35, #00ff88)',
-            backgroundSize: '300% 300%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            animation: 'shimmer 3s ease infinite'
-          }}>
-            🏆 Rewards Dashboard
-          </h1>
+      {/* Main Content */}
+      <main style={{ padding: '40px 20px' }}>
+        <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           
-          <p style={{
-            fontSize: '24px',
-            color: '#ffffff',
-            marginBottom: '15px',
-            fontWeight: '600'
-          }}>
-            Every like is a victory, every comment is rewarded!
-          </p>
-          
-          <p style={{
-            fontSize: '18px',
-            color: '#888',
-            marginBottom: '40px',
-            maxWidth: '600px',
-            margin: '0 auto 40px'
-          }}>
-            Transform your sports insights into real rewards. The more the community loves your takes, the more you earn!
-          </p>
-
-          {/* Live Token Counter */}
+          {/* User Header */}
           <div style={{
-            display: 'inline-block',
-            backgroundColor: 'rgba(0, 255, 136, 0.1)',
-            border: '2px solid #00ff88',
-            borderRadius: '50px',
-            padding: '20px 40px',
-            animation: 'glow 2s ease-in-out infinite'
+            backgroundColor: '#111',
+            borderRadius: '16px',
+            padding: '30px',
+            marginBottom: '30px',
+            border: '2px solid #333',
+            textAlign: 'center'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-              <span style={{ fontSize: '32px', animation: 'bounce 2s infinite' }}>🪙</span>
-              <div>
-                <div style={{ color: '#00ff88', fontSize: '28px', fontWeight: 'bold' }}>
-                  {userStats.tokensEarned.toLocaleString()}
-                </div>
-                <div style={{ color: '#888', fontSize: '14px' }}>Total Tokens Earned</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Wallet Connection */}
-      <section style={{
-        padding: '40px 20px',
-        maxWidth: '800px',
-        margin: '0 auto'
-      }}>
-        <h2 style={{
-          fontSize: '28px',
-          textAlign: 'center',
-          marginBottom: '30px',
-          color: '#ffffff'
-        }}>
-          💳 Connect Your Wallet
-        </h2>
-        <Web3WalletConnect
-          onWalletConnected={handleWalletConnected}
-          onWalletDisconnected={handleWalletDisconnected}
-          currentUser={user}
-        />
-      </section>
-
-      {/* Stats Overview */}
-      <section style={{
-        padding: '40px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '20px',
-          marginBottom: '40px'
-        }}>
-          {[
-            { label: 'Available Now', value: userStats.availableTokens, icon: '💰', color: '#00ff88' },
-            { label: 'Total Likes', value: userStats.totalLikes, icon: '❤️', color: '#ff6b35' },
-            { label: 'Comments Posted', value: userStats.totalComments, icon: '💬', color: '#0099ff' },
-            { label: 'Current Streak', value: `${userStats.currentStreak} days`, icon: '🔥', color: '#ff6b35' }
-          ].map((stat, index) => (
-            <div
-              key={index}
-              className="reward-card"
-              style={{
-                backgroundColor: '#111',
-                border: `2px solid ${stat.color}`,
-                borderRadius: '15px',
-                padding: '25px',
-                textAlign: 'center',
-                cursor: 'pointer'
-              }}
-              onClick={() => handleRewardClick(index)}
-            >
-              <div style={{ 
-                fontSize: '36px', 
-                marginBottom: '10px',
-                animation: animatingReward === index ? 'bounce 0.6s ease' : 'none'
-              }}>
-                {stat.icon}
-              </div>
-              <div style={{ 
-                color: stat.color, 
-                fontSize: '24px', 
-                fontWeight: 'bold',
-                marginBottom: '5px'
-              }}>
-                {stat.value}
-              </div>
-              <div style={{ color: '#888', fontSize: '14px' }}>{stat.label}</div>
-            </div>
-          ))}
-        </div>
-
-        {/* Progress to Next Milestone */}
-        <div style={{
-          backgroundColor: '#111',
-          border: '2px solid #00ff88',
-          borderRadius: '20px',
-          padding: '30px',
-          marginBottom: '40px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ color: '#00ff88', marginBottom: '20px', fontSize: '24px' }}>
-            🎯 Next Milestone: {userStats.nextMilestone} Total Likes
-          </h3>
-          <div style={{
-            backgroundColor: '#0a0a0a',
-            borderRadius: '50px',
-            height: '20px',
-            margin: '20px 0',
-            position: 'relative',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              background: 'linear-gradient(90deg, #00ff88, #0099ff)',
-              height: '100%',
-              borderRadius: '50px',
-              animation: 'progressFill 2s ease-out',
-              width: `${userStats.progress}%`
-            }} />
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              color: '#fff',
-              fontWeight: 'bold',
-              fontSize: '12px'
+            <div style={{ fontSize: '48px', marginBottom: '15px' }}>🎯</div>
+            <h1 style={{ 
+              fontSize: '32px', 
+              marginBottom: '10px',
+              color: '#ffffff'
             }}>
-              {userStats.progress}%
-            </div>
-          </div>
-          <p style={{ color: '#888', margin: 0 }}>
-            {userStats.nextMilestone - userStats.totalLikes} more likes to unlock the next reward tier!
-          </p>
-        </div>
-      </section>
-
-      {/* Reward Tiers */}
-      <section style={{
-        padding: '40px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        <h2 style={{
-          fontSize: '36px',
-          textAlign: 'center',
-          marginBottom: '40px',
-          color: '#ffffff'
-        }}>
-          🎖️ Achievement Tiers
-        </h2>
-        
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-          gap: '30px'
-        }}>
-          {rewardTiers.map((tier, index) => (
-            <div
-              key={index}
-              className={`reward-card ${tier.unlocked ? 'tier-unlocked' : ''} ${celebratingTier === tier.milestone_id ? 'celebrate-animation' : ''}`}
-              style={{
-                backgroundColor: tier.unlocked ? '#1a1a1a' : '#0f0f0f',
-                border: `2px solid ${tier.unlocked ? tier.color : '#333'}`,
-                borderRadius: '20px',
-                padding: '30px',
-                textAlign: 'center',
-                position: 'relative',
-                cursor: 'pointer',
-                opacity: tier.unlocked ? 1 : 0.6
-              }}
-              onClick={() => tier.unlocked && handleRewardClick(index)}
-            >
-              {tier.unlocked && (
-                <div style={{
-                  position: 'absolute',
-                  top: '15px',
-                  right: '15px',
-                  backgroundColor: tier.color,
-                  color: '#000',
-                  padding: '5px 10px',
-                  borderRadius: '50px',
-                  fontSize: '12px',
+              {dashboardData?.display_name || dashboardData?.username || 'Unknown User'}
+            </h1>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '30px',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '18px'
+              }}>
+                <span style={{ 
+                  color: getLevelColor(dashboardData?.level || 1),
                   fontWeight: 'bold'
                 }}>
-                  UNLOCKED
-                </div>
-              )}
-              
-              <div style={{
-                fontSize: '64px',
-                marginBottom: '20px',
-                filter: tier.unlocked ? 'none' : 'grayscale(100%)',
-                animation: tier.unlocked ? 'bounce 2s infinite' : 'none',
-                animationDelay: `${index * 0.2}s`
-              }}>
-                {tier.icon}
+                  Level {dashboardData?.level || 1}
+                </span>
               </div>
-              
-              <h3 style={{
-                color: tier.unlocked ? tier.color : '#666',
-                fontSize: '24px',
-                marginBottom: '10px',
-                fontWeight: 'bold'
-              }}>
-                {tier.name}
-              </h3>
-              
-              <p style={{
-                color: '#888',
-                fontSize: '14px',
-                marginBottom: '20px'
-              }}>
-                {tier.description}
-              </p>
-              
               <div style={{
-                backgroundColor: tier.unlocked ? tier.color + '20' : '#0a0a0a',
-                border: `1px solid ${tier.unlocked ? tier.color : '#333'}`,
-                borderRadius: '12px',
-                padding: '15px',
-                marginBottom: '15px'
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '18px'
               }}>
-                <div style={{ color: tier.unlocked ? tier.color : '#666', fontSize: '18px', fontWeight: 'bold' }}>
-                  {tier.threshold}+ likes required
-                </div>
+                <span style={{ color: '#00ff88', fontWeight: 'bold' }}>
+                  {(dashboardData?.xp || 0).toLocaleString()} XP
+                </span>
               </div>
-              
-              {tier.already_claimed ? (
-                <div style={{
-                  backgroundColor: '#333',
-                  color: '#888',
-                  padding: '12px 24px',
-                  borderRadius: '50px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  display: 'inline-block'
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '18px'
+              }}>
+                <span style={{ 
+                  color: getRankColor(dashboardData?.global_rank),
+                  fontWeight: 'bold'
                 }}>
-                  ✓ Claimed
-                </div>
-              ) : tier.unlocked ? (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleClaimReward(tier)
-                  }}
-                  disabled={claiming || claimingReward === tier.milestone_id}
-                  style={{
-                    backgroundColor: claiming || claimingReward === tier.milestone_id ? '#666' : '#00ff88',
-                    color: claiming || claimingReward === tier.milestone_id ? '#ccc' : '#000',
-                    border: 'none',
-                    padding: '12px 24px',
-                    borderRadius: '50px',
-                    fontSize: '16px',
-                    fontWeight: 'bold',
-                    cursor: claiming || claimingReward === tier.milestone_id ? 'not-allowed' : 'pointer',
-                    animation: tier.unlocked && !claiming ? 'glow 2s ease-in-out infinite' : 'none'
-                  }}
-                >
-                  {claimingReward === tier.milestone_id ? '⏳ Claiming...' : `🪙 Claim ${tier.reward} CHZ`}
-                </button>
-              ) : (
-                <div style={{
-                  backgroundColor: '#333',
-                  color: '#666',
-                  padding: '12px 24px',
-                  borderRadius: '50px',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  display: 'inline-block'
-                }}>
-                  +{tier.reward} CHZ
-                </div>
-              )}
+                  #{dashboardData?.global_rank || 'N/A'} Global
+                </span>
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
+            
+            {/* Level Progress Bar */}
+            {dashboardData && (
+              <div style={{ marginTop: '20px', maxWidth: '400px', margin: '20px auto 0' }}>
+                <div style={{
+                  backgroundColor: '#333',
+                  borderRadius: '10px',
+                  height: '8px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    backgroundColor: getLevelColor(dashboardData.level),
+                    height: '100%',
+                    width: `${dashboardData.level_progress_percent || 0}%`,
+                    transition: 'width 0.3s ease'
+                  }}></div>
+                </div>
+                <div style={{
+                  fontSize: '12px',
+                  color: '#888',
+                  marginTop: '5px',
+                  textAlign: 'center'
+                }}>
+                  {dashboardData.xp_needed_for_next_level || 0} XP to next level
+                </div>
+              </div>
+            )}
+          </div>
 
+          {/* Tab Navigation */}
+          <div style={{
+            display: 'flex',
+            gap: '20px',
+            marginBottom: '30px',
+            borderBottom: '2px solid #333',
+            paddingBottom: '10px'
+          }}>
+            {['overview', 'activity', 'leaderboard'].map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                style={{
+                  backgroundColor: activeTab === tab ? '#00ff88' : 'transparent',
+                  color: activeTab === tab ? '#000' : '#888',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  textTransform: 'capitalize'
+                }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab Content */}
+          {activeTab === 'overview' && dashboardData && (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+              gap: '20px'
+            }}>
+              {/* XP Stats */}
+              <div style={{
+                backgroundColor: '#111',
+                borderRadius: '12px',
+                padding: '25px',
+                border: '1px solid #333'
+              }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  marginBottom: '20px',
+                  color: '#00ff88',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  ⚡ Chiliz XP Stats
+                </h2>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Total XP:</span>
+                    <span style={{ color: '#00ff88', fontWeight: 'bold' }}>
+                      {(dashboardData.total_xp_earned || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Current XP:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {(dashboardData.xp || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Weekly XP:</span>
+                    <span style={{ color: '#ff6b35', fontWeight: 'bold' }}>
+                      +{(dashboardData.weekly_xp || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Monthly XP:</span>
+                    <span style={{ color: '#8b5cf6', fontWeight: 'bold' }}>
+                      +{(dashboardData.monthly_xp || 0).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Activity Stats */}
+              <div style={{
+                backgroundColor: '#111',
+                borderRadius: '12px',
+                padding: '25px',
+                border: '1px solid #333'
+              }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  marginBottom: '20px',
+                  color: '#ff6b35',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  📊 Activity Stats
+                </h2>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Comments Posted:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {dashboardData.total_comments || 0}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Likes Received:</span>
+                    <span style={{ color: '#ff6b35', fontWeight: 'bold' }}>
+                      {dashboardData.total_likes_received || 0}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Global Rank:</span>
+                    <span style={{ 
+                      color: getRankColor(dashboardData.global_rank), 
+                      fontWeight: 'bold' 
+                    }}>
+                      #{dashboardData.global_rank || 'N/A'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Member Since:</span>
+                    <span style={{ color: '#888', fontSize: '14px' }}>
+                      {formatDate(dashboardData.member_since)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Level Information */}
+              <div style={{
+                backgroundColor: '#111',
+                borderRadius: '12px',
+                padding: '25px',
+                border: '1px solid #333'
+              }}>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  marginBottom: '20px',
+                  color: getLevelColor(dashboardData.level),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  🏆 Level Progress
+                </h2>
+                <div style={{ display: 'grid', gap: '15px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Current Level:</span>
+                    <span style={{ 
+                      color: getLevelColor(dashboardData.level), 
+                      fontWeight: 'bold' 
+                    }}>
+                      Level {dashboardData.level}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>Progress:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>
+                      {dashboardData.level_progress_percent || 0}%
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: '#888' }}>XP to Next Level:</span>
+                    <span style={{ color: '#00ff88', fontWeight: 'bold' }}>
+                      {dashboardData.xp_needed_for_next_level || 0}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'activity' && dashboardData && (
       {/* Daily Rewards Section */}
       <section style={{
         padding: '40px 20px',
@@ -755,255 +555,162 @@ export default function Rewards() {
         </div>
       </section>
 
-      {/* Recent Rewards */}
-      <section style={{
-        padding: '40px 20px',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        <h2 style={{
-          fontSize: '36px',
-          textAlign: 'center',
-          marginBottom: '40px',
-          color: '#ffffff'
-        }}>
-          🏆 Recent Achievements
-        </h2>
-        
-        <div style={{
-          display: 'grid',
-          gap: '25px'
-        }}>
-          {recentRewards.map((reward, index) => (
-            <div
-              key={index}
-              className="reward-card"
-              style={{
-                backgroundColor: '#111',
-                border: reward.new ? '2px solid #00ff88' : '1px solid #333',
-                borderRadius: '15px',
-                padding: '25px',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-            >
-              {reward.new && (
-                <div style={{
-                  position: 'absolute',
-                  top: '0',
-                  right: '0',
-                  backgroundColor: '#00ff88',
-                  color: '#000',
-                  padding: '8px 15px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  borderBottomLeft: '10px',
-                  animation: 'bounce 1s infinite'
-                }}>
-                  NEW!
-                </div>
-              )}
-              
-              <div style={{
+            <div style={{
+              backgroundColor: '#111',
+              borderRadius: '12px',
+              padding: '25px',
+              border: '1px solid #333'
+            }}>
+              <h2 style={{
+                fontSize: '20px',
+                fontWeight: 'bold',
+                marginBottom: '20px',
+                color: '#8b5cf6',
                 display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '15px'
+                alignItems: 'center',
+                gap: '10px'
               }}>
-                <div style={{ flex: 1, paddingRight: '20px' }}>
-                  <p style={{
-                    color: '#ffffff',
-                    fontSize: '16px',
-                    lineHeight: '1.5',
-                    marginBottom: '10px',
-                    fontStyle: 'italic'
-                  }}>
-                    🏆 Achievement unlocked: {reward.tier}
-                  </p>
-                  
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '15px',
-                    marginBottom: '10px'
-                  }}>
-                    <div style={{
-                      backgroundColor: '#0a0a0a',
-                      padding: '5px 12px',
-                      borderRadius: '50px',
-                      border: '1px solid #0099ff',
-                      color: '#0099ff',
-                      fontSize: '12px'
+                📈 Recent XP Activity
+              </h2>
+              {dashboardData.recent_activities && dashboardData.recent_activities.length > 0 ? (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {dashboardData.recent_activities.map((activity, index) => (
+                    <div key={index} style={{
+                      backgroundColor: '#1a1a1a',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      border: '1px solid #333',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
                     }}>
-                      {reward.milestone_type.toUpperCase()}
-                    </div>
-                    
-                    {reward.transaction_hash && (
-                      <div style={{
-                        backgroundColor: '#0a0a0a',
-                        padding: '5px 12px',
-                        borderRadius: '50px',
-                        border: '1px solid #00ff88',
-                        color: '#00ff88',
-                        fontSize: '12px'
-                      }}>
-                        ✓ Confirmed
+                      <div>
+                        <div style={{ 
+                          color: '#fff', 
+                          fontWeight: 'bold',
+                          marginBottom: '5px'
+                        }}>
+                          {activity.description || activity.action_type}
+                        </div>
+                        <div style={{ 
+                          color: '#888', 
+                          fontSize: '12px'
+                        }}>
+                          {formatDate(activity.created_at)}
+                        </div>
                       </div>
-                    )}
-                    
-                    <span style={{ color: '#888', fontSize: '12px' }}>{reward.time}</span>
-                  </div>
-                  
-                  {reward.transaction_hash && (
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#666',
-                      fontFamily: 'monospace'
-                    }}>
-                      TX: {reward.transaction_hash.slice(0, 10)}...{reward.transaction_hash.slice(-8)}
+                      <div style={{
+                        color: activity.xp_change > 0 ? '#00ff88' : '#ff4444',
+                        fontWeight: 'bold',
+                        fontSize: '16px'
+                      }}>
+                        {activity.xp_change > 0 ? '+' : ''}{activity.xp_change} XP
+                      </div>
                     </div>
-                  )}
+                  ))}
                 </div>
-                
+              ) : (
                 <div style={{
                   textAlign: 'center',
-                  minWidth: '120px'
+                  color: '#888',
+                  padding: '40px'
                 }}>
-                  <div style={{
-                    backgroundColor: '#00ff88',
-                    color: '#000',
-                    padding: '10px 20px',
-                    borderRadius: '50px',
-                    fontSize: '18px',
-                    fontWeight: 'bold',
-                    marginBottom: '5px',
-                    animation: reward.new ? 'glow 1s ease-in-out infinite' : 'none'
-                  }}>
-                    +{reward.chz_amount}
+                  <div style={{ fontSize: '48px', marginBottom: '15px' }}>📊</div>
+                  <div>No recent activity yet!</div>
+                  <div style={{ fontSize: '14px', marginTop: '10px' }}>
+                    Start commenting and engaging to earn XP!
                   </div>
-                  <div style={{ color: '#888', fontSize: '12px' }}>CHZ</div>
                 </div>
-              </div>
+              )}
             </div>
-          ))}
-        </div>
-      </section>
+          )}
 
-      {/* Call to Action */}
-      <section style={{
-        padding: '60px 20px',
-        textAlign: 'center',
-        maxWidth: '800px',
-        margin: '40px auto 0'
-      }}>
-        <div style={{
-          backgroundColor: '#111',
-          border: '2px solid #00ff88',
-          borderRadius: '20px',
-          padding: '50px 40px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(0,255,136,0.1), rgba(0,153,255,0.1), rgba(255,107,53,0.1))',
-            opacity: 0.5
-          }} />
-          
-          <div style={{ position: 'relative', zIndex: 10 }}>
-            <div style={{ fontSize: '48px', marginBottom: '20px' }}>🚀</div>
-            <h2 style={{
-              fontSize: '32px',
-              marginBottom: '20px',
-              color: '#ffffff',
-              fontWeight: 'bold'
+          {activeTab === 'leaderboard' && (
+            <div style={{
+              backgroundColor: '#111',
+              borderRadius: '12px',
+              padding: '25px',
+              border: '1px solid #333'
             }}>
-              Ready to earn more rewards?
-            </h2>
-            <p style={{
-              color: '#888',
-              fontSize: '18px',
-              lineHeight: '1.6',
-              marginBottom: '30px'
-            }}>
-              Join live match discussions, share your best takes, and watch your token balance grow!
-            </p>
-            <a
-              href="/community"
-              style={{
-                display: 'inline-block',
-                backgroundColor: '#00ff88',
-                color: '#000',
-                textDecoration: 'none',
-                padding: '18px 40px',
-                borderRadius: '50px',
-                fontSize: '18px',
+              <h2 style={{
+                fontSize: '20px',
                 fontWeight: 'bold',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#00cc6a'
-                e.target.style.transform = 'translateY(-3px) scale(1.05)'
-                e.target.style.boxShadow = '0 10px 25px rgba(0, 255, 136, 0.4)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#00ff88'
-                e.target.style.transform = 'translateY(0) scale(1)'
-                e.target.style.boxShadow = 'none'
-              }}
-            >
-              Start Earning Now 💰
-            </a>
-          </div>
-        </div>
-      </section>
+                marginBottom: '20px',
+                color: '#FFD700',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px'
+              }}>
+                🏆 XP Leaderboard
+              </h2>
+              {leaderboard.length > 0 ? (
+                <div style={{ display: 'grid', gap: '12px' }}>
+                  {leaderboard.map((leader, index) => (
+                    <div key={leader.user_id} style={{
+                      backgroundColor: leader.user_id === user.id ? '#1a2e1a' : '#1a1a1a',
+                      borderRadius: '8px',
+                      padding: '15px',
+                      border: leader.user_id === user.id ? '2px solid #00ff88' : '1px solid #333',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <div style={{
+                          fontSize: '20px',
+                          fontWeight: 'bold',
+                          color: getRankColor(leader.rank),
+                          minWidth: '30px'
+                        }}>
+                          #{leader.rank}
+                        </div>
+                        <div>
+                          <div style={{ 
+                            color: '#fff', 
+                            fontWeight: 'bold',
+                            marginBottom: '5px'
+                          }}>
+                            {leader.display_name || leader.username}
+                            {leader.user_id === user.id && (
+                              <span style={{ color: '#00ff88', marginLeft: '8px' }}>
+                                (You)
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ 
+                            color: getLevelColor(leader.level), 
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}>
+                            Level {leader.level} • {leader.total_comments} comments • {leader.total_likes_received} likes
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{
+                        color: '#00ff88',
+                        fontWeight: 'bold',
+                        fontSize: '16px'
+                      }}>
+                        {leader.xp.toLocaleString()} XP
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div style={{
+                  textAlign: 'center',
+                  color: '#888',
+                  padding: '40px'
+                }}>
+                  <div style={{ fontSize: '48px', marginBottom: '15px' }}>🏆</div>
+                  <div>Leaderboard loading...</div>
+                </div>
+              )}
+            </div>
+          )}
 
-      <style jsx>{`
-        /* Mobile Responsive Styles */
-        @media (max-width: 768px) {
-          .mobile-hero {
-            padding: 60px 15px 40px !important;
-          }
-          
-          .mobile-hero-title {
-            font-size: 32px !important;
-            line-height: 1.2 !important;
-          }
-          
-          .mobile-hero-text {
-            font-size: 16px !important;
-          }
-          
-          .mobile-rewards-grid {
-            grid-template-columns: 1fr !important;
-            gap: 15px !important;
-            padding: 0 15px !important;
-          }
-          
-          .mobile-rewards-card {
-            padding: 20px !important;
-          }
-          
-          .mobile-stats-grid {
-            grid-template-columns: repeat(2, 1fr) !important;
-            gap: 15px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .mobile-hero-title {
-            font-size: 28px !important;
-          }
-          
-          .mobile-stats-grid {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
+        </div>
+      </main>
     </div>
   )
 }

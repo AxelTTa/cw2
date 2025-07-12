@@ -4,6 +4,18 @@ import { useState, useEffect } from 'react'
 
 export default function CompetitionBracket({ competition, onClose }) {
   const [bracketData, setBracketData] = useState(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768)
+    }
+    
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     generateBracketData()
@@ -232,19 +244,19 @@ export default function CompetitionBracket({ competition, onClose }) {
             </h3>
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '20px'
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+              gap: isMobile ? '15px' : '20px'
             }}>
               {bracketData.groups.map((group, index) => (
                 <div key={index} style={{
                   backgroundColor: '#1a1a1a',
                   border: '2px solid #333',
                   borderRadius: '12px',
-                  padding: '20px'
+                  padding: isMobile ? '15px' : '20px'
                 }}>
                   <h4 style={{
                     color: '#0099ff',
-                    fontSize: '18px',
+                    fontSize: isMobile ? '16px' : '18px',
                     fontWeight: 'bold',
                     marginBottom: '15px',
                     textAlign: 'center'
@@ -286,12 +298,12 @@ export default function CompetitionBracket({ competition, onClose }) {
               backgroundColor: '#1a1a1a',
               border: '2px solid #333',
               borderRadius: '12px',
-              padding: '30px',
+              padding: isMobile ? '20px' : '30px',
               textAlign: 'center'
             }}>
               <div style={{
                 color: '#0099ff',
-                fontSize: '48px',
+                fontSize: isMobile ? '36px' : '48px',
                 fontWeight: 'bold',
                 marginBottom: '10px'
               }}>
@@ -299,7 +311,7 @@ export default function CompetitionBracket({ competition, onClose }) {
               </div>
               <div style={{
                 color: '#fff',
-                fontSize: '18px',
+                fontSize: isMobile ? '16px' : '18px',
                 fontWeight: 'bold',
                 marginBottom: '5px'
               }}>
@@ -327,25 +339,26 @@ export default function CompetitionBracket({ competition, onClose }) {
           </h3>
           <div style={{
             display: 'flex',
-            gap: '30px',
+            gap: isMobile ? '15px' : '30px',
             overflowX: 'auto',
             paddingBottom: '20px',
-            minHeight: '400px'
+            minHeight: isMobile ? '300px' : '400px',
+            flexDirection: isMobile ? 'column' : 'row'
           }}>
             {Object.entries(bracketData.knockout).map(([roundName, matches], roundIndex) => (
               <div key={roundIndex} style={{
-                minWidth: '220px',
+                minWidth: isMobile ? 'auto' : '220px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '15px'
               }}>
                 <h4 style={{
                   color: '#fff',
-                  fontSize: '16px',
+                  fontSize: isMobile ? '14px' : '16px',
                   fontWeight: 'bold',
                   textAlign: 'center',
                   marginBottom: '15px',
-                  padding: '12px',
+                  padding: isMobile ? '10px' : '12px',
                   backgroundColor: '#2a2a2a',
                   borderRadius: '8px',
                   border: '2px solid #ff6b35'
@@ -357,7 +370,7 @@ export default function CompetitionBracket({ competition, onClose }) {
                     backgroundColor: '#1a1a1a',
                     border: '2px solid #333',
                     borderRadius: '12px',
-                    padding: '18px',
+                    padding: isMobile ? '15px' : '18px',
                     position: 'relative',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer'

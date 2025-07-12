@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import GoogleAuth from './GoogleAuth'
 import MemeSelector from './MemeSelector'
+import CommentCard from './CommentCard'
 
 export default function UniversalComments({ entityType, entityId, entityName }) {
   const [comments, setComments] = useState([])
@@ -15,11 +16,15 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const [selectedMeme, setSelectedMeme] = useState(null)
   const [imageUrl, setImageUrl] = useState('')
   const [error, setError] = useState(null)
+  const [userVotes, setUserVotes] = useState({})
 
   useEffect(() => {
     getCurrentUser()
+  }, [])
+
+  useEffect(() => {
     loadComments()
-  }, [entityType, entityId, sortBy])
+  }, [entityType, entityId, sortBy, user])
 
   const getCurrentUser = async () => {
     // Check localStorage for user data
@@ -32,15 +37,28 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   }
 
   const loadComments = async () => {
-    if (!entityId) return
+    if (!entityId) {
+      console.warn('loadComments called without entityId:', { entityType, entityId })
+      return
+    }
     
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch(`/api/comments?entity_type=${entityType}&entity_id=${entityId}&sort_by=${sortBy}&limit=100`)
+      const url = new URL('/api/comments', window.location.origin)
+      url.searchParams.set('entity_type', entityType)
+      url.searchParams.set('entity_id', entityId)
+      url.searchParams.set('sort_by', sortBy)
+      url.searchParams.set('limit', '100')
+      if (user?.id) {
+        url.searchParams.set('user_id', user.id)
+      }
+
+      const response = await fetch(url)
       const data = await response.json()
       if (data.success) {
         setComments(data.comments || [])
+        setUserVotes(data.user_votes || {})
       } else {
         setError(data.error || 'Failed to load comments')
       }
@@ -55,6 +73,19 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     e.preventDefault()
     if (!user || (!newComment.trim() && !selectedMeme && !imageUrl)) return
 
+    // Debug logging
+    console.log('Submitting comment with:', {
+      entityType,
+      entityId,
+      user: user?.id,
+      content: newComment.trim()
+    })
+
+    if (!entityId) {
+      setError('Entity ID is missing. Please refresh the page and try again.')
+      return
+    }
+
     try {
       const commentData = {
         user_id: user.id,
@@ -68,7 +99,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       // Add meme data if selected
       if (selectedMeme) {
         commentData.is_meme = true
-        commentData.meme_url = selectedMeme.url
+        commentData.meme_url = selectedMeme.template_url
         commentData.meme_caption = newComment.trim() || selectedMeme.caption
         commentData.comment_type = 'meme'
       }
@@ -104,7 +135,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     }
   }
 
-  const handleUpvote = async (commentId) => {
+  const handleUpvote = async (commentId, isRemoving = false) => {
     if (!user) return
     
     try {
@@ -126,6 +157,69 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       }
     } catch (error) {
       console.error('Error upvoting comment:', error)
+    }
+  }
+
+  const handleDownvote = async (commentId, isRemoving = false) => {
+    if (!user) return
+    
+    try {
+      const response = await fetch('/api/comments', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          comment_id: commentId,
+          action: 'downvote',
+          user_id: user.id
+        })
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await loadComments()
+      }
+    } catch (error) {
+      console.error('Error downvoting comment:', error)
+    }
+  }
+
+  const handleReply = async (parentId, content) => {
+    if (!user || !content.trim()) return
+
+    if (!entityId) {
+      setError('Entity ID is missing. Please refresh the page and try again.')
+      return
+    }
+
+    try {
+      const commentData = {
+        user_id: user.id,
+        entity_type: entityType,
+        entity_id: entityId,
+        parent_id: parentId,
+        content: content.trim(),
+        comment_type: 'text'
+      }
+
+      const response = await fetch('/api/comments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(commentData)
+      })
+
+      const data = await response.json()
+      if (data.success) {
+        await loadComments()
+      } else {
+        setError(data.error || 'Failed to post reply')
+      }
+    } catch (error) {
+      console.error('Error submitting reply:', error)
+      setError('Failed to post reply')
     }
   }
 
@@ -179,221 +273,10 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     }
   }
 
-  const CommentComponent = ({ comment, isReply = false }) => (
-    <div style={{
-      backgroundColor: isReply ? '#0f0f0f' : '#1a1a1a',
-      border: '2px solid #333',
-      borderRadius: '12px',
-      padding: '20px',
-      marginBottom: isReply ? '12px' : '20px',
-      marginLeft: isReply ? '32px' : '0',
-      transition: 'all 0.3s ease',
-      position: 'relative'
-    }}
-    onMouseEnter={(e) => {
-      e.currentTarget.style.borderColor = '#00ff88'
-      e.currentTarget.style.backgroundColor = isReply ? '#1a1a1a' : '#222'
-    }}
-    onMouseLeave={(e) => {
-      e.currentTarget.style.borderColor = '#333'
-      e.currentTarget.style.backgroundColor = isReply ? '#0f0f0f' : '#1a1a1a'
-    }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: '12px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            backgroundColor: '#00ff88',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#000'
-          }}>
-            {comment.profiles?.username?.[0]?.toUpperCase() || '?'}
-          </div>
-          <div>
-            <div style={{
-              fontSize: '14px',
-              fontWeight: 'bold',
-              color: '#ffffff'
-            }}>
-              {comment.profiles?.display_name || comment.profiles?.username || 'Anonymous'}
-            </div>
-            <div style={{
-              fontSize: '12px',
-              color: '#888'
-            }}>
-              Level {comment.profiles?.level || 1} • {comment.profiles?.xp || 0} XP
-            </div>
-          </div>
-        </div>
-        <div style={{
-          fontSize: '12px',
-          color: '#666'
-        }}>
-          {formatTime(comment.created_at)}
-        </div>
-      </div>
 
-      {/* Content */}
-      <div style={{
-        color: '#ffffff',
-        fontSize: '14px',
-        lineHeight: '1.5',
-        marginBottom: '12px'
-      }}>
-        {comment.content}
-      </div>
-
-      {/* Meme content */}
-      {comment.is_meme && comment.meme_url && (
-        <div style={{
-          marginBottom: '12px',
-          textAlign: 'center'
-        }}>
-          <img 
-            src={comment.meme_url} 
-            alt={comment.meme_caption || 'Meme'}
-            style={{
-              maxWidth: '100%',
-              maxHeight: '300px',
-              borderRadius: '8px'
-            }}
-          />
-          {comment.meme_caption && (
-            <div style={{
-              marginTop: '8px',
-              fontSize: '12px',
-              color: '#888',
-              fontStyle: 'italic'
-            }}>
-              {comment.meme_caption}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Image content */}
-      {comment.image_url && (
-        <div style={{
-          marginBottom: '12px',
-          textAlign: 'center'
-        }}>
-          <img 
-            src={comment.image_url} 
-            alt="User uploaded image"
-            style={{
-              maxWidth: '100%',
-              maxHeight: '300px',
-              borderRadius: '8px'
-            }}
-          />
-        </div>
-      )}
-
-      {/* Actions */}
-      <div style={{
-        display: 'flex',
-        gap: '16px',
-        alignItems: 'center',
-        flexWrap: 'wrap'
-      }}>
-        <button
-          onClick={() => handleUpvote(comment.id)}
-          style={{
-            background: 'none',
-            border: '1px solid #333',
-            borderRadius: '20px',
-            padding: '6px 12px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '14px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.3s ease'
-          }}
-          onMouseEnter={(e) => {
-            e.target.style.borderColor = '#00ff88'
-            e.target.style.color = '#00ff88'
-            e.target.style.backgroundColor = 'rgba(0, 255, 136, 0.1)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.borderColor = '#333'
-            e.target.style.color = '#888'
-            e.target.style.backgroundColor = 'transparent'
-          }}
-        >
-          ⬆️ {comment.upvotes || 0}
-        </button>
-        
-        <button
-          onClick={() => handleReaction(comment.id, 'like')}
-          style={{
-            background: 'none',
-            border: '1px solid #333',
-            borderRadius: '20px',
-            padding: '6px 12px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '14px',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          👍 {comment.reactions?.filter(r => r.reaction_type === 'like').length || 0}
-        </button>
-        
-        <button
-          onClick={() => handleReaction(comment.id, 'fire')}
-          style={{
-            background: 'none',
-            border: '1px solid #333',
-            borderRadius: '20px',
-            padding: '6px 12px',
-            color: '#888',
-            cursor: 'pointer',
-            fontSize: '14px',
-            transition: 'all 0.3s ease'
-          }}
-        >
-          🔥 {comment.reactions?.filter(r => r.reaction_type === 'fire').length || 0}
-        </button>
-
-        {!isReply && (
-          <button
-            onClick={() => setReplyTo(comment.id)}
-            style={{
-              background: 'none',
-              border: 'none',
-              color: '#888',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }}
-          >
-            💬 Reply
-          </button>
-        )}
-      </div>
-
-      {/* Replies */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div style={{ marginTop: '16px' }}>
-          {comment.replies.map(reply => (
-            <CommentComponent key={reply.id} comment={reply} isReply={true} />
-          ))}
-        </div>
-      )}
-    </div>
-  )
-
+  // Debug info
+  const hasValidProps = entityType && entityId && entityName
+  
   return (
     <div style={{
       backgroundColor: '#1a1a1a',
@@ -402,6 +285,20 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       padding: '25px',
       marginTop: '20px'
     }}>
+      {/* Debug info - remove in production */}
+      {!hasValidProps && (
+        <div style={{
+          backgroundColor: '#664444',
+          border: '1px solid #ff4444',
+          borderRadius: '8px',
+          padding: '15px',
+          marginBottom: '20px',
+          color: '#ff6b6b'
+        }}>
+          <strong>Debug Info:</strong> entityType={entityType}, entityId={entityId}, entityName={entityName}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -417,7 +314,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
           fontSize: '22px',
           fontWeight: 'bold'
         }}>
-          {getEntityIcon(entityType)} {entityName} Discussion ({comments.length})
+          {getEntityIcon(entityType)} {entityName || 'Unknown'} Discussion ({comments.length})
         </h3>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <select
@@ -689,7 +586,15 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
                 animation: `slideInUp 0.6s ease-out ${index * 0.1}s both`
               }}
             >
-              <CommentComponent comment={comment} />
+              <CommentCard 
+                comment={comment}
+                onUpvote={handleUpvote}
+                onDownvote={handleDownvote}
+                onReply={handleReply}
+                currentUser={user}
+                depth={0}
+                userVotes={userVotes}
+              />
             </div>
           ))}
         </div>

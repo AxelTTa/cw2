@@ -2,218 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clutch - Chiliz Token App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Clutch</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1);
-            background-size: 400% 400%;
-            animation: gradientShift 10s ease infinite;
-            color: white;
-            min-height: 100vh;
-            overflow-x: hidden;
+            background: #0a0a0a;
+            color: #ffffff;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
         }
-        
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .container {
-            max-width: 400px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding-top: 60px;
-        }
-        
-        .logo {
-            font-size: 4em;
-            margin-bottom: 10px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-        
-        .title {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            font-size: 1.2em;
-            opacity: 0.9;
-            margin-bottom: 40px;
-        }
-        
-        .status-card {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-        }
-        
-        .feature-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .feature-card {
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            padding: 20px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.2);
-            transition: transform 0.3s ease;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .feature-icon {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-        
-        .feature-text {
-            font-size: 0.9em;
-            font-weight: 500;
-        }
-        
-        .cta-button {
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+        #app-frame {
+            width: 100%;
+            height: 100%;
             border: none;
-            border-radius: 25px;
-            padding: 15px 30px;
-            color: white;
-            font-size: 1.1em;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            margin: 10px auto;
-            display: block;
+            background: #0a0a0a;
         }
-        
-        .cta-button:hover {
-            transform: scale(1.05);
-        }
-        
-        .version-info {
-            margin-top: auto;
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             text-align: center;
-            opacity: 0.7;
-            font-size: 0.8em;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 36px;
+            font-weight: bold;
+            color: #00ff88;
+            margin-bottom: 20px;
+        }
+        .loading-text {
+            font-size: 18px;
+            color: #888;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="logo">🏆</div>
-            <h1 class="title">Clutch</h1>
-            <p class="subtitle">Your Chiliz Token Sports App</p>
-        </div>
-        
-        <div class="status-card">
-            <h3 id="status-title">📱 Mobile App Ready!</h3>
-            <p id="status-text">iOS app successfully configured with Capacitor</p>
-        </div>
-        
-        <div class="feature-grid">
-            <div class="feature-card">
-                <div class="feature-icon">⚽</div>
-                <div class="feature-text">Live Matches</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎯</div>
-                <div class="feature-text">Predictions</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🏅</div>
-                <div class="feature-text">Rewards</div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">👥</div>
-                <div class="feature-text">Community</div>
-            </div>
-        </div>
-        
-        <button class="cta-button" onclick="testMobileFeatures()">
-            Test Mobile Features
-        </button>
-        
-        <div class="version-info">
-            <p>Version 1.0.0 • Capacitor Ready</p>
-            <p id="platform-info">Web Version</p>
-        </div>
+    <div class="loading" id="loading">
+        <div class="logo">Clutch</div>
+        <div class="loading-text">🚀 Loading...</div>
     </div>
     
+    <iframe id="app-frame" src="http://localhost:3000" style="display: none;"></iframe>
+    
     <script>
-        // Mobile app detection and platform info
-        function updatePlatformInfo() {
-            const statusTitle = document.getElementById('status-title');
-            const statusText = document.getElementById('status-text');
-            const platformInfo = document.getElementById('platform-info');
-            
-            if (window.Capacitor) {
-                console.log('🚀 Running in Capacitor mobile app');
-                statusTitle.textContent = '📱 Mobile App Active!';
-                statusText.textContent = 'Running natively on iOS via Capacitor';
-                platformInfo.textContent = `iOS App • Capacitor ${window.Capacitor.getPlatform()}`;
-                
-                // Test Capacitor plugins
-                testCapacitorFeatures();
-            } else {
-                console.log('🌐 Running in web browser');
-                platformInfo.textContent = 'Web Browser Version';
-            }
-        }
+        const frame = document.getElementById('app-frame');
+        const loading = document.getElementById('loading');
         
-        function testCapacitorFeatures() {
-            // Test device info if available
-            if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Device) {
-                window.Capacitor.Plugins.Device.getInfo().then(info => {
-                    console.log('📱 Device Info:', info);
-                });
-            }
-        }
+        // Show the app when it loads
+        frame.onload = function() {
+            loading.style.display = 'none';
+            frame.style.display = 'block';
+        };
         
-        function testMobileFeatures() {
-            if (window.Capacitor) {
-                alert('🎉 Mobile features are working!\n\nCapacitor is successfully integrated.');
-            } else {
-                alert('ℹ️ This is the web version.\n\nMobile features will be available in the iOS app.');
-            }
-        }
-        
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', updatePlatformInfo);
+        // Fallback - show frame after 3 seconds even if not loaded
+        setTimeout(() => {
+            loading.style.display = 'none';
+            frame.style.display = 'block';
+        }, 3000);
     </script>
 </body>
 </html>

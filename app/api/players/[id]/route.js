@@ -17,11 +17,11 @@ async function fetchPlayerDetails(playerId) {
   console.log(`🔍 Backend: Fetching detailed stats for player ${playerId}`)
   
   // Start with current season first for faster response
-  const seasons = [2025, 2024]
+  const seasons = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015]
   let allStatistics = []
   let playerInfo = null
   
-  // Try to get player info and stats from seasons (limited to 2 most recent)
+  // Try to get player info and stats from seasons
   for (const season of seasons) {
     try {
       const response = await fetch(`${BASE_URL}/players?id=${playerId}&season=${season}`, {
@@ -34,7 +34,16 @@ async function fetchPlayerDetails(playerId) {
 
       const data = await response.json()
       
-      if (response.ok && data.response && data.response.length > 0) {
+      if (!response.ok) {
+        console.error(`❌ API Error for player ${playerId}, season ${season}:`, {
+          status: response.status,
+          statusText: response.statusText,
+          data: data
+        })
+        continue
+      }
+      
+      if (data.response && data.response.length > 0) {
         const playerData = data.response[0]
         
         // Store player info from first successful response
@@ -64,8 +73,43 @@ async function fetchPlayerDetails(playerId) {
     }
   }
   
+  // If no player found in specific seasons, try a general API call without season
   if (!playerInfo) {
-    throw new Error('Player not found')
+    console.log(`⚠️ Player ${playerId} not found in specific seasons, trying general search...`)
+    
+    try {
+      const response = await fetch(`${BASE_URL}/players?id=${playerId}`, {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': API_KEY,
+          'X-RapidAPI-Host': 'v3.football.api-sports.io'
+        }
+      })
+
+      const data = await response.json()
+      
+      if (response.ok && data.response && data.response.length > 0) {
+        const playerData = data.response[0]
+        playerInfo = playerData.player
+        
+        // Collect any available statistics
+        if (playerData.statistics && playerData.statistics.length > 0) {
+          allStatistics.push(...playerData.statistics)
+        }
+        
+        console.log(`✅ Found player ${playerId} via general search:`, {
+          name: playerInfo.name,
+          stats: playerData.statistics?.length || 0
+        })
+      }
+    } catch (error) {
+      console.error(`❌ General search failed for player ${playerId}:`, error.message)
+    }
+  }
+  
+  if (!playerInfo) {
+    console.log(`⚠️ Player ${playerId} not found in any search method`)
+    return null
   }
   
   // Calculate summary statistics
@@ -83,7 +127,7 @@ async function fetchPlayerDetails(playerId) {
   let ratingCount = 0
   
   allStatistics.forEach(stat => {
-    summaryStats.games += stat.games?.appearences || 0
+    summaryStats.games += stat.games?.appearances || 0
     summaryStats.goals += stat.goals?.total || 0
     summaryStats.assists += stat.goals?.assists || 0
     summaryStats.minutes += stat.games?.minutes || 0
@@ -122,7 +166,15 @@ async function findPlayerTeam(playerId) {
 
       const teamsData = await teamsResponse.json()
       
-      if (teamsResponse.ok && teamsData.response) {
+      if (!teamsResponse.ok) {
+        console.error(`❌ Teams API Error for league ${leagueId}:`, {
+          status: teamsResponse.status,
+          data: teamsData
+        })
+        continue
+      }
+      
+      if (teamsData.response) {
         for (const teamData of teamsData.response) {
           const teamId = teamData.team.id
           
@@ -137,7 +189,12 @@ async function findPlayerTeam(playerId) {
 
             const squadData = await squadResponse.json()
             
-            if (squadResponse.ok && squadData.response && squadData.response.length > 0) {
+            if (!squadResponse.ok) {
+              console.error(`❌ Squad API Error for team ${teamId}:`, squadData)
+              continue
+            }
+            
+            if (squadData.response && squadData.response.length > 0) {
               const players = squadData.response[0].players || []
               const foundPlayer = players.find(p => p.id == playerId)
               
@@ -191,6 +248,15 @@ export async function GET(request, { params }) {
       fetchPlayerDetails(playerId),
       findPlayerTeam(playerId)
     ])
+    
+    // Check if player was found
+    if (!playerDetails) {
+      return NextResponse.json({
+        success: false,
+        error: `Player with ID ${playerId} not found in any available season`,
+        timestamp: new Date().toISOString()
+      }, { status: 404 })
+    }
     
     playerDetails.team = teamInfo
     
