@@ -6,14 +6,14 @@
   - Local:        http://localhost:3000
 
  ✓ Starting...
- ✓ Ready in 1097ms
- ✓ Compiled /api/players in 164ms (56 modules)
+ ✓ Ready in 1050ms
+ ✓ Compiled /api/players in 132ms (56 modules)
 🎯 Backend API Route /api/players called
-📅 Backend Current time: 2025-07-12T13:09:52.274Z
-🔍 Backend Query parameters: { limit: 1, offset: 0, sort: null }
-🔍 Backend Starting ALL European + Club World Cup players fetch...
+📅 Backend Current time: 2025-07-12T13:18:29.334Z
+🔍 Backend Query parameters: { limit: 3, offset: 0, sort: null }
+🔍 Backend Starting international competition players fetch...
 🎯 Backend Player limit requested: No limit
-🔍 Backend Starting teams fetch for ALL European clubs + Club World Cup...
+🔍 Backend Starting teams fetch for international competitions only...
 🔍 Backend Fetching major European teams directly...
 🎯 Backend Fetching team ID: 541
 ✅ Backend Added major team: Real Madrid (ID: 541)
@@ -51,46 +51,38 @@
 🎯 Backend Trying League ID: 1 for teams
 🎯 Backend Trying League ID: 2 for teams
 ✅ Backend Found 81 teams for League ID 2
-🎯 Backend Trying League ID: 39 for teams
-✅ Backend Found 20 teams for League ID 39
-🎯 Backend Trying League ID: 140 for teams
-✅ Backend Found 20 teams for League ID 140
-🎯 Backend Trying League ID: 135 for teams
-✅ Backend Found 20 teams for League ID 135
-🎯 Backend Trying League ID: 78 for teams
-✅ Backend Found 19 teams for League ID 78
-🎯 Backend Trying League ID: 61 for teams
-✅ Backend Found 19 teams for League ID 61
-✅ Backend Total teams collected: 157
-📋 Backend Found 157 teams, now fetching ALL players...
+🎯 Backend Trying League ID: 3 for teams
+✅ Backend Found 76 teams for League ID 3
+🎯 Backend Trying League ID: 848 for teams
+✅ Backend Found 164 teams for League ID 848
+🎯 Backend Trying League ID: 4 for teams
+✅ Backend Found 24 teams for League ID 4
+🎯 Backend Trying League ID: 531 for teams
+✅ Backend Found 2 teams for League ID 531
+✅ Backend Total teams collected: 260
+📋 Backend Found 260 teams, now fetching players...
 🎯 Backend Processing 15 major teams first (with rate limiting)
 🔍 Processing major team: Real Madrid (ID: 541) from La Liga
 🏃 Backend Fetching players for team: 541 (attempt 1)
-🚫 Backend Rate limit hit for team 541, retry 1/3
+🚫 Backend Rate limit hit for team 541, retry 1/2
 🏃 Backend Fetching players for team: 541 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 541
-🚫 Backend Rate limit hit for team 541, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 541
+🚫 Backend Rate limit hit for team 541, retry 2/2
 🏃 Backend Fetching players for team: 541 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 541
-🚫 Backend Rate limit hit for team 541, retry 3/3
-🏃 Backend Fetching players for team: 541 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 541
-🚫 Backend Rate limit hit for team 541, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 541
+🚫 Backend Rate limit hit for team 541, retry 3/2
 ❌ Backend Max retries exceeded for team 541 due to rate limiting
 📋 Found 0 players for Real Madrid
 ✅ Processed 0 players for Real Madrid (Total so far: 0)
 🔍 Processing major team: Barcelona (ID: 529) from La Liga
 🏃 Backend Fetching players for team: 529 (attempt 1)
-🚫 Backend Rate limit hit for team 529, retry 1/3
+🚫 Backend Rate limit hit for team 529, retry 1/2
 🏃 Backend Fetching players for team: 529 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 529
-🚫 Backend Rate limit hit for team 529, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 529
+🚫 Backend Rate limit hit for team 529, retry 2/2
 🏃 Backend Fetching players for team: 529 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 529
-🚫 Backend Rate limit hit for team 529, retry 3/3
-🏃 Backend Fetching players for team: 529 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 529
-🚫 Backend Rate limit hit for team 529, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 529
+🚫 Backend Rate limit hit for team 529, retry 3/2
 ❌ Backend Max retries exceeded for team 529 due to rate limiting
 📋 Found 0 players for Barcelona
 ✅ Processed 0 players for Barcelona (Total so far: 0)
@@ -166,63 +158,51 @@
 ✅ Processed 30 players for Arsenal (Total so far: 144)
 🔍 Processing major team: Chelsea (ID: 49) from Premier League
 🏃 Backend Fetching players for team: 49 (attempt 1)
-🚫 Backend Rate limit hit for team 49, retry 1/3
+🚫 Backend Rate limit hit for team 49, retry 1/2
 🏃 Backend Fetching players for team: 49 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 49
-🚫 Backend Rate limit hit for team 49, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 49
+🚫 Backend Rate limit hit for team 49, retry 2/2
 🏃 Backend Fetching players for team: 49 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 49
-🚫 Backend Rate limit hit for team 49, retry 3/3
-🏃 Backend Fetching players for team: 49 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 49
-🚫 Backend Rate limit hit for team 49, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 49
+🚫 Backend Rate limit hit for team 49, retry 3/2
 ❌ Backend Max retries exceeded for team 49 due to rate limiting
 📋 Found 0 players for Chelsea
 ✅ Processed 0 players for Chelsea (Total so far: 144)
 🔍 Processing major team: Manchester United (ID: 33) from Premier League
 🏃 Backend Fetching players for team: 33 (attempt 1)
-🚫 Backend Rate limit hit for team 33, retry 1/3
+🚫 Backend Rate limit hit for team 33, retry 1/2
 🏃 Backend Fetching players for team: 33 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 33
-🚫 Backend Rate limit hit for team 33, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 33
+ GET /api/players?limit=3 200 in 115042ms
+🚫 Backend Rate limit hit for team 33, retry 2/2
 🏃 Backend Fetching players for team: 33 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 33
-🚫 Backend Rate limit hit for team 33, retry 3/3
-🏃 Backend Fetching players for team: 33 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 33
- GET /api/players?limit=1 200 in 115027ms
-🚫 Backend Rate limit hit for team 33, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 33
+ ✓ Compiled in 17ms
+🚫 Backend Rate limit hit for team 33, retry 3/2
 ❌ Backend Max retries exceeded for team 33 due to rate limiting
 📋 Found 0 players for Manchester United
 ✅ Processed 0 players for Manchester United (Total so far: 144)
 🔍 Processing major team: Tottenham (ID: 47) from Premier League
 🏃 Backend Fetching players for team: 47 (attempt 1)
-🚫 Backend Rate limit hit for team 47, retry 1/3
+🚫 Backend Rate limit hit for team 47, retry 1/2
 🏃 Backend Fetching players for team: 47 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 47
-🚫 Backend Rate limit hit for team 47, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 47
+🚫 Backend Rate limit hit for team 47, retry 2/2
 🏃 Backend Fetching players for team: 47 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 47
-🚫 Backend Rate limit hit for team 47, retry 3/3
-🏃 Backend Fetching players for team: 47 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 47
- ✓ Compiled in 14ms
-🚫 Backend Rate limit hit for team 47, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 47
+🚫 Backend Rate limit hit for team 47, retry 3/2
 ❌ Backend Max retries exceeded for team 47 due to rate limiting
 📋 Found 0 players for Tottenham
 ✅ Processed 0 players for Tottenham (Total so far: 144)
 🔍 Processing major team: AC Milan (ID: 489) from Serie A
 🏃 Backend Fetching players for team: 489 (attempt 1)
-🚫 Backend Rate limit hit for team 489, retry 1/3
+🚫 Backend Rate limit hit for team 489, retry 1/2
 🏃 Backend Fetching players for team: 489 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 489
-🚫 Backend Rate limit hit for team 489, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 489
+🚫 Backend Rate limit hit for team 489, retry 2/2
 🏃 Backend Fetching players for team: 489 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 489
-🚫 Backend Rate limit hit for team 489, retry 3/3
-🏃 Backend Fetching players for team: 489 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 489
-🚫 Backend Rate limit hit for team 489, retry 4/3
+⏳ Backend Waiting 20000ms before retry for team 489
+🚫 Backend Rate limit hit for team 489, retry 3/2
 ❌ Backend Max retries exceeded for team 489 due to rate limiting
 📋 Found 0 players for AC Milan
 ✅ Processed 0 players for AC Milan (Total so far: 144)
@@ -233,12 +213,9 @@
 ✅ Processed 43 players for Inter (Total so far: 187)
 🔍 Processing major team: Juventus (ID: 496) from Serie A
 🏃 Backend Fetching players for team: 496 (attempt 1)
-🚫 Backend Rate limit hit for team 496, retry 1/3
+🚫 Backend Rate limit hit for team 496, retry 1/2
 🏃 Backend Fetching players for team: 496 (attempt 2)
-⏳ Backend Waiting 4000ms before retry for team 496
-🚫 Backend Rate limit hit for team 496, retry 2/3
+⏳ Backend Waiting 10000ms before retry for team 496
+🚫 Backend Rate limit hit for team 496, retry 2/2
 🏃 Backend Fetching players for team: 496 (attempt 3)
-⏳ Backend Waiting 8000ms before retry for team 496
-🚫 Backend Rate limit hit for team 496, retry 3/3
-🏃 Backend Fetching players for team: 496 (attempt 4)
-⏳ Backend Waiting 16000ms before retry for team 496
+⏳ Backend Waiting 20000ms before retry for team 496
