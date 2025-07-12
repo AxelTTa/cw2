@@ -111,9 +111,9 @@ export default function Home() {
 
     const particleInterval = setInterval(animateParticles, 50)
 
-    // Cycle testimonials
-    const testimonialInterval = setInterval(() => {
-      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
+    // Cycle features
+    const featureInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % features.length)
     }, 4000)
 
     // Mouse tracking
@@ -124,7 +124,7 @@ export default function Home() {
 
     return () => {
       clearInterval(particleInterval)
-      clearInterval(testimonialInterval)
+      clearInterval(featureInterval)
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
