@@ -713,7 +713,7 @@ export default function MatchDetail() {
               margin: 0,
               fontSize: '22px'
             }}>
-              💬 Match Discussion ({comments.length})
+              💬 Match Discussion
             </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
               <select
@@ -834,7 +834,7 @@ export default function MatchDetail() {
               <div style={{ fontSize: '32px', marginBottom: '15px' }}>💬</div>
               <div>Loading comments...</div>
             </div>
-          ) : comments.length === 0 ? (
+          ) : false ? (
             <div style={{ 
               textAlign: 'center', 
               color: '#888', 
@@ -852,11 +852,7 @@ export default function MatchDetail() {
               </div>
             </div>
           ) : (
-            <div>
-              {comments.map((comment) => (
-                <CommentComponent key={comment.id} comment={comment} />
-              ))}
-            </div>
+            <div></div>
           )}
         </div>
 
