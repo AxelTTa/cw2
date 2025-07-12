@@ -348,8 +348,9 @@ async function fetchInternationalCompetitionPlayers(limit = null) {
           // Fetch detailed stats for each player using their league
           const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
           
-          // Find the best available stat
+          // Find the best available stat and extract player details
           let relevantStat = null
+          let playerDetails = null
           
           if (stats.length > 0) {
             // Priority: Stats with goals > 0, then games > 0, then any stat
@@ -357,7 +358,11 @@ async function fetchInternationalCompetitionPlayers(limit = null) {
                          stats.find(s => s.games?.appearences > 0) ||
                          stats.find(s => s.goals?.assists > 0) ||
                          stats[0] // fallback to first stat
+                         
+            // Get player details from the statistics response (contains full player info)
+            playerDetails = stats[0]?.player
           }
+          
           
           teamPlayers.push({
             player: {
@@ -365,10 +370,11 @@ async function fetchInternationalCompetitionPlayers(limit = null) {
               name: player.name,
               photo: player.photo,
               age: player.age,
-              nationality: player.birth?.country || 'Unknown',
+              // Use detailed player info from statistics API for nationality
+              nationality: playerDetails?.birth?.country || playerDetails?.nationality || 'Unknown',
               position: player.position,
-              height: player.height,
-              weight: player.weight
+              height: playerDetails?.height || player.height,
+              weight: playerDetails?.weight || player.weight
             },
             team: {
               id: teamId,
