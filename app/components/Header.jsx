@@ -119,6 +119,7 @@ export default function Header() {
     { href: '/players', label: 'Players', paths: ['/players'] },
     { href: '/matches', label: 'Matches', paths: ['/matches'] },
     { href: '/live', label: 'Live', paths: ['/live'] },
+    { href: '/prediction-grid', label: '🎯 Prediction Grid', paths: ['/prediction-grid'] },
     { href: '/test-livematch', label: 'Test Live Match', paths: ['/test-livematch'] },
     { href: '/rewards', label: 'Rewards', paths: ['/rewards'] },
     { href: '/daily-leaderboard', label: 'Daily Leaderboard', paths: ['/daily-leaderboard'] }

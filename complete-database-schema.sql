@@ -1155,33 +1155,27 @@ BEGIN
   ELSE
     -- Check if user has opposite reaction and remove it
     IF p_vote_type = 'like' THEN
-      DELETE FROM reactions 
-      WHERE user_id = p_user_id 
-        AND comment_id = p_comment_id 
-        AND reaction_type = 'dislike';
-      UPDATE comments 
-      SET downvotes = GREATEST(0, downvotes - 1) 
-      WHERE id = p_comment_id 
-        AND EXISTS (
-          SELECT 1 FROM reactions 
-          WHERE user_id = p_user_id 
-            AND comment_id = p_comment_id 
-            AND reaction_type = 'dislike'
-        );
+      -- Check and remove dislike if exists
+      IF EXISTS (SELECT 1 FROM reactions WHERE user_id = p_user_id AND comment_id = p_comment_id AND reaction_type = 'dislike') THEN
+        DELETE FROM reactions 
+        WHERE user_id = p_user_id 
+          AND comment_id = p_comment_id 
+          AND reaction_type = 'dislike';
+        UPDATE comments 
+        SET downvotes = GREATEST(0, downvotes - 1) 
+        WHERE id = p_comment_id;
+      END IF;
     ELSE
-      DELETE FROM reactions 
-      WHERE user_id = p_user_id 
-        AND comment_id = p_comment_id 
-        AND reaction_type = 'like';
-      UPDATE comments 
-      SET upvotes = GREATEST(0, upvotes - 1) 
-      WHERE id = p_comment_id 
-        AND EXISTS (
-          SELECT 1 FROM reactions 
-          WHERE user_id = p_user_id 
-            AND comment_id = p_comment_id 
-            AND reaction_type = 'like'
-        );
+      -- Check and remove like if exists
+      IF EXISTS (SELECT 1 FROM reactions WHERE user_id = p_user_id AND comment_id = p_comment_id AND reaction_type = 'like') THEN
+        DELETE FROM reactions 
+        WHERE user_id = p_user_id 
+          AND comment_id = p_comment_id 
+          AND reaction_type = 'like';
+        UPDATE comments 
+        SET upvotes = GREATEST(0, upvotes - 1) 
+        WHERE id = p_comment_id;
+      END IF;
     END IF;
     
     -- Add new reaction (protected by unique constraint)
