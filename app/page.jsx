@@ -39,31 +39,31 @@ export default function Home() {
 
   const testimonials = [
     {
-      name: 'Alex Thompson',
-      username: '@crypto_king',
-      text: 'Made 45 CHZ in my first week! The live predictions are incredibly accurate.',
-      earnings: '+45 CHZ',
+      name: 'Alex Chen',
+      username: '@AlexPredicts',
       avatar: '👑',
       verified: true,
-      bgColor: 'linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1))'
+      earnings: '+127 CHZ',
+      text: 'Clutch changed my game completely! I went from casual watching to earning real crypto from my sports knowledge. The prediction system is incredibly intuitive.',
+      bgColor: 'linear-gradient(135deg, rgba(255, 215, 0, 0.8), rgba(255, 165, 0, 0.6))'
     },
     {
-      name: 'Sarah Martinez',
-      username: '@sports_prophet',
-      text: 'Finally, a platform that rewards sports knowledge. Love the community!',
-      earnings: '+32 CHZ',
+      name: 'Maria Santos',
+      username: '@SportsMaria',
       avatar: '🔮',
       verified: true,
-      bgColor: 'linear-gradient(135deg, rgba(58, 190, 249, 0.3), rgba(58, 190, 249, 0.1))'
+      earnings: '+89 CHZ',
+      text: 'Being part of the Clutch community feels like having a VIP pass to sports. The insights I get from other fans help me make better predictions and earn more.',
+      bgColor: 'linear-gradient(135deg, rgba(58, 190, 249, 0.8), rgba(0, 153, 204, 0.6))'
     },
     {
-      name: 'Mike Chen',
-      username: '@clutch_master',
-      text: 'The real-time stats helped me make better predictions. Already climbing the leaderboard!',
-      earnings: '+28 CHZ',
+      name: 'James Wilson',
+      username: '@ClutchJames',
       avatar: '⚡',
-      verified: true,
-      bgColor: 'linear-gradient(135deg, rgba(0, 255, 170, 0.3), rgba(0, 255, 170, 0.1))'
+      verified: false,
+      earnings: '+156 CHZ',
+      text: 'The live betting feature is a game-changer. I can make quick decisions during matches and see instant rewards. It\'s like having superpowers during game day!',
+      bgColor: 'linear-gradient(135deg, rgba(0, 255, 170, 0.8), rgba(0, 204, 136, 0.6))'
     }
   ]
 
@@ -141,10 +141,10 @@ export default function Home() {
 
     const particleInterval = setInterval(animateParticles, 100)
 
-    // Cycle testimonials less frequently
-    const testimonialInterval = setInterval(() => {
-      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
-    }, 6000)
+    // Cycle features
+    const featureInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % features.length)
+    }, 4000)
 
     // Throttled mouse tracking for better performance
     let mouseTimeout
@@ -159,7 +159,7 @@ export default function Home() {
 
     return () => {
       clearInterval(particleInterval)
-      clearInterval(testimonialInterval)
+      clearInterval(featureInterval)
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
