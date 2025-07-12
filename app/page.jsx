@@ -130,7 +130,7 @@ export default function Home() {
     }))
     setParticles(particleArray)
 
-    // Animate particles
+    // Animate particles less frequently
     const animateParticles = () => {
       setParticles(prev => prev.map(particle => ({
         ...particle,
@@ -141,9 +141,9 @@ export default function Home() {
 
     const particleInterval = setInterval(animateParticles, 50)
 
-    // Cycle features
-    const featureInterval = setInterval(() => {
-      setCurrentTestimonial(prev => (prev + 1) % features.length)
+    // Cycle testimonials
+    const testimonialInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
     }, 4000)
 
     // Mouse tracking
@@ -154,7 +154,7 @@ export default function Home() {
 
     return () => {
       clearInterval(particleInterval)
-      clearInterval(featureInterval)
+      clearInterval(testimonialInterval)
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
@@ -216,8 +216,8 @@ export default function Home() {
         
         .crypto-bg {
           background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460, #0a0a0a);
-          background-size: 400% 400%;
-          animation: gradientWave 15s ease infinite;
+          background-size: 200% 200%;
+          animation: gradientWave 20s ease infinite;
           position: relative;
         }
         
