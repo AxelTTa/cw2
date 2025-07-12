@@ -8,11 +8,17 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url)
     const limit = parseInt(searchParams.get('limit')) || 50
     const offset = parseInt(searchParams.get('offset')) || 0
+    const type = searchParams.get('type') || 'overall' // 'overall' or 'daily'
+    const date = searchParams.get('date') || new Date().toISOString().split('T')[0]
     
-    console.log(`🎯 Backend API Route /api/leaderboard called with limit: ${limit}, offset: ${offset}`)
+    console.log(`🎯 Backend API Route /api/leaderboard called with limit: ${limit}, offset: ${offset}, type: ${type}`)
     console.log('📅 Backend Current time:', new Date().toISOString())
     
-    console.log('🔍 Backend: Getting leaderboard data')
+    if (type === 'daily') {
+      return await getDailyLeaderboard(date, limit, offset)
+    }
+    
+    console.log('🔍 Backend: Getting overall leaderboard data')
     
     // Try to use the SQL function first
     const { data: leaderboardData, error: leaderboardError } = await supabaseAdmin
@@ -36,6 +42,7 @@ export async function GET(request) {
       success: true,
       leaderboard: leaderboardData || [],
       count: leaderboardData?.length || 0,
+      type: 'overall',
       timestamp: new Date().toISOString()
     })
     
@@ -50,6 +57,72 @@ export async function GET(request) {
     return NextResponse.json({
       success: false,
       error: error.message,
+      timestamp: new Date().toISOString()
+    }, { status: 500 })
+  }
+}
+
+// Get daily leaderboard from daily_commentator_scores
+async function getDailyLeaderboard(date, limit, offset) {
+  try {
+    console.log(`🔄 Backend: Getting daily leaderboard for ${date}`)
+    
+    const { data: dailyScores, error } = await supabaseAdmin
+      .from('daily_commentator_scores')
+      .select(`
+        rank,
+        user_id,
+        final_score,
+        comments_count,
+        total_upvotes,
+        profiles:user_id (
+          id,
+          username,
+          display_name,
+          avatar_url,
+          level
+        )
+      `)
+      .eq('date', date)
+      .order('rank', { ascending: true })
+      .range(offset, offset + limit - 1)
+
+    if (error) {
+      console.error('❌ Backend Error fetching daily leaderboard:', error)
+      throw error
+    }
+
+    const leaderboard = (dailyScores || []).map(score => ({
+      rank: score.rank,
+      user_id: score.user_id,
+      username: score.profiles?.username,
+      display_name: score.profiles?.display_name,
+      avatar_url: score.profiles?.avatar_url,
+      level: score.profiles?.level,
+      daily_score: score.final_score,
+      comments_count: score.comments_count,
+      upvotes_received: score.total_upvotes
+    }))
+
+    console.log('✅ Backend Daily leaderboard data compiled:', {
+      resultsCount: leaderboard.length,
+      date
+    })
+
+    return NextResponse.json({
+      success: true,
+      leaderboard: leaderboard,
+      count: leaderboard.length,
+      type: 'daily',
+      date: date,
+      timestamp: new Date().toISOString()
+    })
+
+  } catch (error) {
+    console.error('❌ Backend Daily leaderboard error:', error)
+    return NextResponse.json({
+      success: false,
+      error: 'Failed to load daily leaderboard',
       timestamp: new Date().toISOString()
     }, { status: 500 })
   }

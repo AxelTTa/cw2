@@ -677,6 +677,84 @@ export default function Rewards() {
         </div>
       </section>
 
+      {/* Daily Rewards Section */}
+      <section style={{
+        padding: '40px 20px',
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
+        <h2 style={{
+          fontSize: '36px',
+          textAlign: 'center',
+          marginBottom: '40px',
+          color: '#ffffff'
+        }}>
+          🏅 Daily Top Commentator Rewards
+        </h2>
+        
+        <div style={{
+          backgroundColor: '#111',
+          border: '2px solid #00ff88',
+          borderRadius: '20px',
+          padding: '30px',
+          marginBottom: '40px'
+        }}>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '20px',
+            marginBottom: '30px'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥇</div>
+              <div style={{ color: '#FFD700', fontSize: '24px', fontWeight: 'bold' }}>1st Place</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>50 CHZ Daily</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥈</div>
+              <div style={{ color: '#C0C0C0', fontSize: '24px', fontWeight: 'bold' }}>2nd Place</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>30 CHZ Daily</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥉</div>
+              <div style={{ color: '#CD7F32', fontSize: '24px', fontWeight: 'bold' }}>3rd Place</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>20 CHZ Daily</div>
+            </div>
+          </div>
+          
+          <div style={{
+            textAlign: 'center',
+            color: '#888',
+            fontSize: '16px',
+            lineHeight: '1.5',
+            marginBottom: '20px'
+          }}>
+            Be the top commentator of the day! Rankings based on comments posted + upvotes received.
+            <br />
+            Rewards distributed automatically at midnight to connected wallets.
+          </div>
+          
+          <div style={{ textAlign: 'center' }}>
+            <a
+              href="/daily-leaderboard"
+              style={{
+                display: 'inline-block',
+                backgroundColor: '#00ff88',
+                color: '#000',
+                textDecoration: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              View Daily Leaderboard 📊
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Recent Rewards */}
       <section style={{
         padding: '40px 20px',
