@@ -114,13 +114,9 @@ export default function Header() {
 
   const navItems = [
     { href: '/', label: 'Home', paths: ['/'] },
-    { href: '/competitions', label: 'Competitions', paths: ['/competitions'] },
-    { href: '/teams', label: 'Teams', paths: ['/teams'] },
-    { href: '/players', label: 'Players', paths: ['/players'] },
+    { href: '/overview', label: 'Overview', paths: ['/overview'] },
     { href: '/matches', label: 'Matches', paths: ['/matches'] },
-    { href: '/live', label: 'Live', paths: ['/live'] },
     { href: '/prediction-grid', label: '🎯 Prediction Grid', paths: ['/prediction-grid'] },
-    { href: '/test-livematch', label: 'Test Live Match', paths: ['/test-livematch'] },
     { href: '/rewards', label: 'Rewards', paths: ['/rewards'] },
     { href: '/daily-leaderboard', label: 'Daily Leaderboard', paths: ['/daily-leaderboard'] }
   ]
