@@ -17,7 +17,7 @@ async function fetchPlayerDetails(playerId) {
   console.log(`🔍 Backend: Fetching detailed stats for player ${playerId}`)
   
   // Start with current season first for faster response
-  const seasons = [2025, 2024, 2023, 2022, 2021, 2020]
+  const seasons = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015]
   let allStatistics = []
   let playerInfo = null
   
@@ -73,8 +73,42 @@ async function fetchPlayerDetails(playerId) {
     }
   }
   
+  // If no player found in specific seasons, try a general API call without season
   if (!playerInfo) {
-    console.log(`⚠️ Player ${playerId} not found in any season`)
+    console.log(`⚠️ Player ${playerId} not found in specific seasons, trying general search...`)
+    
+    try {
+      const response = await fetch(`${BASE_URL}/players?id=${playerId}`, {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': API_KEY,
+          'X-RapidAPI-Host': 'v3.football.api-sports.io'
+        }
+      })
+
+      const data = await response.json()
+      
+      if (response.ok && data.response && data.response.length > 0) {
+        const playerData = data.response[0]
+        playerInfo = playerData.player
+        
+        // Collect any available statistics
+        if (playerData.statistics && playerData.statistics.length > 0) {
+          allStatistics.push(...playerData.statistics)
+        }
+        
+        console.log(`✅ Found player ${playerId} via general search:`, {
+          name: playerInfo.name,
+          stats: playerData.statistics?.length || 0
+        })
+      }
+    } catch (error) {
+      console.error(`❌ General search failed for player ${playerId}:`, error.message)
+    }
+  }
+  
+  if (!playerInfo) {
+    console.log(`⚠️ Player ${playerId} not found in any search method`)
     return null
   }
   
