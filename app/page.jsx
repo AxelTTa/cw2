@@ -415,7 +415,7 @@ export default function Home() {
             lineHeight: '1.6'
           }}>
             Follow the expanded Club World Cup with 32 teams from around the world. 
-            Real-time match results, player stats, and community discussions.
+            Real-time match results and comprehensive player statistics.
           </p>
         </div>
 
@@ -450,11 +450,11 @@ export default function Home() {
               paddingBottom: '5px'
             }}>
               {[
-                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴' },
-                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷' },
-                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷' },
-                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷' },
-                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷' }
+                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴', id: 1100 },
+                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷', id: 4 },
+                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷', id: 154 },
+                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷', id: 165 },
+                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷', id: 607 }
               ].map((player, index) => (
                 <div key={index} style={{
                   minWidth: '120px',
@@ -466,6 +466,7 @@ export default function Home() {
                   cursor: 'pointer',
                   transition: 'all 0.3s ease'
                 }}
+                onClick={() => window.location.href = `/players/${player.id}`}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = '#00ff88'
                   e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
@@ -733,41 +734,6 @@ export default function Home() {
             </div>
           )}
           
-          <div style={{
-            textAlign: 'center',
-            marginTop: '50px'
-          }}>
-            <a 
-              href="/community" 
-              className="rotating-border mobile-btn"
-              style={{
-                display: 'inline-block',
-                backgroundColor: '#00ff88',
-                color: '#000',
-                textDecoration: 'none',
-                padding: '16px 32px',
-                borderRadius: '50px',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                animation: 'glow 4s infinite',
-                position: 'relative',
-                overflow: 'hidden'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#00cc6a'
-                e.target.style.transform = 'translateY(-5px) scale(1.08)'
-                e.target.style.boxShadow = '0 15px 35px rgba(0, 255, 136, 0.5)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#00ff88'
-                e.target.style.transform = 'translateY(0) scale(1)'
-                e.target.style.boxShadow = 'none'
-              }}
-            >
-              Join Match Discussions 💬
-            </a>
-          </div>
         </div>
 
         {/* Top Competitions Section */}
@@ -989,12 +955,6 @@ export default function Home() {
               delay: '0.2s'
             },
             {
-              title: 'Community Discussions 💬',
-              desc: 'Share your thoughts on matches and players. Engage with fans from around the world during live games.',
-              color: '#0099ff',
-              delay: '0.4s'
-            },
-            {
               title: 'Player Profiles 👤',
               desc: 'Explore detailed profiles of players from top competitions worldwide. View career highlights and achievements.',
               color: '#ff6b35',
@@ -1080,20 +1040,11 @@ export default function Home() {
               lineHeight: '1.7'
             }}>
               The expanded tournament featuring 32 clubs from around the world. 
-              Real-time data, comprehensive player profiles, and community discussions.
+              Real-time data and comprehensive player profiles.
             </p>
           </div>
         </div>
 
-        {/* Public Comments Section */}
-        <div style={{
-          marginTop: '80px',
-          maxWidth: '1200px',
-          margin: '80px auto 0',
-          animation: 'slideInUp 0.8s ease-out 1s both'
-        }}>
-          <PublicComments showForm={true} />
-        </div>
       </main>
     </div>
   )

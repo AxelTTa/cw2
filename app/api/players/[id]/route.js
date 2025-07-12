@@ -3,6 +3,9 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
+// Simple in-memory cache
+const cache = new Map()
+
 const POTENTIAL_LEAGUE_IDS = [
   537,  // Current ID being used
   15,   // FIFA Club World Cup (historical)
@@ -13,11 +16,12 @@ const POTENTIAL_LEAGUE_IDS = [
 async function fetchPlayerDetails(playerId) {
   console.log(`🔍 Backend: Fetching detailed stats for player ${playerId}`)
   
-  const seasons = [2025, 2024, 2023, 2022]
+  // Start with current season first for faster response
+  const seasons = [2025, 2024]
   let allStatistics = []
   let playerInfo = null
   
-  // Try to get player info and stats from multiple seasons
+  // Try to get player info and stats from seasons (limited to 2 most recent)
   for (const season of seasons) {
     try {
       const response = await fetch(`${BASE_URL}/players?id=${playerId}&season=${season}`, {
@@ -47,6 +51,12 @@ async function fetchPlayerDetails(playerId) {
           stats: playerData.statistics?.length || 0,
           leagues: playerData.statistics?.map(s => s.league?.name) || []
         })
+        
+        // If we have player info and some stats, we can break early
+        if (playerInfo && allStatistics.length > 0) {
+          console.log(`✅ Early return for player ${playerId} - sufficient data found`)
+          break
+        }
       }
     } catch (error) {
       console.error(`❌ Error fetching player ${playerId} for season ${season}:`, error.message)
@@ -167,6 +177,15 @@ export async function GET(request, { params }) {
       }, { status: 400 })
     }
     
+    // Check cache first (5 minute TTL)
+    const cacheKey = `player_${playerId}`
+    const cached = cache.get(cacheKey)
+    
+    if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutes
+      console.log(`🚀 Cache hit for player ${playerId}`)
+      return NextResponse.json(cached.data)
+    }
+    
     // Fetch player details and team info in parallel
     const [playerDetails, teamInfo] = await Promise.all([
       fetchPlayerDetails(playerId),
@@ -174,6 +193,18 @@ export async function GET(request, { params }) {
     ])
     
     playerDetails.team = teamInfo
+    
+    const result = {
+      success: true,
+      player: playerDetails,
+      timestamp: new Date().toISOString()
+    }
+    
+    // Cache the result
+    cache.set(cacheKey, {
+      data: result,
+      timestamp: Date.now()
+    })
     
     console.log('✅ Backend Successfully processed player detail request:', {
       playerId,
@@ -184,11 +215,7 @@ export async function GET(request, { params }) {
       games: playerDetails.statistics?.games
     })
     
-    return NextResponse.json({
-      success: true,
-      player: playerDetails,
-      timestamp: new Date().toISOString()
-    })
+    return NextResponse.json(result)
     
   } catch (error) {
     console.error('❌ Backend API Route Error:', {
