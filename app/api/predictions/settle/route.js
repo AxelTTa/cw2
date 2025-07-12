@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../../../utils/supabase'
 import { NextResponse } from 'next/server'
 
 export async function POST(request) {
@@ -13,7 +13,6 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    const supabase = createClient()
 
     // Get authenticated user (admin check could be added here)
     const { data: { user }, error: authError } = await supabase.auth.getUser()

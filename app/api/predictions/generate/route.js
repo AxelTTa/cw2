@@ -1,4 +1,4 @@
-import { createClient } from '@/app/utils/supabase'
+import { supabase } from '../../../utils/supabase'
 import { NextResponse } from 'next/server'
 
 // Prediction generation logic
@@ -78,7 +78,6 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    const supabase = createClient()
 
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser()
