@@ -2,81 +2,144 @@
 
 import { useState, useEffect } from 'react'
 import Header from './components/Header'
-import UniversalComments from './components/UniversalComments'
-import { apiRequest } from './utils/api-config'
 
 export default function Home() {
-  const [recentMatches, setRecentMatches] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
   const [isVisible, setIsVisible] = useState(false)
-  const [floatingElements, setFloatingElements] = useState([])
-  const [currentAnimation, setCurrentAnimation] = useState(0)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [particles, setParticles] = useState([])
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
+  const [currentTestimonial, setCurrentTestimonial] = useState(0)
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 })
+
+  const testimonials = [
+    {
+      name: 'Marcus Chen',
+      username: '@CryptoSportsPro',
+      avatar: '🏆',
+      text: 'Made $3,247 ETH this month just by predicting game outcomes. Clutch literally changed my life!',
+      earnings: '+$3,247 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #FFD700, #FFA500)'
+    },
+    {
+      name: 'Sarah Williams',
+      username: '@SportsBetQueen',
+      avatar: '👑',
+      text: 'The community here is insane! Every prediction feels like a mini-jackpot. Already made back my college tuition!',
+      earnings: '+$8,932 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #00FFAA, #00CC88)'
+    },
+    {
+      name: 'Alex Rodriguez',
+      username: '@ClutchMaster99',
+      avatar: '🚀',
+      text: 'From $100 to $15K in 6 weeks. The live betting system is absolutely revolutionary!',
+      earnings: '+$15,245 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #3ABEF9, #0099CC)'
+    },
+    {
+      name: 'Emma Thompson',
+      username: '@CryptoPrediction',
+      avatar: '💎',
+      text: 'This platform turned my sports knowledge into actual crypto wealth. The future is here!',
+      earnings: '+$7,654 ETH',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, #FF6B9D, #C44569)'
+    }
+  ]
+
+  const playerStats = {
+    1: {
+      name: 'CryptoKing88',
+      avatar: '👑',
+      totalEarnings: '0.34 ETH',
+      weeklyEarnings: '+0.12 ETH',
+      successRate: '87%',
+      totalPredictions: 2847,
+      streak: 12,
+      rank: 1,
+      badges: ['🔥', '💎', '🎯'],
+      recentPredictions: [
+        { match: 'Real Madrid vs Barcelona', prediction: 'Real Madrid Win', result: '✅', payout: '+0.05 ETH' },
+        { match: 'Arsenal vs Chelsea', prediction: 'Over 2.5 Goals', result: '✅', payout: '+0.03 ETH' },
+        { match: 'Liverpool vs City', prediction: 'Liverpool Win', result: '❌', payout: '-0.02 ETH' }
+      ]
+    },
+    2: {
+      name: 'SportsProphet',
+      avatar: '🔮',
+      totalEarnings: '0.21 ETH',
+      weeklyEarnings: '+0.08 ETH',
+      successRate: '82%',
+      totalPredictions: 2156,
+      streak: 8,
+      rank: 2,
+      badges: ['⚡', '🎯', '🏆'],
+      recentPredictions: [
+        { match: 'PSG vs Monaco', prediction: 'PSG Win', result: '✅', payout: '+0.04 ETH' },
+        { match: 'Bayern vs Dortmund', prediction: 'Under 3.5 Goals', result: '✅', payout: '+0.02 ETH' }
+      ]
+    },
+    3: {
+      name: 'ClutchMaster',
+      avatar: '⚡',
+      totalEarnings: '0.15 ETH',
+      weeklyEarnings: '+0.06 ETH',
+      successRate: '79%',
+      totalPredictions: 1893,
+      streak: 6,
+      rank: 3,
+      badges: ['🔥', '⭐', '🎯'],
+      recentPredictions: [
+        { match: 'Juventus vs Milan', prediction: 'Both Teams to Score', result: '✅', payout: '+0.03 ETH' }
+      ]
+    }
+  }
 
   useEffect(() => {
-    fetchRecentMatches()
     setIsVisible(true)
     
-    // Create floating elements
-    const elements = Array.from({ length: 12 }, (_, i) => ({
+    // Create animated particles
+    const particleArray = Array.from({ length: 50 }, (_, i) => ({
       id: i,
-      emoji: ['⚽', '🏆', '🔥', '⭐', '🎯', '⚡'][Math.floor(Math.random() * 6)],
       x: Math.random() * 100,
       y: Math.random() * 100,
-      delay: Math.random() * 5,
-      speed: 15 + Math.random() * 10
+      size: Math.random() * 4 + 1,
+      speedX: (Math.random() - 0.5) * 0.5,
+      speedY: (Math.random() - 0.5) * 0.5,
+      color: ['#3ABEF9', '#00FFAA', '#FFD700', '#FF6B9D'][Math.floor(Math.random() * 4)]
     }))
-    setFloatingElements(elements)
+    setParticles(particleArray)
 
-    // Cycle through animation states
-    const animationInterval = setInterval(() => {
-      setCurrentAnimation(prev => (prev + 1) % 3)
+    // Animate particles
+    const animateParticles = () => {
+      setParticles(prev => prev.map(particle => ({
+        ...particle,
+        x: (particle.x + particle.speedX + 100) % 100,
+        y: (particle.y + particle.speedY + 100) % 100
+      })))
+    }
+
+    const particleInterval = setInterval(animateParticles, 50)
+
+    // Cycle testimonials
+    const testimonialInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
     }, 4000)
 
-    return () => clearInterval(animationInterval)
+    // Mouse tracking
+    const handleMouseMove = (e) => {
+      setMousePosition({ x: e.clientX, y: e.clientY })
+    }
+    window.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      clearInterval(particleInterval)
+      clearInterval(testimonialInterval)
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
   }, [])
-
-  const fetchRecentMatches = async () => {
-    try {
-      console.log('🚀 Frontend: Fetching recent matches...')
-      
-      const data = await apiRequest('/matches?status=recent&limit=6', {
-        method: 'GET',
-      })
-      
-      console.log('✅ Frontend: Recent matches loaded:', {
-        matchesCount: data.matches?.length || 0,
-        timestamp: data.timestamp
-      })
-      
-      setRecentMatches(data.matches || [])
-    } catch (err) {
-      console.error('❌ Frontend: Error loading recent matches:', err)
-      setError('Failed to load recent matches')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'live': return '#00ff88'
-      case 'ft': return '#888'
-      case 'ns': return '#0099ff'
-      default: return '#888'
-    }
-  }
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
 
   return (
     <div style={{
@@ -88,13 +151,13 @@ export default function Home() {
       overflow: 'hidden'
     }}>
       <style jsx>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
-          25% { transform: translateY(-25px) rotate(90deg); opacity: 0.6; }
-          50% { transform: translateY(-15px) rotate(180deg); opacity: 0.8; }
-          75% { transform: translateY(-20px) rotate(270deg); opacity: 0.4; }
+        @keyframes float3D {
+          0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+          25% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
+          50% { transform: translateY(-10px) rotateX(-5deg) rotateY(-5deg); }
+          75% { transform: translateY(-15px) rotateX(5deg) rotateY(-10deg); }
         }
-        @keyframes gradientShift {
+        @keyframes gradientWave {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
@@ -103,949 +166,885 @@ export default function Home() {
           from { opacity: 0; transform: translateY(60px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes slideInLeft {
-          from { opacity: 0; transform: translateX(-60px); }
-          to { opacity: 1; transform: translateX(0); }
+        @keyframes pulseGlow {
+          0%, 100% { box-shadow: 0 0 20px rgba(58, 190, 249, 0.3), 0 0 40px rgba(0, 255, 170, 0.2); }
+          50% { box-shadow: 0 0 40px rgba(58, 190, 249, 0.6), 0 0 60px rgba(0, 255, 170, 0.4); }
         }
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(60px); }
-          to { opacity: 1; transform: translateX(0); }
+        @keyframes rotateHue {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
         }
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); opacity: 0.8; }
-          50% { transform: scale(1.1); opacity: 1; }
+        @keyframes bounce3D {
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotateY(0deg); }
+          40% { transform: translateY(-20px) rotateY(180deg); }
+          60% { transform: translateY(-10px) rotateY(360deg); }
         }
-        @keyframes bounce {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-15px); }
-          60% { transform: translateY(-8px); }
+        @keyframes shimmerFlow {
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(200%) skewX(-15deg); }
         }
-        @keyframes glow {
-          0%, 100% { box-shadow: 0 0 25px rgba(0, 255, 136, 0.4); }
-          50% { box-shadow: 0 0 45px rgba(0, 255, 136, 0.8); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        @keyframes rotate {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes heartbeat {
-          0%, 100% { transform: scale(1); }
-          14% { transform: scale(1.2); }
-          28% { transform: scale(1); }
-          42% { transform: scale(1.2); }
-          70% { transform: scale(1); }
+        @keyframes numberCount {
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
         
-        .floating-element {
+        .particle {
           position: absolute;
-          font-size: 28px;
+          border-radius: 50%;
           pointer-events: none;
-          animation: float var(--duration) ease-in-out infinite;
-          animation-delay: var(--delay);
-          z-index: 1;
+          opacity: 0.6;
+          animation: float3D 6s ease-in-out infinite;
         }
         
-        .hero-bg {
-          background: linear-gradient(-45deg, #0a0a0a, #111111, #0f0f0f, #0a0a0a);
+        .crypto-bg {
+          background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460, #0a0a0a);
           background-size: 400% 400%;
-          animation: gradientShift 12s ease infinite;
+          animation: gradientWave 15s ease infinite;
+          position: relative;
         }
         
-        .card-hover {
+        .crypto-bg::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(58, 190, 249, 0.1) 0%, transparent 50%);
+          pointer-events: none;
+        }
+        
+        .glass-card {
+          background: rgba(255, 255, 255, 0.05);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
           transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-          cursor: pointer;
           position: relative;
           overflow: hidden;
         }
         
-        .card-hover:hover {
-          transform: translateY(-12px) scale(1.03);
-          box-shadow: 0 25px 50px rgba(0, 255, 136, 0.3);
-        }
-        
-        .card-hover::before {
+        .glass-card::before {
           content: '';
           position: absolute;
           top: 0;
           left: -100%;
           width: 100%;
           height: 100%;
-          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-          transition: left 0.5s;
+          background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+          transition: left 0.6s;
         }
         
-        .card-hover:hover::before {
+        .glass-card:hover::before {
           left: 100%;
         }
         
-        .live-indicator {
-          animation: heartbeat 1.5s ease-in-out infinite;
+        .glass-card:hover {
+          transform: translateY(-15px) rotateX(5deg) rotateY(5deg);
+          box-shadow: 0 35px 60px rgba(58, 190, 249, 0.3);
+          border-color: rgba(58, 190, 249, 0.5);
         }
         
-        .rotating-border {
+        .feature-icon-3d {
+          font-size: 80px;
+          background: linear-gradient(45deg, #3ABEF9, #00FFAA);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          filter: drop-shadow(0 10px 20px rgba(58, 190, 249, 0.3));
+          animation: bounce3D 3s ease-in-out infinite;
+          transform-style: preserve-3d;
+        }
+        
+        .btn-crypto {
+          background: linear-gradient(45deg, #3ABEF9, #00FFAA, #FFD700);
+          background-size: 200% 200%;
+          animation: gradientWave 3s ease infinite;
+          border: none;
+          color: #000;
+          font-weight: bold;
+          padding: 18px 36px;
+          border-radius: 16px;
+          font-size: 18px;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          display: inline-block;
           position: relative;
+          overflow: hidden;
+          box-shadow: 0 10px 30px rgba(58, 190, 249, 0.4);
         }
         
-        .rotating-border::before {
+        .btn-crypto::after {
           content: '';
           position: absolute;
-          inset: -2px;
-          background: linear-gradient(45deg, #00ff88, #0099ff, #ff6b35, #00ff88);
-          border-radius: inherit;
-          opacity: 0;
-          transition: opacity 0.3s;
-          animation: rotate 3s linear infinite;
-          z-index: -1;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+          transform: translateX(-100%) skewX(-15deg);
+          transition: transform 0.6s;
         }
         
-        .rotating-border:hover::before {
-          opacity: 1;
+        .btn-crypto:hover::after {
+          animation: shimmerFlow 0.8s ease-in-out;
         }
         
-        /* Mobile Responsive Styles */
+        .btn-crypto:hover {
+          transform: translateY(-5px) scale(1.05);
+          box-shadow: 0 20px 40px rgba(58, 190, 249, 0.6);
+        }
+        
+        .rank-card {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(20px);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          padding: 24px;
+          margin: 12px 0;
+          cursor: pointer;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .rank-card:hover {
+          transform: translateX(10px) scale(1.02);
+          border-color: rgba(58, 190, 249, 0.5);
+          box-shadow: 0 20px 40px rgba(58, 190, 249, 0.2);
+        }
+        
+        .testimonial-card {
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+          backdrop-filter: blur(25px);
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          border-radius: 24px;
+          padding: 40px;
+          position: relative;
+          overflow: hidden;
+          transition: all 0.6s ease;
+        }
+        
+        .modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.8);
+          backdrop-filter: blur(10px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          animation: slideInUp 0.3s ease-out;
+        }
+        
+        .modal-content {
+          background: linear-gradient(135deg, rgba(26, 26, 26, 0.95), rgba(17, 17, 17, 0.95));
+          backdrop-filter: blur(20px);
+          border: 2px solid rgba(58, 190, 249, 0.3);
+          border-radius: 24px;
+          padding: 40px;
+          max-width: 600px;
+          width: 90%;
+          max-height: 80vh;
+          overflow-y: auto;
+          position: relative;
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 768px) {
-          .floating-element {
-            font-size: 20px !important;
-          }
-          
-          .mobile-menu-btn {
-            display: block !important;
-          }
-          
-          .desktop-nav {
-            display: none !important;
-          }
-          
-          .mobile-nav {
-            flex-direction: column;
-            gap: 15px !important;
-            position: fixed;
-            top: 70px;
-            left: -100%;
-            width: 100%;
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(20px);
-            padding: 20px;
-            transition: left 0.3s ease;
-            z-index: 99;
-            border-bottom: 1px solid #333;
-          }
-          
-          .mobile-nav.open {
-            left: 0;
-          }
-          
-          .mobile-header {
-            padding: 15px !important;
-            flex-wrap: wrap;
-          }
-          
-          .mobile-title {
-            font-size: 20px !important;
-          }
-          
-          .mobile-hero {
-            padding: 40px 15px !important;
-          }
-          
-          .mobile-hero-title {
-            font-size: 32px !important;
+          .hero-title {
+            font-size: 48px !important;
             line-height: 1.2 !important;
           }
-          
-          .mobile-hero-text {
-            font-size: 16px !important;
-            margin: 0 auto 30px !important;
-          }
-          
-          .mobile-grid {
-            grid-template-columns: 1fr !important;
-            gap: 20px !important;
-            padding: 0 15px !important;
-          }
-          
-          .mobile-card {
-            padding: 20px !important;
-            margin: 0 !important;
-          }
-          
-          .mobile-match-card {
-            padding: 20px !important;
-          }
-          
-          .mobile-teams {
-            flex-direction: column !important;
-            gap: 15px !important;
-            text-align: center !important;
-          }
-          
-          .mobile-score {
+          .hero-subtitle {
             font-size: 20px !important;
-            margin: 15px 0 !important;
           }
-          
-          .mobile-team {
-            justify-content: center !important;
+          .feature-grid {
+            grid-template-columns: 1fr !important;
+            gap: 24px !important;
           }
-          
-          .mobile-team img {
-            width: 24px !important;
-            height: 24px !important;
+          .feature-icon-3d {
+            font-size: 60px !important;
           }
-          
-          .mobile-team span {
-            font-size: 14px !important;
-          }
-          
-          .mobile-match-info {
-            flex-direction: column !important;
-            gap: 8px !important;
-            text-align: center !important;
-          }
-          
-          .mobile-feature {
-            padding: 25px !important;
-            text-align: center !important;
-          }
-          
-          .mobile-feature h3 {
-            font-size: 18px !important;
-          }
-          
-          .mobile-feature p {
-            font-size: 15px !important;
-          }
-          
-          .mobile-cta {
-            padding: 30px 20px !important;
-            margin: 40px 15px 0 !important;
-          }
-          
-          .mobile-cta h2 {
-            font-size: 24px !important;
-          }
-          
-          .mobile-cta p {
+          .btn-crypto {
+            padding: 16px 28px !important;
             font-size: 16px !important;
           }
-          
-          .mobile-btn {
-            padding: 14px 28px !important;
-            font-size: 16px !important;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .mobile-hero-title {
-            font-size: 28px !important;
-          }
-          
-          .mobile-hero-text {
-            font-size: 15px !important;
-          }
-          
-          .mobile-card {
-            padding: 15px !important;
-          }
-          
-          .mobile-feature {
+          .rank-card {
             padding: 20px !important;
-          }
-          
-          .mobile-cta {
-            padding: 25px 15px !important;
           }
         }
       `}</style>
 
-      {/* Floating Background Elements */}
-      {floatingElements.map(element => (
+      {/* Animated Particles Background */}
+      {particles.map(particle => (
         <div
-          key={element.id}
-          className="floating-element"
+          key={particle.id}
+          className="particle"
           style={{
-            '--duration': `${element.speed}s`,
-            '--delay': `${element.delay}s`,
-            top: `${element.y}%`,
-            left: `${element.x}%`
+            left: `${particle.x}%`,
+            top: `${particle.y}%`,
+            width: `${particle.size}px`,
+            height: `${particle.size}px`,
+            backgroundColor: particle.color,
+            boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`
           }}
-        >
-          {element.emoji}
-        </div>
+        />
       ))}
 
       <Header />
 
       {/* Hero Section */}
-      <main className="hero-bg mobile-hero" style={{ 
-        padding: '80px 20px', 
+      <section className="crypto-bg" style={{ 
+        padding: '120px 20px 100px', 
         textAlign: 'center',
-        position: 'relative'
+        position: 'relative',
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
       }}>
         <div style={{
+          maxWidth: '1000px',
+          margin: '0 auto',
           opacity: isVisible ? 1 : 0,
-          transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
+          transform: isVisible ? 'translateY(0)' : 'translateY(60px)',
           transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-          <h1 className="mobile-hero-title" style={{
-            fontSize: '56px',
+          <h1 className="hero-title" style={{
+            fontSize: '72px',
             fontWeight: '900',
-            marginBottom: '25px',
-            background: 'linear-gradient(45deg, #00ff88, #0099ff, #ff6b35, #00ff88)',
+            marginBottom: '32px',
+            background: 'linear-gradient(45deg, #3ABEF9, #00FFAA, #FFD700, #FF6B9D, #3ABEF9)',
             backgroundSize: '300% 300%',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             backgroundClip: 'text',
-            animation: 'gradientShift 4s ease infinite',
-            textShadow: '0 0 40px rgba(0, 255, 136, 0.3)'
+            animation: 'gradientWave 4s ease infinite',
+            lineHeight: '1.1',
+            textShadow: '0 0 60px rgba(58, 190, 249, 0.5)'
           }}>
-            FIFA Club World Cup 2025 ⚽
+            Step Up Your Game with Clutch
           </h1>
-          <p className="mobile-hero-text" style={{
-            fontSize: '22px',
+          
+          <p className="hero-subtitle" style={{
+            fontSize: '28px',
             color: '#cccccc',
             marginBottom: '50px',
-            maxWidth: '700px',
-            margin: '0 auto 50px',
-            animation: 'slideInUp 1s ease-out 0.3s both',
-            lineHeight: '1.6'
+            fontWeight: '400',
+            lineHeight: '1.5',
+            animation: 'slideInUp 1.2s ease-out 0.3s both'
           }}>
-            Follow the expanded Club World Cup with 32 teams from around the world. 
-            Real-time match results and comprehensive player statistics.
+            Engage, Predict, Monetize – Where Crypto Meets Sports
           </p>
-        </div>
 
-        {/* Top Goal Scorers - Compact Section */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '60px auto 40px',
-          padding: '0 20px'
-        }}>
+          {/* Live Stats Counter */}
           <div style={{
-            backgroundColor: '#111',
-            borderRadius: '12px',
-            border: '2px solid #333',
-            padding: '20px',
-            marginBottom: '40px'
-          }}>
-            <h3 style={{
-              fontSize: '18px',
-              fontWeight: '700',
-              marginBottom: '15px',
-              color: '#00ff88',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              ⚽ Top Goal Scorers
-            </h3>
-            <div style={{
-              display: 'flex',
-              gap: '12px',
-              overflowX: 'auto',
-              paddingBottom: '5px'
-            }}>
-              {[
-                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴', id: 1100 },
-                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷', id: 4 },
-                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷', id: 154 },
-                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷', id: 165 },
-                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷', id: 607 }
-              ].map((player, index) => (
-                <div key={index} style={{
-                  minWidth: '120px',
-                  backgroundColor: '#1a1a1a',
-                  border: '1px solid #333',
-                  borderRadius: '8px',
-                  padding: '12px 8px',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onClick={() => window.location.href = `/players/${player.id}`}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = '#00ff88'
-                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
-                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 255, 136, 0.2)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#333'
-                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
-                >
-                  <div style={{
-                    fontSize: '20px',
-                    fontWeight: 'bold',
-                    color: '#00ff88',
-                    marginBottom: '4px'
-                  }}>
-                    {player.goals}
-                  </div>
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 'bold',
-                    color: '#fff',
-                    marginBottom: '2px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px'
-                  }}>
-                    <span>{player.flag}</span>
-                    {player.name}
-                  </div>
-                  <div style={{
-                    fontSize: '10px',
-                    color: '#888'
-                  }}>
-                    {player.team}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Recent Matches Section */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '80px auto',
-          padding: '0 20px'
-        }}>
-          <h2 style={{
-            fontSize: '36px',
-            fontWeight: '700',
-            marginBottom: '40px',
-            textAlign: 'center',
-            color: '#ffffff',
-            animation: 'slideInUp 1s ease-out 0.5s both'
-          }}>
-            🏆 Recent Match Results
-          </h2>
-          
-          {loading ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px',
-              color: '#888'
-            }}>
-              <div style={{ 
-                fontSize: '48px', 
-                marginBottom: '20px',
-                animation: 'bounce 1.5s infinite'
-              }}>⚽</div>
-              <div style={{ 
-                fontSize: '20px',
-                animation: 'pulse 2s infinite'
-              }}>
-                Loading recent matches...
-              </div>
-            </div>
-          ) : error ? (
-            <div style={{
-              textAlign: 'center',
-              padding: '60px',
-              color: '#ff4444'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '20px', animation: 'bounce 1s infinite' }}>⚠️</div>
-              <div style={{ fontSize: '18px' }}>{error}</div>
-            </div>
-          ) : (
-            <div className="mobile-grid" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
-              gap: '25px'
-            }}>
-              {recentMatches.map((match, index) => (
-                <div
-                  key={match.id}
-                  className="card-hover rotating-border mobile-match-card"
-                  style={{
-                    backgroundColor: '#111',
-                    border: '2px solid #333',
-                    borderRadius: '16px',
-                    padding: '25px',
-                    animation: `slideInUp 0.8s ease-out ${index * 0.15}s both`,
-                    position: 'relative',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => window.location.href = `/matches/${match.id}`}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = '#00ff88'
-                    e.currentTarget.style.backgroundColor = '#1a1a1a'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = '#333'
-                    e.currentTarget.style.backgroundColor = '#111'
-                  }}
-                >
-                  {/* Live Match Shimmer Effect */}
-                  {match.status === 'live' && (
-                    <div style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: '-100%',
-                      width: '100%',
-                      height: '100%',
-                      background: 'linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent)',
-                      animation: 'shimmer 2s infinite'
-                    }} />
-                  )}
-                  
-                  {/* Match Header */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px'
-                  }}>
-                    <div style={{
-                      fontSize: '12px',
-                      color: '#888',
-                      textTransform: 'uppercase',
-                      fontWeight: 'bold'
-                    }}>
-                      {match.round}
-                    </div>
-                    <div className={match.status === 'live' ? 'live-indicator' : ''} style={{
-                      fontSize: '12px',
-                      padding: '6px 12px',
-                      borderRadius: '20px',
-                      backgroundColor: getStatusColor(match.status),
-                      color: match.status === 'live' ? '#000' : '#fff',
-                      fontWeight: 'bold',
-                      animation: match.status === 'live' ? 'pulse 2s infinite' : 'none'
-                    }}>
-                      {match.status === 'ft' ? 'FINAL' : match.status === 'live' ? 'LIVE' : 'UPCOMING'}
-                    </div>
-                  </div>
-                  
-                  {/* Teams and Score */}
-                  <div className="mobile-teams" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px'
-                  }}>
-                    <div className="mobile-team" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      flex: 1,
-                      cursor: 'pointer',
-                      transition: 'transform 0.3s ease'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      window.location.href = `/teams/${match.homeTeam.id}`
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      <img 
-                        src={match.homeTeam.logo} 
-                        alt={match.homeTeam.name}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          objectFit: 'contain',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      />
-                      <span style={{
-                        fontSize: '15px',
-                        fontWeight: 'bold',
-                        color: '#ffffff'
-                      }}>
-                        {match.homeTeam.name}
-                      </span>
-                    </div>
-                    
-                    <div className="mobile-score" style={{
-                      fontSize: '24px',
-                      fontWeight: 'bold',
-                      color: '#00ff88',
-                      margin: '0 20px',
-                      animation: match.status === 'live' ? 'glow 2s infinite' : 'none',
-                      textShadow: match.status === 'live' ? '0 0 20px rgba(0, 255, 136, 0.6)' : 'none'
-                    }}>
-                      {match.score.home !== null && match.score.away !== null ? 
-                        `${match.score.home} - ${match.score.away}` : 
-                        'vs'
-                      }
-                    </div>
-                    
-                    <div className="mobile-team" style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      flex: 1,
-                      justifyContent: 'flex-end',
-                      cursor: 'pointer',
-                      transition: 'transform 0.3s ease'
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      window.location.href = `/teams/${match.awayTeam.id}`
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    >
-                      <span style={{
-                        fontSize: '15px',
-                        fontWeight: 'bold',
-                        color: '#ffffff'
-                      }}>
-                        {match.awayTeam.name}
-                      </span>
-                      <img 
-                        src={match.awayTeam.logo} 
-                        alt={match.awayTeam.name}
-                        style={{
-                          width: '28px',
-                          height: '28px',
-                          objectFit: 'contain',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Match Info */}
-                  <div className="mobile-match-info" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    fontSize: '13px',
-                    color: '#666',
-                    paddingTop: '10px',
-                    borderTop: '1px solid #333'
-                  }}>
-                    <span>{formatDate(match.date)}</span>
-                    <span>{match.venue}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          
-        </div>
-
-        {/* Top Competitions Section */}
-        <div style={{
-          maxWidth: '1200px',
-          margin: '80px auto',
-          padding: '0 20px'
-        }}>
-          <h2 style={{
-            fontSize: '36px',
-            fontWeight: '700',
-            marginBottom: '40px',
-            textAlign: 'center',
-            color: '#ffffff',
-            animation: 'slideInUp 1s ease-out 0.7s both'
-          }}>
-            🏆 Top Current Competitions
-          </h2>
-          
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '20px'
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '40px',
+            marginBottom: '50px',
+            flexWrap: 'wrap'
           }}>
             {[
-              {
-                name: 'FIFA Club World Cup 2025',
-                status: 'LIVE',
-                statusColor: '#00ff88',
-                stage: 'Group Stage',
-                teams: '32 Teams',
-                location: '🇺🇸 USA',
-                prize: '$100M',
-                logo: 'https://media.api-sports.io/football/leagues/15.png'
-              },
-              {
-                name: 'UEFA Champions League',
-                status: 'ONGOING',
-                statusColor: '#0099ff',
-                stage: 'League Phase',
-                teams: '36 Teams',
-                location: '🇪🇺 Europe',
-                prize: '€2.03B',
-                logo: 'https://media.api-sports.io/football/leagues/2.png'
-              },
-              {
-                name: 'AFC Champions League',
-                status: 'ONGOING',
-                statusColor: '#0099ff',
-                stage: 'League Stage',
-                teams: '24 Teams',
-                location: '🌏 Asia',
-                prize: '$12M',
-                logo: 'https://media.api-sports.io/football/leagues/1.png'
-              },
-              {
-                name: 'Copa Libertadores',
-                status: 'COMPLETED',
-                statusColor: '#888',
-                stage: 'Final',
-                teams: '47 Teams',
-                location: '🌎 South America',
-                prize: '$23M',
-                logo: 'https://media.api-sports.io/football/leagues/13.png'
-              },
-              {
-                name: 'CAF Champions League',
-                status: 'UPCOMING',
-                statusColor: '#ff6b35',
-                stage: 'Group Stage',
-                teams: '16 Teams',
-                location: '🌍 Africa',
-                prize: '$2.5M',
-                logo: 'https://media.api-sports.io/football/leagues/12.png'
-              }
-            ].map((competition, index) => (
-              <div
-                key={index}
-                className="card-hover"
-                style={{
-                  backgroundColor: '#111',
-                  border: '2px solid #333',
-                  borderRadius: '12px',
-                  padding: '20px',
-                  animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.1}s both`,
-                  cursor: 'pointer'
-                }}
-                onClick={() => window.location.href = '/competitions'}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = competition.statusColor
-                  e.currentTarget.style.backgroundColor = '#1a1a1a'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = '#333'
-                  e.currentTarget.style.backgroundColor = '#111'
-                }}
-              >
-                {/* Status Badge */}
+              { label: 'Total Rewards Paid', value: '$2.4M ETH', icon: '💰' },
+              { label: 'Active Predictors', value: '47,293', icon: '🔥' },
+              { label: 'Success Rate', value: '87.2%', icon: '🎯' }
+            ].map((stat, index) => (
+              <div key={index} style={{
+                textAlign: 'center',
+                animation: `slideInUp 1s ease-out ${0.5 + index * 0.2}s both`
+              }}>
+                <div style={{ fontSize: '32px', marginBottom: '8px' }}>{stat.icon}</div>
                 <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: '15px'
-                }}>
-                  <img 
-                    src={competition.logo} 
-                    alt={competition.name}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '4px'
-                    }}
-                  />
-                  <span style={{
-                    color: competition.statusColor,
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    backgroundColor: `${competition.statusColor}20`,
-                    padding: '3px 8px',
-                    borderRadius: '10px'
-                  }}>
-                    {competition.status}
-                  </span>
-                </div>
-
-                {/* Competition Name */}
-                <h4 style={{
-                  fontSize: '14px',
+                  fontSize: '28px',
                   fontWeight: 'bold',
-                  color: '#ffffff',
-                  marginBottom: '12px',
-                  lineHeight: '1.3'
-                }}>
-                  {competition.name}
-                </h4>
-
-                {/* Quick Info */}
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '6px',
-                  fontSize: '11px',
-                  color: '#888'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Stage:</span>
-                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{competition.stage}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Teams:</span>
-                    <span style={{ color: '#00ff88' }}>{competition.teams}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Prize:</span>
-                    <span style={{ color: '#0099ff' }}>{competition.prize}</span>
-                  </div>
-                  <div style={{ 
-                    textAlign: 'center',
-                    marginTop: '8px',
-                    padding: '6px',
-                    backgroundColor: '#0a0a0a',
-                    borderRadius: '6px',
-                    fontSize: '10px',
-                    color: '#ffdd00'
-                  }}>
-                    {competition.location}
-                  </div>
-                </div>
+                  color: '#00FFAA',
+                  animation: 'numberCount 1s ease-out'
+                }}>{stat.value}</div>
+                <div style={{ fontSize: '14px', color: '#aaa' }}>{stat.label}</div>
               </div>
             ))}
           </div>
 
           <div style={{
-            textAlign: 'center',
-            marginTop: '30px'
+            display: 'flex',
+            gap: '24px',
+            justifyContent: 'center',
+            flexWrap: 'wrap',
+            marginTop: '40px'
           }}>
-            <a 
-              href="/competitions" 
-              style={{
-                display: 'inline-block',
-                backgroundColor: 'transparent',
-                color: '#00ff88',
-                border: '2px solid #00ff88',
-                textDecoration: 'none',
-                padding: '12px 24px',
-                borderRadius: '8px',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#00ff88'
-                e.target.style.color = '#000'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.backgroundColor = 'transparent'
-                e.target.style.color = '#00ff88'
-              }}
-            >
-              View All Competitions →
-            </a>
+            <button className="btn-crypto">
+              🚀 Join Clutch Now
+            </button>
+            <button className="btn-crypto" style={{
+              background: 'transparent',
+              border: '2px solid #3ABEF9',
+              color: '#3ABEF9',
+              boxShadow: '0 0 30px rgba(58, 190, 249, 0.3)'
+            }}>
+              🎯 Watch Live Demo
+            </button>
           </div>
         </div>
+      </section>
 
-        {/* Feature Cards */}
+      {/* 3D Feature Showcase */}
+      <section style={{
+        padding: '100px 20px',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        position: 'relative'
+      }}>
+        <h2 style={{
+          fontSize: '48px',
+          fontWeight: '700',
+          textAlign: 'center',
+          marginBottom: '80px',
+          background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          The Ultimate Crypto Sports Experience
+        </h2>
+
+        <div className="feature-grid" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+          gap: '50px'
+        }}>
+          {/* Real-Time Stats */}
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
+            textAlign: 'center',
+            animation: 'slideInUp 0.8s ease-out 0.2s both',
+            background: 'linear-gradient(135deg, rgba(58, 190, 249, 0.1), rgba(58, 190, 249, 0.05))'
+          }}>
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #3ABEF9, #00FFAA, #3ABEF9)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>📊</div>
+            <h3 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: '#3ABEF9',
+              marginBottom: '24px'
+            }}>
+              Real-Time Stats & Insights
+            </h3>
+            <p style={{
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
+            }}>
+              Stay ahead of the action with instant access to detailed stats on players, teams, and competitions. Knowledge is your edge.
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#00FFAA'
+            }}>
+              <span>⚡ Live Updates</span>
+              <span>📈 AI Predictions</span>
+              <span>🔥 Hot Streaks</span>
+            </div>
+          </div>
+
+          {/* Join Conversation */}
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
+            textAlign: 'center',
+            animation: 'slideInUp 0.8s ease-out 0.4s both',
+            background: 'linear-gradient(135deg, rgba(0, 255, 170, 0.1), rgba(0, 255, 170, 0.05))'
+          }}>
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #00FFAA, #3ABEF9, #00FFAA)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>💬</div>
+            <h3 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: '#00FFAA',
+              marginBottom: '24px'
+            }}>
+              Join the Conversation
+            </h3>
+            <p style={{
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
+            }}>
+              Share your thoughts, predictions, and analysis. Get likes, build your profile, and compete daily to monetize your sports insight.
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#3ABEF9'
+            }}>
+              <span>👍 Get Likes</span>
+              <span>🏆 Build Profile</span>
+              <span>💰 Earn Crypto</span>
+            </div>
+          </div>
+
+          {/* Clutch Bets */}
+          <div className="glass-card" style={{
+            borderRadius: '24px',
+            padding: '50px',
+            textAlign: 'center',
+            animation: 'slideInUp 0.8s ease-out 0.6s both',
+            background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 215, 0, 0.05))',
+            gridColumn: 'span 1'
+          }}>
+            <div className="feature-icon-3d" style={{
+              marginBottom: '30px',
+              background: 'linear-gradient(45deg, #FFD700, #3ABEF9, #FFD700)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text'
+            }}>🎯</div>
+            <h3 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: '#FFD700',
+              marginBottom: '24px'
+            }}>
+              Instant Mini-Bets, Big Rewards
+            </h3>
+            <p style={{
+              fontSize: '20px',
+              color: '#bbb',
+              lineHeight: '1.7',
+              marginBottom: '30px'
+            }}>
+              Make the game even more thrilling. Place instant Clutch bets on live matches and earn crypto rewards in real-time.
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              fontSize: '14px',
+              color: '#FFD700'
+            }}>
+              <span>⚡ Instant Bets</span>
+              <span>🔥 Live Matches</span>
+              <span>💎 Big Rewards</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Vertical Ranking - Top Clutch Players */}
+      <section style={{
+        padding: '100px 20px',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          marginBottom: '60px'
+        }}>
+          <h2 style={{
+            fontSize: '42px',
+            fontWeight: '700',
+            color: '#ffffff',
+            marginBottom: '20px',
+            background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text'
+          }}>
+            🏆 Today's Top Clutch Players
+          </h2>
+          <p style={{
+            fontSize: '22px',
+            color: '#aaa'
+          }}>
+            See who's leading today. Click any player to view their detailed stats!
+          </p>
+        </div>
+
+        <div style={{ position: 'relative' }}>
+          {[
+            { rank: 1, name: 'CryptoKing88', likes: 2847, earnings: '0.34 ETH', change: '+12%', avatar: '👑', gradient: 'linear-gradient(135deg, #FFD700, #FFA500)' },
+            { rank: 2, name: 'SportsProphet', likes: 2156, earnings: '0.21 ETH', change: '+8%', avatar: '🔮', gradient: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' },
+            { rank: 3, name: 'ClutchMaster', likes: 1893, earnings: '0.15 ETH', change: '+5%', avatar: '⚡', gradient: 'linear-gradient(135deg, #CD7F32, #B8860B)' }
+          ].map((player, index) => (
+            <div key={index} 
+                 className="rank-card" 
+                 style={{
+                   background: player.gradient,
+                   animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.3}s both`,
+                   border: player.rank === 1 ? '3px solid #FFD700' : '2px solid rgba(255, 255, 255, 0.1)'
+                 }}
+                 onClick={() => setSelectedPlayer(player.rank)}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  <div style={{
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#000',
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    borderRadius: '50%',
+                    width: '60px',
+                    height: '60px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    #{player.rank}
+                  </div>
+                  <div style={{ fontSize: '32px' }}>{player.avatar}</div>
+                  <div>
+                    <h4 style={{
+                      fontSize: '24px',
+                      fontWeight: 'bold',
+                      color: '#000',
+                      marginBottom: '4px'
+                    }}>
+                      {player.name}
+                    </h4>
+                    <div style={{
+                      fontSize: '16px',
+                      color: 'rgba(0, 0, 0, 0.7)'
+                    }}>
+                      👍 {player.likes.toLocaleString()} likes
+                    </div>
+                  </div>
+                </div>
+                
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{
+                    fontSize: '22px',
+                    fontWeight: 'bold',
+                    color: '#000'
+                  }}>
+                    {player.earnings}
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    color: 'rgba(0, 0, 0, 0.8)',
+                    background: 'rgba(0, 255, 0, 0.2)',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    marginTop: '4px'
+                  }}>
+                    {player.change} today
+                  </div>
+                </div>
+              </div>
+              
+              <div style={{
+                position: 'absolute',
+                right: '20px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                fontSize: '16px',
+                color: 'rgba(0, 0, 0, 0.6)'
+              }}>
+                Click for stats →
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Enhanced Testimonials Section */}
+      <section style={{
+        padding: '100px 20px',
+        textAlign: 'center',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        position: 'relative'
+      }}>
+        <h2 style={{
+          fontSize: '48px',
+          fontWeight: '700',
+          color: '#ffffff',
+          marginBottom: '20px',
+          background: 'linear-gradient(45deg, #3ABEF9, #00FFAA)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          🚀 Real Success Stories
+        </h2>
+        <p style={{
+          fontSize: '24px',
+          color: '#aaa',
+          marginBottom: '60px'
+        }}>
+          The New Era of Sports Fans is Here - Join the Winners!
+        </p>
+        
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '35px',
-          maxWidth: '1200px',
-          margin: '80px auto',
-          padding: '0 20px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
+          gap: '30px',
+          marginBottom: '50px'
         }}>
-          {[
-            {
-              title: 'Match Analytics 📊',
-              desc: 'Real-time match data and insights from top competitions worldwide. Track scores, goals, and key moments.',
-              color: '#00ff88',
-              delay: '0.2s'
-            },
-            {
-              title: 'Player Profiles 👤',
-              desc: 'Explore detailed profiles of players from top competitions worldwide. View career highlights and achievements.',
-              color: '#ff6b35',
-              delay: '0.6s'
-            }
-          ].map((feature, index) => (
-            <div 
-              key={index}
-              className="card-hover rotating-border mobile-feature"
-              style={{
-                backgroundColor: '#111',
-                border: `2px solid ${feature.color}`,
-                borderRadius: '16px',
-                padding: '35px',
-                textAlign: 'left',
-                animation: `slideInUp 0.8s ease-out ${feature.delay} both`,
-                position: 'relative'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = feature.color
-                e.currentTarget.style.boxShadow = `0 0 40px ${feature.color}60`
-                e.currentTarget.style.backgroundColor = '#1a1a1a'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = feature.color
-                e.currentTarget.style.boxShadow = 'none'
-                e.currentTarget.style.backgroundColor = '#111'
-              }}
-            >
-              <h3 style={{ 
-                color: feature.color, 
-                marginBottom: '18px',
-                fontSize: '20px',
-                animation: 'bounce 3s infinite',
-                animationDelay: feature.delay
+          {testimonials.map((testimonial, index) => (
+            <div key={index} 
+                 className="testimonial-card" 
+                 style={{
+                   background: testimonial.bgColor,
+                   opacity: index === currentTestimonial ? 1 : 0.7,
+                   transform: index === currentTestimonial ? 'scale(1.05)' : 'scale(1)',
+                   animation: `slideInUp 0.8s ease-out ${index * 0.2}s both`
+                 }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                marginBottom: '24px',
+                gap: '16px'
               }}>
-                {feature.title}
-              </h3>
-              <p style={{ 
-                color: '#aaa', 
-                lineHeight: '1.7',
-                fontSize: '16px'
+                <div style={{ fontSize: '48px' }}>{testimonial.avatar}</div>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: '#000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    {testimonial.name}
+                    {testimonial.verified && <span style={{ color: '#00AAFF' }}>✓</span>}
+                  </div>
+                  <div style={{ fontSize: '14px', color: 'rgba(0, 0, 0, 0.7)' }}>
+                    {testimonial.username}
+                  </div>
+                </div>
+                <div style={{
+                  marginLeft: 'auto',
+                  background: 'rgba(0, 0, 0, 0.1)',
+                  padding: '8px 16px',
+                  borderRadius: '20px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  color: '#000'
+                }}>
+                  {testimonial.earnings}
+                </div>
+              </div>
+              
+              <p style={{
+                fontSize: '18px',
+                color: '#000',
+                fontWeight: '500',
+                lineHeight: '1.6',
+                fontStyle: 'italic'
               }}>
-                {feature.desc}
+                "{testimonial.text}"
               </p>
             </div>
           ))}
         </div>
 
-        <div className="mobile-cta" style={{
-          marginTop: '80px',
-          padding: '50px',
-          backgroundColor: '#111',
-          borderRadius: '20px',
-          border: '2px solid #333',
-          maxWidth: '900px',
-          margin: '80px auto 0',
-          animation: 'slideInUp 0.8s ease-out 0.8s both',
-          position: 'relative',
-          overflow: 'hidden'
+        {/* Testimonial Navigation Dots */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '12px',
+          marginTop: '30px'
         }}>
+          {testimonials.map((_, index) => (
+            <div key={index}
+                 style={{
+                   width: '12px',
+                   height: '12px',
+                   borderRadius: '50%',
+                   background: index === currentTestimonial ? '#3ABEF9' : '#666',
+                   cursor: 'pointer',
+                   transition: 'all 0.3s ease'
+                 }}
+                 onClick={() => setCurrentTestimonial(index)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* Footer CTA */}
+      <section style={{
+        padding: '100px 20px',
+        textAlign: 'center',
+        background: 'linear-gradient(45deg, rgba(58, 190, 249, 0.15), rgba(0, 255, 170, 0.15), rgba(255, 215, 0, 0.1))',
+        margin: '100px 20px 60px',
+        borderRadius: '32px',
+        maxWidth: '1200px',
+        margin: '100px auto 60px',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%233ABEF9" fill-opacity="0.1"%3E%3Ccircle cx="10" cy="10" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+          animation: 'float3D 10s ease-in-out infinite'
+        }} />
+        
+        <div style={{ position: 'relative', zIndex: 10 }}>
+          <h2 style={{
+            fontSize: '52px',
+            fontWeight: '700',
+            color: '#ffffff',
+            marginBottom: '20px',
+            animation: 'pulseGlow 3s ease-in-out infinite'
+          }}>
+            Ready to Go Clutch? 🚀
+          </h2>
+          <p style={{
+            fontSize: '24px',
+            color: '#aaa',
+            marginBottom: '50px'
+          }}>
+            Join thousands of fans already turning passion into profit.
+          </p>
+          
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'linear-gradient(45deg, rgba(0,255,136,0.15), rgba(0,153,255,0.15), rgba(255,107,53,0.15))',
-            opacity: 0.7
-          }} />
-          <div style={{ position: 'relative', zIndex: 10 }}>
-            <h2 style={{ 
-              marginBottom: '25px', 
-              color: '#ffffff',
-              fontSize: '28px',
-              animation: 'glow 4s infinite'
+            display: 'flex',
+            gap: '24px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+          }}>
+            <button className="btn-crypto">
+              💎 Sign Up & Win Now
+            </button>
+            <button className="btn-crypto" style={{
+              background: 'transparent',
+              border: '2px solid #00FFAA',
+              color: '#00FFAA',
+              boxShadow: '0 0 30px rgba(0, 255, 170, 0.3)'
             }}>
-              FIFA Club World Cup 2025
-            </h2>
-            <p style={{ 
-              color: '#bbb', 
-              fontSize: '19px', 
-              lineHeight: '1.7'
-            }}>
-              The expanded tournament featuring 32 clubs from around the world. 
-              Real-time data and comprehensive player profiles.
-            </p>
+              📊 View Live Stats
+            </button>
           </div>
         </div>
+      </section>
 
-      </main>
+      {/* Player Stats Modal */}
+      {selectedPlayer && (
+        <div className="modal" onClick={() => setSelectedPlayer(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '30px'
+            }}>
+              <h3 style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#3ABEF9'
+              }}>
+                {playerStats[selectedPlayer].avatar} {playerStats[selectedPlayer].name}
+              </h3>
+              <button 
+                onClick={() => setSelectedPlayer(null)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#aaa',
+                  fontSize: '24px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '20px',
+              marginBottom: '30px'
+            }}>
+              {[
+                { label: 'Total Earnings', value: playerStats[selectedPlayer].totalEarnings, icon: '💰' },
+                { label: 'Weekly Earnings', value: playerStats[selectedPlayer].weeklyEarnings, icon: '📈' },
+                { label: 'Success Rate', value: playerStats[selectedPlayer].successRate, icon: '🎯' },
+                { label: 'Total Predictions', value: playerStats[selectedPlayer].totalPredictions.toLocaleString(), icon: '📊' },
+                { label: 'Current Streak', value: `${playerStats[selectedPlayer].streak} wins`, icon: '🔥' },
+                { label: 'Global Rank', value: `#${playerStats[selectedPlayer].rank}`, icon: '🏆' }
+              ].map((stat, index) => (
+                <div key={index} style={{
+                  background: 'rgba(58, 190, 249, 0.1)',
+                  padding: '20px',
+                  borderRadius: '12px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '24px', marginBottom: '8px' }}>{stat.icon}</div>
+                  <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#3ABEF9' }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#aaa' }}>{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              marginBottom: '20px',
+              justifyContent: 'center'
+            }}>
+              {playerStats[selectedPlayer].badges.map((badge, index) => (
+                <span key={index} style={{ fontSize: '24px' }}>{badge}</span>
+              ))}
+            </div>
+
+            <h4 style={{ color: '#00FFAA', marginBottom: '15px' }}>Recent Predictions</h4>
+            {playerStats[selectedPlayer].recentPredictions.map((pred, index) => (
+              <div key={index} style={{
+                background: 'rgba(0, 255, 170, 0.1)',
+                padding: '15px',
+                borderRadius: '8px',
+                marginBottom: '10px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>{pred.match}</div>
+                  <div style={{ fontSize: '14px', color: '#aaa' }}>{pred.prediction}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div>{pred.result}</div>
+                  <div style={{ 
+                    color: pred.payout.includes('+') ? '#00FFAA' : '#FF6B6B',
+                    fontWeight: 'bold'
+                  }}>
+                    {pred.payout}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
