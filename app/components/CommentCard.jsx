@@ -12,6 +12,11 @@ export default function CommentCard({
   userVotes = {} 
 }) {
   const [userVote, setUserVote] = useState(userVotes[comment.id] || null) // null, 'upvote', 'downvote'
+
+  // Update userVote when userVotes prop changes
+  useEffect(() => {
+    setUserVote(userVotes[comment.id] || null)
+  }, [userVotes, comment.id])
   const [showReplyForm, setShowReplyForm] = useState(false)
   const [replyContent, setReplyContent] = useState('')
   const [isSubmittingReply, setIsSubmittingReply] = useState(false)
@@ -21,7 +26,6 @@ export default function CommentCard({
     
     try {
       const isRemoving = userVote === voteType
-      const newVote = isRemoving ? null : voteType
       
       if (voteType === 'upvote') {
         await onUpvote(comment.id, isRemoving)
@@ -29,7 +33,9 @@ export default function CommentCard({
         await onDownvote(comment.id, isRemoving)
       }
       
-      setUserVote(newVote)
+      // Don't update local state here - let it be updated by the parent component
+      // after the API call completes and data is refreshed
+      
     } catch (error) {
       console.error(`Error ${voteType}ing comment:`, error)
     }
