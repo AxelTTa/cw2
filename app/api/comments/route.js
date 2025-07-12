@@ -134,14 +134,15 @@ export async function GET(request) {
 
       if (allCommentIds.length > 0) {
         const { data: votes } = await supabaseAdmin
-          .from('comment_votes')
-          .select('comment_id, vote_type')
+          .from('reactions')
+          .select('comment_id, reaction_type')
           .eq('user_id', userId)
           .in('comment_id', allCommentIds)
+          .in('reaction_type', ['like', 'dislike'])
 
         if (votes) {
           votes.forEach(vote => {
-            userVotes[vote.comment_id] = vote.vote_type
+            userVotes[vote.comment_id] = vote.reaction_type === 'like' ? 'upvote' : 'downvote'
           })
         }
       }
@@ -345,16 +346,16 @@ export async function PATCH(request) {
         }, { status: 400 })
       }
 
-      // Check if user has already voted on this comment
-      const { data: existingVote } = await supabaseAdmin
-        .from('comment_votes')
-        .select('vote_type')
+      // Check if user has already reacted to this comment
+      const { data: existingReaction } = await supabaseAdmin
+        .from('reactions')
+        .select('reaction_type')
         .eq('user_id', user_id)
         .eq('comment_id', comment_id)
+        .eq('reaction_type', action === 'upvote' ? 'like' : 'dislike')
         .single()
 
-      const isRemoving = existingVote && existingVote.vote_type === action
-      const isChangingVote = existingVote && existingVote.vote_type !== action
+      const isRemoving = !!existingReaction
 
       // Get current vote counts
       const { data: currentComment } = await supabaseAdmin
@@ -367,41 +368,27 @@ export async function PATCH(request) {
       let newDownvotes = currentComment?.downvotes || 0
 
       if (isRemoving) {
-        // Remove the vote
+        // Remove the reaction
         await supabaseAdmin
-          .from('comment_votes')
+          .from('reactions')
           .delete()
           .eq('user_id', user_id)
           .eq('comment_id', comment_id)
+          .eq('reaction_type', action === 'upvote' ? 'like' : 'dislike')
 
         if (action === 'upvote') {
           newUpvotes = Math.max(0, newUpvotes - 1)
         } else {
           newDownvotes = Math.max(0, newDownvotes - 1)
-        }
-      } else if (isChangingVote) {
-        // Update the existing vote
-        await supabaseAdmin
-          .from('comment_votes')
-          .update({ vote_type: action })
-          .eq('user_id', user_id)
-          .eq('comment_id', comment_id)
-
-        if (action === 'upvote') {
-          newUpvotes += 1
-          newDownvotes = Math.max(0, newDownvotes - 1)
-        } else {
-          newDownvotes += 1
-          newUpvotes = Math.max(0, newUpvotes - 1)
         }
       } else {
-        // Add new vote
+        // Add new reaction
         await supabaseAdmin
-          .from('comment_votes')
+          .from('reactions')
           .insert({
             user_id,
             comment_id,
-            vote_type: action
+            reaction_type: action === 'upvote' ? 'like' : 'dislike'
           })
 
         if (action === 'upvote') {
@@ -436,7 +423,7 @@ export async function PATCH(request) {
       if (error) throw error
       result = { 
         comment,
-        action: isRemoving ? 'removed' : (isChangingVote ? 'changed' : 'added'),
+        action: isRemoving ? 'removed' : 'added',
         vote_type: action
       }
 
