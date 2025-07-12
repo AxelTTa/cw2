@@ -697,7 +697,7 @@ export default function Players() {
             animation: 'gradientShift 4s ease infinite',
             textShadow: '0 0 40px rgba(0, 255, 136, 0.3)'
           }}>
-            ⭐ Elite Football Players
+            🏆 International Competition Stars
           </h1>
           <p style={{
             fontSize: '22px',
@@ -707,7 +707,7 @@ export default function Players() {
             lineHeight: '1.6',
             animation: 'fadeInScale 1s ease-out 0.4s both'
           }}>
-            Discover the world's best players from Europe's top clubs and Club World Cup teams
+            Discover players from teams competing in international tournaments this season
           </p>
         </div>
 

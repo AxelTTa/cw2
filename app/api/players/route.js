@@ -3,63 +3,31 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-const CLUB_WORLD_CUP_LEAGUE_IDS = [
-  15,   // FIFA Club World Cup - WORKING ✅
-  537,  // Alternative ID
-  960,  // Alternative Club World Cup ID
-  1    // World Cup ID (different tournament but similar format)
+// Focus on only the most prestigious international competitions to reduce load
+const INTERNATIONAL_COMPETITION_LEAGUE_IDS = [
+  15,   // FIFA Club World Cup
+  2,    // UEFA Champions League  
+  3,    // UEFA Europa League
 ]
 
-const EUROPEAN_LEAGUE_IDS = [
-  2,    // UEFA Champions League
-  39,   // Premier League (England)
-  140,  // La Liga (Spain)
-  135,  // Serie A (Italy)
-  78,   // Bundesliga (Germany)
-  61,   // Ligue 1 (France)
-]
+// Remove major teams concept - focus only on actual international competition participants
 
-// Major European teams we want to ensure are included  
-const MAJOR_TEAM_IDS = [
-  // Spanish teams
-  541,  // Real Madrid
-  529,  // Barcelona
-  530,  // Atletico Madrid
-  // English teams  
-  50,   // Manchester City
-  40,   // Liverpool
-  42,   // Arsenal
-  49,   // Chelsea
-  33,   // Manchester United
-  47,   // Tottenham
-  // Italian teams
-  489,  // AC Milan
-  505,  // Inter Milan
-  496,  // Juventus
-  // German teams
-  157,  // Bayern Munich
-  165,  // Borussia Dortmund
-  // French teams
-  85,   // Paris Saint Germain
-]
-
-// All leagues combined for comprehensive player coverage
-const ALL_LEAGUE_IDS = [...CLUB_WORLD_CUP_LEAGUE_IDS, ...EUROPEAN_LEAGUE_IDS]
+// Only international competitions for focused, faster loading
+const ALL_LEAGUE_IDS = INTERNATIONAL_COMPETITION_LEAGUE_IDS
 
 function getLeagueName(leagueId) {
   const leagueNames = {
     15: 'FIFA Club World Cup',
     537: 'Club World Cup (Alt)',
-    960: 'Club World Cup (Alt 2)',
+    960: 'Club World Cup (Alt 2)', 
     1: 'World Cup',
     2: 'UEFA Champions League',
-    39: 'Premier League',
-    140: 'La Liga',
-    135: 'Serie A',
-    78: 'Bundesliga',
-    61: 'Ligue 1'
+    3: 'UEFA Europa League',
+    848: 'UEFA Europa Conference League',
+    4: 'UEFA Super Cup',
+    531: 'UEFA Nations League'
   }
-  return leagueNames[leagueId] || `League ${leagueId}`
+  return leagueNames[leagueId] || `International Competition ${leagueId}`
 }
 
 const logApiRequest = (endpoint, params) => {
@@ -114,71 +82,14 @@ const logApiError = (endpoint, error) => {
   })
 }
 
-async function fetchMajorEuropeanTeams() {
-  console.log('🔍 Backend Fetching major European teams directly...')
-  const majorTeams = []
-  
-  // Fetch each major team individually to ensure we get them
-  for (const teamId of MAJOR_TEAM_IDS) {
-    try {
-      console.log(`🎯 Backend Fetching team ID: ${teamId}`)
-      
-      const response = await fetch(`${BASE_URL}/teams?id=${teamId}`, {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': API_KEY,
-          'X-RapidAPI-Host': 'v3.football.api-sports.io'
-        }
-      })
+// Remove major teams fetching - only use actual competition participants
 
-      const data = await response.json()
-
-      if (response.ok && data.response && data.response.length > 0) {
-        const teamData = data.response[0]
-        
-        // Determine the primary league for this team
-        let primaryLeague = 'Unknown'
-        if ([541, 529, 530].includes(teamId)) primaryLeague = 'La Liga'
-        else if ([50, 40, 42, 49, 33, 47].includes(teamId)) primaryLeague = 'Premier League'
-        else if ([489, 505, 496].includes(teamId)) primaryLeague = 'Serie A'
-        else if ([157, 165].includes(teamId)) primaryLeague = 'Bundesliga'
-        else if ([85].includes(teamId)) primaryLeague = 'Ligue 1'
-        
-        const teamWithLeague = {
-          ...teamData,
-          league: {
-            id: 0, // Generic ID for direct team fetch
-            name: primaryLeague
-          }
-        }
-        
-        majorTeams.push(teamWithLeague)
-        console.log(`✅ Backend Added major team: ${teamData.team.name}`)
-      } else {
-        console.log(`⚠️ Backend No data for team ${teamId}:`, data)
-      }
-    } catch (error) {
-      console.error(`❌ Backend Error fetching team ${teamId}:`, error.message)
-      continue
-    }
-  }
-  
-  return majorTeams
-}
-
-async function fetchAllEuropeanAndClubWorldCupTeams() {
-  console.log('🔍 Backend Starting teams fetch for ALL European clubs + Club World Cup...')
+async function fetchInternationalCompetitionTeams() {
+  console.log('🔍 Backend Starting teams fetch for international competitions only...')
   const allTeams = []
   const teamIdsSeen = new Set() // To avoid duplicates across leagues
   
-  // First, fetch major teams directly to ensure we have them
-  const majorTeams = await fetchMajorEuropeanTeams()
-  for (const team of majorTeams) {
-    teamIdsSeen.add(team.team.id)
-    allTeams.push(team)
-  }
-  
-  // Then fetch teams from all leagues
+  // Fetch teams from international competitions
   for (const leagueId of ALL_LEAGUE_IDS) {
     try {
       console.log(`🎯 Backend Trying League ID: ${leagueId} for teams`)
@@ -270,11 +181,23 @@ async function fetchAllEuropeanAndClubWorldCupTeams() {
   return allTeams
 }
 
-async function fetchPlayersForTeam(teamId, season = 2025) {
+// Rate limiting helper
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
+
+async function fetchPlayersForTeam(teamId, season = 2025, retryCount = 0) {
   const endpoint = '/players/squads'
+  const maxRetries = 2 // Reduce retries since we have better initial delays
+  const baseDelay = 5000 // 5 seconds base delay for more conservative approach
   
   try {
-    console.log(`🏃 Backend Fetching players for team: ${teamId}`)
+    console.log(`🏃 Backend Fetching players for team: ${teamId} (attempt ${retryCount + 1})`)
+    
+    // Add delay between requests to respect rate limits
+    if (retryCount > 0) {
+      const delay = baseDelay * Math.pow(2, retryCount) // Exponential backoff
+      console.log(`⏳ Backend Waiting ${delay}ms before retry for team ${teamId}`)
+      await sleep(delay)
+    }
     
     const response = await fetch(`${BASE_URL}/players/squads?team=${teamId}`, {
       method: 'GET',
@@ -286,13 +209,52 @@ async function fetchPlayersForTeam(teamId, season = 2025) {
 
     const data = await response.json()
     
-    if (response.ok && data.response && data.response.length > 0) {
-      return data.response[0].players || []
+    // Check for rate limiting error specifically
+    if (data.errors && data.errors.rateLimit) {
+      console.log(`🚫 Backend Rate limit hit for team ${teamId}, retry ${retryCount + 1}/${maxRetries}`)
+      
+      if (retryCount < maxRetries) {
+        return await fetchPlayersForTeam(teamId, season, retryCount + 1)
+      } else {
+        console.error(`❌ Backend Max retries exceeded for team ${teamId} due to rate limiting`)
+        return []
+      }
     }
     
-    return []
+    if (!response.ok) {
+      console.error(`❌ Squad API Error for team ${teamId}:`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: data
+      })
+      return []
+    }
+    
+    if (data.response && data.response.length > 0) {
+      const players = data.response[0].players || []
+      console.log(`🔍 Squad API response for team ${teamId}:`, {
+        responseLength: data.response.length,
+        playersCount: players.length,
+        firstPlayer: players[0]?.name || 'None'
+      })
+      return players
+    } else {
+      console.log(`⚠️ No squad data for team ${teamId}:`, {
+        hasResponse: !!data.response,
+        responseLength: data.response?.length || 0,
+        fullData: data
+      })
+      return []
+    }
   } catch (error) {
     console.error(`❌ Backend Error fetching players for team ${teamId}:`, error.message)
+    
+    // Retry on network errors too
+    if (retryCount < maxRetries) {
+      console.log(`🔄 Backend Retrying team ${teamId} due to network error, attempt ${retryCount + 2}`)
+      return await fetchPlayersForTeam(teamId, season, retryCount + 1)
+    }
+    
     return []
   }
 }
@@ -353,18 +315,21 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   }
 }
 
-async function fetchAllEuropeanPlayers(limit = null) {
-  console.log('🔍 Backend Starting ALL European + Club World Cup players fetch...')
+async function fetchInternationalCompetitionPlayers(limit = null) {
+  console.log('🔍 Backend Starting international competition players fetch...')
   console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
-  // First, get all teams from European leagues and Club World Cup
-  const teams = await fetchAllEuropeanAndClubWorldCupTeams()
-  console.log(`📋 Backend Found ${teams.length} teams, now fetching ALL players...`)
+  // First, get all teams from international competitions
+  const teams = await fetchInternationalCompetitionTeams()
+  console.log(`📋 Backend Found ${teams.length} teams, now fetching players...`)
   
   const allPlayers = []
+  
+  // Process all teams sequentially with rate limiting to avoid API issues
+  console.log(`🎯 Backend Processing ${teams.length} international competition teams`)
+  
   const playerPromises = []
   
-  // Fetch players for each team
   for (const teamData of teams) {
     const teamId = teamData.team.id
     const teamName = teamData.team.name
@@ -375,12 +340,11 @@ async function fetchAllEuropeanPlayers(limit = null) {
     
     playerPromises.push(
       fetchPlayersForTeam(teamId).then(async (players) => {
+        console.log(`📋 Found ${players.length} players for ${teamName}`)
         const teamPlayers = []
         
         // Process all players to get complete squad data
-        const playersToProcess = players
-        
-        for (const player of playersToProcess) {
+        for (const player of players) {
           // Fetch detailed stats for each player using their league
           const stats = await fetchPlayerStatistics(player.id, leagueInfo.id, 2024)
           
@@ -442,10 +406,10 @@ async function fetchAllEuropeanPlayers(limit = null) {
     )
   }
   
-  // Wait for all player fetches to complete
+  // Wait for all team player fetches to complete
   const teamPlayersArrays = await Promise.all(playerPromises)
   
-  // Flatten all players into one array
+  // Flatten all team players into the main array
   for (const teamPlayers of teamPlayersArrays) {
     allPlayers.push(...teamPlayers)
   }
@@ -483,7 +447,7 @@ export async function GET(request) {
     
     console.log('🔍 Backend Query parameters:', { limit, offset, sort })
     
-    const players = await fetchAllEuropeanPlayers()
+    const players = await fetchInternationalCompetitionPlayers()
     
     // Apply sorting if requested
     let sortedPlayers = players
