@@ -37,6 +37,36 @@ export default function Home() {
     }
   ]
 
+  const testimonials = [
+    {
+      name: 'Alex Chen',
+      username: '@AlexPredicts',
+      avatar: '👑',
+      verified: true,
+      earnings: '+127 CHZ',
+      text: 'Clutch changed my game completely! I went from casual watching to earning real crypto from my sports knowledge. The prediction system is incredibly intuitive.',
+      bgColor: 'linear-gradient(135deg, rgba(255, 215, 0, 0.8), rgba(255, 165, 0, 0.6))'
+    },
+    {
+      name: 'Maria Santos',
+      username: '@SportsMaria',
+      avatar: '🔮',
+      verified: true,
+      earnings: '+89 CHZ',
+      text: 'Being part of the Clutch community feels like having a VIP pass to sports. The insights I get from other fans help me make better predictions and earn more.',
+      bgColor: 'linear-gradient(135deg, rgba(58, 190, 249, 0.8), rgba(0, 153, 204, 0.6))'
+    },
+    {
+      name: 'James Wilson',
+      username: '@ClutchJames',
+      avatar: '⚡',
+      verified: false,
+      earnings: '+156 CHZ',
+      text: 'The live betting feature is a game-changer. I can make quick decisions during matches and see instant rewards. It\'s like having superpowers during game day!',
+      bgColor: 'linear-gradient(135deg, rgba(0, 255, 170, 0.8), rgba(0, 204, 136, 0.6))'
+    }
+  ]
+
   const playerStats = {
     1: {
       name: 'CryptoKing88',
