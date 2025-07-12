@@ -3,31 +3,23 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-// Focus on only the most prestigious international competitions to reduce load
-const INTERNATIONAL_COMPETITION_LEAGUE_IDS = [
-  15,   // FIFA Club World Cup
-  2,    // UEFA Champions League  
-  3,    // UEFA Europa League
+// Focus on only World Cup and Champions League - the most elite competitions
+const ELITE_COMPETITION_LEAGUE_IDS = [
+  1,    // FIFA World Cup
+  2,    // UEFA Champions League
 ]
 
 // Remove major teams concept - focus only on actual international competition participants
 
-// Only international competitions for focused, faster loading
-const ALL_LEAGUE_IDS = INTERNATIONAL_COMPETITION_LEAGUE_IDS
+// Only World Cup and Champions League for most elite focus
+const ALL_LEAGUE_IDS = ELITE_COMPETITION_LEAGUE_IDS
 
 function getLeagueName(leagueId) {
   const leagueNames = {
-    15: 'FIFA Club World Cup',
-    537: 'Club World Cup (Alt)',
-    960: 'Club World Cup (Alt 2)', 
-    1: 'World Cup',
-    2: 'UEFA Champions League',
-    3: 'UEFA Europa League',
-    848: 'UEFA Europa Conference League',
-    4: 'UEFA Super Cup',
-    531: 'UEFA Nations League'
+    1: 'FIFA World Cup',
+    2: 'UEFA Champions League'
   }
-  return leagueNames[leagueId] || `International Competition ${leagueId}`
+  return leagueNames[leagueId] || `Elite Competition ${leagueId}`
 }
 
 const logApiRequest = (endpoint, params) => {
@@ -84,8 +76,8 @@ const logApiError = (endpoint, error) => {
 
 // Remove major teams fetching - only use actual competition participants
 
-async function fetchInternationalCompetitionTeams() {
-  console.log('🔍 Backend Starting teams fetch for international competitions only...')
+async function fetchEliteCompetitionTeams() {
+  console.log('🔍 Backend Starting teams fetch for World Cup + Champions League only...')
   const allTeams = []
   const teamIdsSeen = new Set() // To avoid duplicates across leagues
   
@@ -315,18 +307,18 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   }
 }
 
-async function fetchInternationalCompetitionPlayers(limit = null) {
-  console.log('🔍 Backend Starting international competition players fetch...')
+async function fetchEliteCompetitionPlayers(limit = null) {
+  console.log('🔍 Backend Starting World Cup + Champions League players fetch...')
   console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
-  // First, get all teams from international competitions
-  const teams = await fetchInternationalCompetitionTeams()
+  // First, get all teams from World Cup and Champions League
+  const teams = await fetchEliteCompetitionTeams()
   console.log(`📋 Backend Found ${teams.length} teams, now fetching players...`)
   
   const allPlayers = []
   
   // Process all teams sequentially with rate limiting to avoid API issues
-  console.log(`🎯 Backend Processing ${teams.length} international competition teams`)
+  console.log(`🎯 Backend Processing ${teams.length} World Cup + Champions League teams`)
   
   const playerPromises = []
   
@@ -453,7 +445,7 @@ export async function GET(request) {
     
     console.log('🔍 Backend Query parameters:', { limit, offset, sort })
     
-    const players = await fetchInternationalCompetitionPlayers()
+    const players = await fetchEliteCompetitionPlayers()
     
     // Apply sorting if requested
     let sortedPlayers = players
