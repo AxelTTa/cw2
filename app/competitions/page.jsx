@@ -464,7 +464,7 @@ export default function Competitions() {
                     View Matches
                   </a>
                   <a
-                    href="/stats"
+                    href="/live"
                     onClick={(e) => e.stopPropagation()}
                     style={{
                       backgroundColor: 'transparent',
@@ -487,7 +487,7 @@ export default function Competitions() {
                       e.target.style.backgroundColor = 'transparent'
                     }}
                   >
-                    Statistics
+                    Live Matches
                   </a>
                 </div>
 
@@ -523,12 +523,49 @@ export default function Competitions() {
           </div>
         )}
 
-        {/* Competition Bracket Modal */}
+        {/* Competition Bracket Section */}
         {selectedCompetition && (
-          <CompetitionBracket 
-            competition={selectedCompetition}
-            onClose={() => setSelectedCompetition(null)}
-          />
+          <div style={{
+            marginTop: '40px',
+            padding: '30px',
+            backgroundColor: '#111',
+            borderRadius: '16px',
+            border: '2px solid #333'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '30px'
+            }}>
+              <h2 style={{
+                color: '#fff',
+                fontSize: '28px',
+                fontWeight: 'bold',
+                margin: 0
+              }}>
+                {selectedCompetition.name} - Tournament Info
+              </h2>
+              <button
+                onClick={() => setSelectedCompetition(null)}
+                style={{
+                  backgroundColor: '#333',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  color: '#fff',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕ Close
+              </button>
+            </div>
+            <CompetitionBracket 
+              competition={selectedCompetition}
+              onClose={() => setSelectedCompetition(null)}
+            />
+          </div>
         )}
       </main>
 

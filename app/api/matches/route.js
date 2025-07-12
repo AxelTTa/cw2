@@ -3,8 +3,20 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-// Club World Cup League ID (from logs: League ID 15 is working)
-const CLUB_WORLD_CUP_LEAGUE_ID = 15
+// Popular league IDs for fetching matches from multiple competitions
+const LEAGUE_IDS = {
+  CLUB_WORLD_CUP: 15,
+  CHAMPIONS_LEAGUE: 2,
+  PREMIER_LEAGUE: 39,
+  LA_LIGA: 140,
+  BUNDESLIGA: 78,
+  SERIE_A: 135,
+  LIGUE_1: 61,
+  UEFA_EUROPA: 3,
+  COPA_LIBERTADORES: 13,
+  AFC_CHAMPIONS: 1,
+  CAF_CHAMPIONS: 12
+}
 
 const logApiRequest = (endpoint, params) => {
   console.log(`🚀 Backend API Football Request:`, {
@@ -47,8 +59,8 @@ const logApiResponse = (endpoint, response, data) => {
   }
 }
 
-async function fetchClubWorldCupMatches() {
-  console.log('🏆 Backend Starting Club World Cup 2025 matches fetch...')
+async function fetchAllMatches() {
+  console.log('🏆 Backend Starting matches fetch from multiple competitions...')
   
   try {
     // Try to get recent/current matches for 2025 season
@@ -57,27 +69,45 @@ async function fetchClubWorldCupMatches() {
     for (const season of seasons) {
       console.log(`🎯 Backend Trying season ${season} for Club World Cup matches`)
       
-      const endpoint = `/fixtures`
-      const url = `${BASE_URL}${endpoint}?league=${CLUB_WORLD_CUP_LEAGUE_ID}&season=${season}`
+      // Try to get matches from multiple leagues
+      const allMatches = []
+      const leagueIds = Object.values(LEAGUE_IDS)
       
-      logApiRequest(endpoint, { league: CLUB_WORLD_CUP_LEAGUE_ID, season })
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'X-RapidAPI-Key': API_KEY,
-          'X-RapidAPI-Host': 'v3.football.api-sports.io'
+      for (const leagueId of leagueIds.slice(0, 5)) { // Limit to first 5 leagues to avoid API limits
+        const endpoint = `/fixtures`
+        const url = `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=10`
+        
+        logApiRequest(endpoint, { league: leagueId, season })
+        
+        try {
+          const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+              'X-RapidAPI-Key': API_KEY,
+              'X-RapidAPI-Host': 'v3.football.api-sports.io'
+            }
+          })
+
+          const data = await response.json()
+          logApiResponse(endpoint, response, data)
+
+          if (response.ok && data.response && data.response.length > 0) {
+            console.log(`✅ Backend Found ${data.response.length} matches for league ${leagueId} season ${season}`)
+            allMatches.push(...data.response)
+          }
+          
+          // Small delay to avoid hitting rate limits
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } catch (err) {
+          console.warn(`⚠️ Backend Failed to fetch from league ${leagueId}:`, err.message)
         }
-      })
-
-      const data = await response.json()
-      logApiResponse(endpoint, response, data)
-
-      if (response.ok && data.response && data.response.length > 0) {
-        console.log(`✅ Backend Found ${data.response.length} matches for season ${season}`)
+      }
+      
+      if (allMatches.length > 0) {
+        console.log(`✅ Backend Found total ${allMatches.length} matches from all leagues for season ${season}`)
         
         // Transform the matches data
-        const matches = data.response.map(match => ({
+        const matches = allMatches.map(match => ({
           id: match.fixture.id,
           homeTeam: {
             id: match.teams.home.id,
@@ -111,7 +141,8 @@ async function fetchClubWorldCupMatches() {
           awayTeam: m.awayTeam.name,
           score: `${m.score.home}-${m.score.away}`,
           status: m.status,
-          date: m.date
+          date: m.date,
+          league: m.league
         })))
         
         return matches
@@ -182,7 +213,7 @@ function getMockMatches() {
       date: matchDate.toISOString(),
       venue: 'Mercedes-Benz Stadium',
       round: rounds[Math.floor(Math.random() * rounds.length)],
-      league: 'FIFA Club World Cup',
+      league: ['FIFA Club World Cup', 'UEFA Champions League', 'Premier League', 'La Liga', 'Bundesliga'][Math.floor(Math.random() * 5)],
       season: 2025
     })
   }
@@ -207,7 +238,7 @@ export async function GET(request) {
     
     console.log('🔍 Backend Query parameters:', { limit, status })
     
-    const allMatches = await fetchClubWorldCupMatches()
+    const allMatches = await fetchAllMatches()
     
     // Filter by status if requested
     let filteredMatches = allMatches

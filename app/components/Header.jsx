@@ -44,7 +44,6 @@ export default function Header() {
 
   const navItems = [
     { href: '/', label: 'Home', paths: ['/'] },
-    { href: '/stats', label: 'Stats', paths: ['/stats'] },
     { href: '/competitions', label: 'Competitions', paths: ['/competitions'] },
     { href: '/teams', label: 'Teams', paths: ['/teams'] },
     { href: '/players', label: 'Players', paths: ['/players'] },
@@ -70,7 +69,9 @@ export default function Header() {
       position: 'sticky',
       top: 0,
       zIndex: 1000,
-      backdropFilter: 'blur(10px)'
+      backdropFilter: 'blur(10px)',
+      willChange: 'transform',
+      transform: 'translateZ(0)'
     }}>
       {/* Logo */}
       <a 

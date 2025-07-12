@@ -17,6 +17,7 @@ export default function CommunityPage() {
   const [userProfile, setUserProfile] = useState(null)
   const [isVisible, setIsVisible] = useState(false)
   const [floatingReactions, setFloatingReactions] = useState([])
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     initializePage()
@@ -227,7 +228,7 @@ export default function CommunityPage() {
   }
 
   const CommentComponent = ({ comment, isReply = false }) => (
-    <div className="card-hover" style={{
+    <div className={`card-hover mobile-comment ${isReply ? 'mobile-comments' : ''}`} style={{
       backgroundColor: isReply ? '#0f0f0f' : '#1a1a1a',
       border: '2px solid #333',
       borderRadius: '12px',
@@ -301,7 +302,7 @@ export default function CommunityPage() {
         {comment.content}
       </div>
 
-      <div style={{
+      <div className="mobile-comment-actions" style={{
         display: 'flex',
         gap: '16px',
         alignItems: 'center'
@@ -522,6 +523,128 @@ export default function CommunityPage() {
           background: linear-gradient(90deg, transparent, rgba(0, 255, 136, 0.2), transparent);
           animation: shimmer 3s infinite;
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .floating-reaction {
+            font-size: 18px !important;
+          }
+          
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          
+          .desktop-nav {
+            display: none !important;
+          }
+          
+          .mobile-nav {
+            flex-direction: column;
+            gap: 15px !important;
+            position: fixed;
+            top: 70px;
+            left: -100%;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            transition: left 0.3s ease;
+            z-index: 99;
+            border-bottom: 1px solid #333;
+          }
+          
+          .mobile-nav.open {
+            left: 0;
+          }
+          
+          .mobile-header {
+            padding: 15px !important;
+            flex-wrap: wrap;
+          }
+          
+          .mobile-title {
+            font-size: 18px !important;
+          }
+          
+          .mobile-main {
+            padding: 15px !important;
+          }
+          
+          .mobile-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+          }
+          
+          .mobile-card {
+            padding: 20px !important;
+            margin: 15px !important;
+          }
+          
+          .mobile-profile {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-match-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-match-card {
+            padding: 15px !important;
+          }
+          
+          .mobile-comment-form {
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          
+          .mobile-comment-form textarea {
+            min-height: 60px !important;
+            font-size: 16px !important;
+          }
+          
+          .mobile-comment-form button {
+            padding: 12px 20px !important;
+            font-size: 16px !important;
+          }
+          
+          .mobile-comments {
+            margin-left: 0 !important;
+            padding: 15px !important;
+          }
+          
+          .mobile-comment {
+            padding: 15px !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .mobile-comment-actions {
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+          }
+          
+          .mobile-comment-actions button {
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-title {
+            font-size: 16px !important;
+          }
+          
+          .mobile-card {
+            padding: 15px !important;
+            margin: 10px !important;
+          }
+          
+          .mobile-comment {
+            padding: 12px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Reactions */}
@@ -540,7 +663,7 @@ export default function CommunityPage() {
         </div>
       ))}
       {/* Header */}
-      <header style={{
+      <header className="mobile-header" style={{
         padding: '20px',
         borderBottom: '1px solid #333',
         display: 'flex',
@@ -553,13 +676,14 @@ export default function CommunityPage() {
         zIndex: 100,
         animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
       }}>
-        <div style={{
+        <div className="mobile-title" style={{
           fontSize: '24px',
           fontWeight: 'bold',
           color: '#00ff88',
           cursor: 'pointer',
           transition: 'all 0.3s ease'
         }}
+        onClick={() => window.location.href = '/'}
         onMouseEnter={(e) => {
           e.target.style.transform = 'scale(1.15)'
           e.target.style.textShadow = '0 0 25px #00ff88'
@@ -573,7 +697,28 @@ export default function CommunityPage() {
         >
           Clutch Community 💬
         </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
+
+        {/* Mobile Menu Button */}
+        <button
+          style={{
+            display: 'none',
+            background: 'none',
+            border: '2px solid #00ff88',
+            borderRadius: '8px',
+            color: '#00ff88',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav" style={{ display: 'flex', gap: '30px' }}>
           {[
             { href: '/', label: 'Home' },
             { href: '/live', label: 'Live' },
@@ -609,12 +754,51 @@ export default function CommunityPage() {
             </a>
           ))}
         </nav>
+
+        {/* Mobile Navigation */}
+        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players' },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/community', label: 'Community', active: true },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '12px 0',
+                fontSize: '18px',
+                borderBottom: '1px solid #333'
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateX(10px)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateX(0)'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
       </header>
 
-      <main className="hero-bg" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <main className="hero-bg mobile-main" style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* User Profile Section */}
         {userProfile && (
-          <div className="card-hover" style={{
+          <div className="card-hover mobile-card mobile-profile" style={{
             backgroundColor: '#1a1a1a',
             border: '2px solid #00ff88',
             borderRadius: '16px',
@@ -668,7 +852,7 @@ export default function CommunityPage() {
         )}
 
         {/* Match Selection */}
-        <div className="card-hover" style={{
+        <div className="card-hover mobile-card" style={{
           backgroundColor: '#1a1a1a',
           border: '2px solid #0099ff',
           borderRadius: '16px',
@@ -687,7 +871,7 @@ export default function CommunityPage() {
             🔥 Select a Match to Join the Discussion
           </h2>
           
-          <div style={{
+          <div className="mobile-match-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
             gap: '16px'
@@ -695,7 +879,7 @@ export default function CommunityPage() {
             {matches.map((match, index) => (
               <div
                 key={match.id}
-                className="card-hover"
+                className="card-hover mobile-match-card"
                 onClick={() => handleMatchSelect(match)}
                 style={{
                   backgroundColor: selectedMatch?.id === match.id ? '#2a2a2a' : '#111',
@@ -880,7 +1064,7 @@ export default function CommunityPage() {
                     </button>
                   </div>
                 )}
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div className="mobile-comment-form" style={{ display: 'flex', gap: '8px' }}>
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}

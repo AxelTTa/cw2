@@ -1,10 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
+import { supabaseAdmin } from '../../utils/supabase'
 
 export async function GET(request) {
   try {
@@ -85,12 +80,36 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
+    // Ensure user profile exists before creating comment
+    try {
+      const { data: existingProfile, error: profileCheckError } = await supabaseAdmin
+        .from('profiles')
+        .select('id')
+        .eq('id', user_id)
+        .single()
+
+      if (profileCheckError || !existingProfile) {
+        // Create profile if it doesn't exist using the SQL function
+        const { error: profileCreateError } = await supabaseAdmin
+          .rpc('create_profile_if_not_exists', {
+            p_user_id: user_id,
+            p_email: `${user_id}@tempuser.com`
+          })
+
+        if (profileCreateError) {
+          console.error('Error creating profile:', profileCreateError)
+        }
+      }
+    } catch (profileError) {
+      console.error('Profile check/creation error:', profileError)
+    }
+
     // Convert match_id to string to handle both integers and UUIDs
     const matchIdString = match_id ? match_id.toString() : null
 
     console.log('Creating comment with data:', {
       content,
-      match_id: matchIdString,
+      match_id,
       user_id,
       parent_id,
       is_meme,

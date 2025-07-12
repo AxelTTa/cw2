@@ -22,6 +22,7 @@ export default function Players() {
   const [floatingTrophies, setFloatingTrophies] = useState([])
   const [searchFocused, setSearchFocused] = useState(false)
   const [searchLoading, setSearchLoading] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchPlayers()
@@ -445,6 +446,144 @@ export default function Players() {
           border-radius: 50%;
           animation: sparkle 2s infinite;
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .floating-trophy {
+            font-size: 20px !important;
+          }
+          
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          
+          .desktop-nav {
+            display: none !important;
+          }
+          
+          .mobile-nav {
+            flex-direction: column;
+            gap: 15px !important;
+            position: fixed;
+            top: 70px;
+            left: -100%;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            transition: left 0.3s ease;
+            z-index: 99;
+            border-bottom: 1px solid #333;
+          }
+          
+          .mobile-nav.open {
+            left: 0;
+          }
+          
+          .mobile-header {
+            padding: 15px !important;
+            flex-wrap: wrap;
+          }
+          
+          .mobile-title {
+            font-size: 20px !important;
+          }
+          
+          .mobile-hero {
+            padding: 30px 15px !important;
+          }
+          
+          .mobile-hero-title {
+            font-size: 36px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 16px !important;
+            margin: 0 auto 25px !important;
+          }
+          
+          .mobile-filters {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: stretch !important;
+          }
+          
+          .mobile-search {
+            width: 100% !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .mobile-filter-row {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          .mobile-filter-row select {
+            width: 100% !important;
+            font-size: 16px !important;
+            padding: 12px !important;
+          }
+          
+          .mobile-players-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-player-card {
+            padding: 20px !important;
+            margin: 0 !important;
+          }
+          
+          .mobile-player-header {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 15px !important;
+          }
+          
+          .mobile-player-stats {
+            flex-direction: column !important;
+            gap: 10px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-pagination {
+            flex-direction: column !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-pagination-buttons {
+            display: flex !important;
+            justify-content: center !important;
+            gap: 10px !important;
+            flex-wrap: wrap !important;
+          }
+          
+          .mobile-pagination button {
+            padding: 8px 12px !important;
+            font-size: 14px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-hero-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 15px !important;
+          }
+          
+          .mobile-player-card {
+            padding: 15px !important;
+          }
+          
+          .mobile-title {
+            font-size: 18px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Trophies */}
@@ -477,7 +616,7 @@ export default function Players() {
       ))}
 
       {/* Header */}
-      <header style={{
+      <header className="mobile-header" style={{
         padding: '20px',
         borderBottom: '1px solid #333',
         display: 'flex',
@@ -491,6 +630,7 @@ export default function Players() {
         animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
       }}>
         <div 
+          className="mobile-title"
           style={{
             fontSize: '24px',
             fontWeight: 'bold',
@@ -512,7 +652,28 @@ export default function Players() {
         >
           Clutch
         </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
+
+        {/* Mobile Menu Button */}
+        <button
+          style={{
+            display: 'none',
+            background: 'none',
+            border: '2px solid #00ff88',
+            borderRadius: '8px',
+            color: '#00ff88',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav" style={{ display: 'flex', gap: '30px' }}>
           {[
             { href: '/', label: 'Home' },
             { href: '/live', label: 'Live' },
@@ -542,6 +703,45 @@ export default function Players() {
                 e.target.style.color = item.active ? '#ffffff' : '#888'
                 e.target.style.transform = 'translateY(0)'
                 e.target.style.textShadow = 'none'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Mobile Navigation */}
+        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players', active: true },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/community', label: 'Community' },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '12px 0',
+                fontSize: '18px',
+                borderBottom: '1px solid #333'
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateX(10px)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateX(0)'
               }}
             >
               {item.label}

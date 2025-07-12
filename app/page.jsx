@@ -13,6 +13,7 @@ export default function Home() {
   const [isVisible, setIsVisible] = useState(false)
   const [floatingElements, setFloatingElements] = useState([])
   const [currentAnimation, setCurrentAnimation] = useState(0)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     fetchRecentMatches()
@@ -205,6 +206,161 @@ export default function Home() {
         .rotating-border:hover::before {
           opacity: 1;
         }
+        
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .floating-element {
+            font-size: 20px !important;
+          }
+          
+          .mobile-menu-btn {
+            display: block !important;
+          }
+          
+          .desktop-nav {
+            display: none !important;
+          }
+          
+          .mobile-nav {
+            flex-direction: column;
+            gap: 15px !important;
+            position: fixed;
+            top: 70px;
+            left: -100%;
+            width: 100%;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            transition: left 0.3s ease;
+            z-index: 99;
+            border-bottom: 1px solid #333;
+          }
+          
+          .mobile-nav.open {
+            left: 0;
+          }
+          
+          .mobile-header {
+            padding: 15px !important;
+            flex-wrap: wrap;
+          }
+          
+          .mobile-title {
+            font-size: 20px !important;
+          }
+          
+          .mobile-hero {
+            padding: 40px 15px !important;
+          }
+          
+          .mobile-hero-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 16px !important;
+            margin: 0 auto 30px !important;
+          }
+          
+          .mobile-grid {
+            grid-template-columns: 1fr !important;
+            gap: 20px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-card {
+            padding: 20px !important;
+            margin: 0 !important;
+          }
+          
+          .mobile-match-card {
+            padding: 20px !important;
+          }
+          
+          .mobile-teams {
+            flex-direction: column !important;
+            gap: 15px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-score {
+            font-size: 20px !important;
+            margin: 15px 0 !important;
+          }
+          
+          .mobile-team {
+            justify-content: center !important;
+          }
+          
+          .mobile-team img {
+            width: 24px !important;
+            height: 24px !important;
+          }
+          
+          .mobile-team span {
+            font-size: 14px !important;
+          }
+          
+          .mobile-match-info {
+            flex-direction: column !important;
+            gap: 8px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-feature {
+            padding: 25px !important;
+            text-align: center !important;
+          }
+          
+          .mobile-feature h3 {
+            font-size: 18px !important;
+          }
+          
+          .mobile-feature p {
+            font-size: 15px !important;
+          }
+          
+          .mobile-cta {
+            padding: 30px 20px !important;
+            margin: 40px 15px 0 !important;
+          }
+          
+          .mobile-cta h2 {
+            font-size: 24px !important;
+          }
+          
+          .mobile-cta p {
+            font-size: 16px !important;
+          }
+          
+          .mobile-btn {
+            padding: 14px 28px !important;
+            font-size: 16px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-hero-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 15px !important;
+          }
+          
+          .mobile-card {
+            padding: 15px !important;
+          }
+          
+          .mobile-feature {
+            padding: 20px !important;
+          }
+          
+          .mobile-cta {
+            padding: 25px 15px !important;
+          }
+        }
       `}</style>
 
       {/* Floating Background Elements */}
@@ -223,81 +379,10 @@ export default function Home() {
         </div>
       ))}
 
-      {/* Header */}
-      <header style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(15px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div 
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => window.location.href = '/'}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.15)'
-            e.target.style.textShadow = '0 0 25px #00ff88'
-            e.target.style.filter = 'brightness(1.2)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1)'
-            e.target.style.textShadow = 'none'
-            e.target.style.filter = 'brightness(1)'
-          }}
-        >
-          Clutch
-        </div>
-        <nav style={{ display: 'flex', gap: '30px' }}>
-          {[
-            { href: '/', label: 'Home', active: true },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '8px 0'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
-      <main className="hero-bg" style={{ 
+      <main className="hero-bg mobile-hero" style={{ 
         padding: '80px 20px', 
         textAlign: 'center',
         position: 'relative'
@@ -307,7 +392,7 @@ export default function Home() {
           transform: isVisible ? 'translateY(0)' : 'translateY(40px)',
           transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
-          <h1 style={{
+          <h1 className="mobile-hero-title" style={{
             fontSize: '56px',
             fontWeight: '900',
             marginBottom: '25px',
@@ -321,7 +406,7 @@ export default function Home() {
           }}>
             FIFA Club World Cup 2025 ⚽
           </h1>
-          <p style={{
+          <p className="mobile-hero-text" style={{
             fontSize: '22px',
             color: '#cccccc',
             marginBottom: '50px',
@@ -333,6 +418,97 @@ export default function Home() {
             Follow the expanded Club World Cup with 32 teams from around the world. 
             Real-time match results, player stats, and community discussions.
           </p>
+        </div>
+
+        {/* Top Goal Scorers - Compact Section */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '60px auto 40px',
+          padding: '0 20px'
+        }}>
+          <div style={{
+            backgroundColor: '#111',
+            borderRadius: '12px',
+            border: '2px solid #333',
+            padding: '20px',
+            marginBottom: '40px'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              marginBottom: '15px',
+              color: '#00ff88',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              ⚽ Top Goal Scorers
+            </h3>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              overflowX: 'auto',
+              paddingBottom: '5px'
+            }}>
+              {[
+                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴' },
+                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷' },
+                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷' },
+                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷' },
+                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷' }
+              ].map((player, index) => (
+                <div key={index} style={{
+                  minWidth: '120px',
+                  backgroundColor: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  padding: '12px 8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#00ff88'
+                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 255, 136, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+                >
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: '#00ff88',
+                    marginBottom: '4px'
+                  }}>
+                    {player.goals}
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    marginBottom: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{player.flag}</span>
+                    {player.name}
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#888'
+                  }}>
+                    {player.team}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Recent Matches Section */}
@@ -349,7 +525,7 @@ export default function Home() {
             color: '#ffffff',
             animation: 'slideInUp 1s ease-out 0.5s both'
           }}>
-            🏆 Recent Club World Cup Results
+            🏆 Recent Match Results
           </h2>
           
           {loading ? (
@@ -380,7 +556,7 @@ export default function Home() {
               <div style={{ fontSize: '18px' }}>{error}</div>
             </div>
           ) : (
-            <div style={{
+            <div className="mobile-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
               gap: '25px'
@@ -388,7 +564,7 @@ export default function Home() {
               {recentMatches.map((match, index) => (
                 <div
                   key={match.id}
-                  className="card-hover rotating-border"
+                  className="card-hover rotating-border mobile-match-card"
                   style={{
                     backgroundColor: '#111',
                     border: '2px solid #333',
@@ -450,13 +626,13 @@ export default function Home() {
                   </div>
                   
                   {/* Teams and Score */}
-                  <div style={{
+                  <div className="mobile-teams" style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '20px'
                   }}>
-                    <div style={{
+                    <div className="mobile-team" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -490,7 +666,7 @@ export default function Home() {
                       </span>
                     </div>
                     
-                    <div style={{
+                    <div className="mobile-score" style={{
                       fontSize: '24px',
                       fontWeight: 'bold',
                       color: '#00ff88',
@@ -504,7 +680,7 @@ export default function Home() {
                       }
                     </div>
                     
-                    <div style={{
+                    <div className="mobile-team" style={{
                       display: 'flex',
                       alignItems: 'center',
                       gap: '12px',
@@ -541,7 +717,7 @@ export default function Home() {
                   </div>
                   
                   {/* Match Info */}
-                  <div style={{
+                  <div className="mobile-match-info" style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
@@ -564,7 +740,7 @@ export default function Home() {
           }}>
             <a 
               href="/community" 
-              className="rotating-border"
+              className="rotating-border mobile-btn"
               style={{
                 display: 'inline-block',
                 backgroundColor: '#00ff88',
@@ -808,8 +984,8 @@ export default function Home() {
         }}>
           {[
             {
-              title: 'Live Statistics 📊',
-              desc: 'Real-time player and team stats from all 32 Club World Cup teams. Track goals, assists, and performances.',
+              title: 'Match Analytics 📊',
+              desc: 'Real-time match data and insights from top competitions worldwide. Track scores, goals, and key moments.',
               color: '#00ff88',
               delay: '0.2s'
             },
@@ -821,14 +997,14 @@ export default function Home() {
             },
             {
               title: 'Player Profiles 👤',
-              desc: 'Explore detailed profiles of all Club World Cup players. View stats, photos, and career highlights.',
+              desc: 'Explore detailed profiles of players from top competitions worldwide. View career highlights and achievements.',
               color: '#ff6b35',
               delay: '0.6s'
             }
           ].map((feature, index) => (
             <div 
               key={index}
-              className="card-hover rotating-border"
+              className="card-hover rotating-border mobile-feature"
               style={{
                 backgroundColor: '#111',
                 border: `2px solid ${feature.color}`,
@@ -869,7 +1045,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div style={{
+        <div className="mobile-cta" style={{
           marginTop: '80px',
           padding: '50px',
           backgroundColor: '#111',
