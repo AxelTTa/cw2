@@ -447,7 +447,7 @@ export default function Rewards() {
       }}>
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
           gap: '20px',
           marginBottom: '40px'
         }}>
@@ -552,7 +552,7 @@ export default function Rewards() {
         
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
           gap: '30px'
         }}>
           {rewardTiers.map((tier, index) => (
@@ -883,6 +883,49 @@ export default function Rewards() {
           </div>
         </div>
       </section>
+
+      <style jsx>{`
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+          .mobile-hero {
+            padding: 60px 15px 40px !important;
+          }
+          
+          .mobile-hero-title {
+            font-size: 32px !important;
+            line-height: 1.2 !important;
+          }
+          
+          .mobile-hero-text {
+            font-size: 16px !important;
+          }
+          
+          .mobile-rewards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            padding: 0 15px !important;
+          }
+          
+          .mobile-rewards-card {
+            padding: 20px !important;
+          }
+          
+          .mobile-stats-grid {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 15px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .mobile-hero-title {
+            font-size: 28px !important;
+          }
+          
+          .mobile-stats-grid {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
