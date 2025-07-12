@@ -361,6 +361,8 @@ export async function PATCH(request) {
         }, { status: 500 })
       }
 
+      console.log('Vote result:', voteResult)
+
       // Get updated comment with profile data
       const { data: comment, error } = await supabaseAdmin
         .from('comments')
