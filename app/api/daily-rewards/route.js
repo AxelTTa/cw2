@@ -335,31 +335,133 @@ export async function POST(request) {
 // Manual test endpoint for devs
 export async function PUT(request) {
   try {
-    const { action, amount = 0.001 } = await request.json() // Default test amount is 0.001 CHZ
+    const { action, amount = 0.001, user_id, wallet_address } = await request.json() // Default test amount is 0.001 CHZ
+    
+    console.log(`🧪 Test transaction request:`, {
+      action,
+      amount,
+      user_id,
+      wallet_address: wallet_address ? `${wallet_address.slice(0, 6)}...${wallet_address.slice(-4)}` : 'Not provided'
+    })
     
     if (action === 'test-transaction') {
+      // Validate required parameters
+      if (!user_id) {
+        console.error('❌ Test transaction failed: Missing user_id')
+        return NextResponse.json({ 
+          success: false, 
+          error: 'User ID is required for test transaction' 
+        }, { status: 400 })
+      }
+
+      if (!wallet_address) {
+        console.error('❌ Test transaction failed: Missing wallet_address')
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Wallet address is required for test transaction' 
+        }, { status: 400 })
+      }
+
+      // Validate wallet address format (Ethereum address)
+      if (!ethers.isAddress(wallet_address)) {
+        console.error('❌ Test transaction failed: Invalid wallet address format:', wallet_address)
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Invalid wallet address format' 
+        }, { status: 400 })
+      }
+
+      console.log(`🔗 Setting up CHZ blockchain connection...`)
+      
       // Test CHZ transaction
       const provider = new ethers.JsonRpcProvider(process.env.CHZ_RPC_URL || 'https://rpc.chiliz.com')
       const adminWallet = new ethers.Wallet(process.env.ADMIN_WALLET_PRIVATE_KEY, provider)
       
-      // Send small test amount to admin wallet (self-transaction)
-      const amountInWei = ethers.parseEther(amount.toString())
+      console.log(`💰 Admin wallet address: ${adminWallet.address}`)
+      console.log(`🎯 Target wallet address: ${wallet_address}`)
+      console.log(`💵 Amount to send: ${amount} CHZ`)
       
+      // Check admin wallet balance
+      const balance = await provider.getBalance(adminWallet.address)
+      const balanceInChz = ethers.formatEther(balance)
+      console.log(`💳 Admin wallet balance: ${balanceInChz} CHZ`)
+      
+      // Convert amount to Wei
+      const amountInWei = ethers.parseEther(amount.toString())
+      console.log(`⚖️ Amount in Wei: ${amountInWei.toString()}`)
+      
+      // Check if admin has enough balance
+      if (balance < amountInWei) {
+        console.error('❌ Insufficient balance in admin wallet:', {
+          required: `${amount} CHZ`,
+          available: `${balanceInChz} CHZ`
+        })
+        return NextResponse.json({ 
+          success: false, 
+          error: `Insufficient balance. Required: ${amount} CHZ, Available: ${balanceInChz} CHZ` 
+        }, { status: 400 })
+      }
+
+      console.log(`📡 Sending transaction on Chiliz Chain...`)
+      
+      // Send CHZ to the connected user's wallet
       const tx = await adminWallet.sendTransaction({
-        to: process.env.ADMIN_WALLET_ADDRESS,
+        to: wallet_address,
         value: amountInWei
       })
       
-      console.log(`Test transaction sent: ${tx.hash}`)
+      console.log(`✅ Test transaction sent successfully!`, {
+        transaction_hash: tx.hash,
+        from: adminWallet.address,
+        to: wallet_address,
+        amount: `${amount} CHZ`,
+        block_number: tx.blockNumber || 'Pending',
+        gas_used: tx.gasLimit?.toString() || 'Unknown'
+      })
+
+      // Wait for transaction confirmation
+      console.log(`⏳ Waiting for transaction confirmation...`)
+      try {
+        const receipt = await tx.wait(1) // Wait for 1 confirmation
+        console.log(`🎉 Transaction confirmed!`, {
+          block_number: receipt.blockNumber,
+          gas_used: receipt.gasUsed?.toString(),
+          status: receipt.status === 1 ? 'Success' : 'Failed'
+        })
+      } catch (confirmError) {
+        console.warn('⚠️ Transaction sent but confirmation failed:', confirmError.message)
+      }
+
+      // Update user profile with test transaction info (optional logging)
+      try {
+        console.log(`📝 Logging test transaction in database...`)
+        const { error: updateError } = await supabaseAdmin
+          .from('profiles')
+          .update({ 
+            last_test_transaction: new Date().toISOString(),
+            last_test_amount: amount.toString()
+          })
+          .eq('id', user_id)
+
+        if (updateError) {
+          console.error('⚠️ Failed to log test transaction in database:', updateError)
+        } else {
+          console.log('✅ Test transaction logged in database')
+        }
+      } catch (dbError) {
+        console.error('⚠️ Database logging error:', dbError)
+      }
       
       return NextResponse.json({
         success: true,
-        message: 'Test transaction completed successfully',
+        message: 'Test CHZ transaction completed successfully',
         transaction_hash: tx.hash,
         amount: amount,
         from: adminWallet.address,
-        to: process.env.ADMIN_WALLET_ADDRESS,
-        network: 'Chiliz Chain'
+        to: wallet_address,
+        network: 'Chiliz Chain',
+        admin_balance_after: (parseFloat(balanceInChz) - amount).toFixed(6),
+        block_explorer_url: `https://chiliscan.com/tx/${tx.hash}`
       })
     }
     
@@ -369,10 +471,17 @@ export async function PUT(request) {
     }, { status: 400 })
     
   } catch (error) {
-    console.error('Test transaction error:', error)
+    console.error('❌ Test transaction error:', error)
+    console.error('Error details:', {
+      message: error.message,
+      code: error.code,
+      reason: error.reason,
+      stack: error.stack
+    })
+    
     return NextResponse.json({ 
       success: false, 
-      error: `Test failed: ${error.message}` 
+      error: `Test transaction failed: ${error.message}` 
     }, { status: 500 })
   }
 }

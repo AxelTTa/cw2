@@ -14,6 +14,7 @@ export default function DailyLeaderboard() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [user, setUser] = useState(null)
   const [walletConnected, setWalletConnected] = useState(false)
+  const [walletConnection, setWalletConnection] = useState(null)
   const [testingTransaction, setTestingTransaction] = useState(false)
 
   useEffect(() => {
@@ -104,22 +105,74 @@ export default function DailyLeaderboard() {
   }
 
   const testTransaction = async () => {
+    console.log('🧪 Starting test CHZ transaction...')
+    
+    // Check if user is logged in
+    if (!user) {
+      console.error('❌ Test transaction failed: User not logged in')
+      alert('Please log in first to test CHZ transactions')
+      return
+    }
+
+    // Check if wallet is connected
+    if (!walletConnection || !walletConnection.address) {
+      console.error('❌ Test transaction failed: Wallet not connected')
+      alert('Please connect your wallet first to test CHZ transactions')
+      return
+    }
+
+    console.log('✅ Prerequisites met:', {
+      user_id: user.id,
+      wallet_address: `${walletConnection.address.slice(0, 6)}...${walletConnection.address.slice(-4)}`
+    })
+
     setTestingTransaction(true)
     try {
+      const requestBody = { 
+        action: 'test-transaction', 
+        amount: 0.001,
+        user_id: user.id,
+        wallet_address: walletConnection.address
+      }
+
+      console.log('📡 Sending test transaction request:', {
+        ...requestBody,
+        wallet_address: `${requestBody.wallet_address.slice(0, 6)}...${requestBody.wallet_address.slice(-4)}`
+      })
+
       const response = await fetch('/api/daily-rewards', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'test-transaction', amount: 0.001 })
+        body: JSON.stringify(requestBody)
       })
       
       const data = await response.json()
+      console.log('📨 API Response:', data)
+      
       if (data.success) {
-        alert(`Test transaction successful!\nTX Hash: ${data.transaction_hash}\nAmount: ${data.amount} CHZ`)
+        console.log('🎉 Test transaction successful!', {
+          transaction_hash: data.transaction_hash,
+          amount: data.amount,
+          from: data.from,
+          to: data.to,
+          network: data.network
+        })
+        
+        const message = `✅ Test CHZ Transaction Successful!\n\n` +
+          `💰 Amount: ${data.amount} CHZ\n` +
+          `🎯 Sent to: ${data.to.slice(0, 6)}...${data.to.slice(-4)}\n` +
+          `📄 TX Hash: ${data.transaction_hash}\n` +
+          `🌐 Network: ${data.network}\n` +
+          `🔗 View on Explorer: ${data.block_explorer_url || 'N/A'}`
+        
+        alert(message)
       } else {
-        alert('Test transaction failed: ' + data.error)
+        console.error('❌ Test transaction failed:', data.error)
+        alert(`❌ Test transaction failed:\n${data.error}`)
       }
     } catch (error) {
-      alert('Test transaction error: ' + error.message)
+      console.error('❌ Test transaction error:', error)
+      alert(`❌ Test transaction error:\n${error.message}`)
     } finally {
       setTestingTransaction(false)
     }
@@ -127,12 +180,17 @@ export default function DailyLeaderboard() {
 
   const handleWalletConnected = (connection) => {
     setWalletConnected(true)
-    console.log('Wallet connected:', connection)
+    setWalletConnection(connection)
+    console.log('💳 Wallet connected:', {
+      address: `${connection.address.slice(0, 6)}...${connection.address.slice(-4)}`,
+      type: connection.type
+    })
   }
 
   const handleWalletDisconnected = () => {
     setWalletConnected(false)
-    console.log('Wallet disconnected')
+    setWalletConnection(null)
+    console.log('💳 Wallet disconnected')
   }
 
   const formatDate = (dateString) => {
