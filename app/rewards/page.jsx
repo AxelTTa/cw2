@@ -25,6 +25,12 @@ export default function Rewards() {
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
       fetchDashboardData(parsedUser.id)
+      
+      // Check for existing wallet connection
+      const savedWallet = localStorage.getItem('wallet_address')
+      if (savedWallet) {
+        setWalletAddress(savedWallet)
+      }
     } else {
       setLoading(false)
     }
@@ -75,6 +81,7 @@ export default function Rewards() {
         if (milestonesResult.success) {
           setMilestones(milestonesResult.data)
           console.log('🎯 Frontend: Milestones loaded:', milestonesResult.data.stats)
+          console.log('🎯 Frontend: Available milestones:', milestonesResult.data.milestones.filter(m => m.is_eligible && !m.already_claimed))
         }
       }
 
@@ -99,6 +106,7 @@ export default function Rewards() {
 
   const handleWalletConnect = (address) => {
     setWalletAddress(address)
+    localStorage.setItem('wallet_address', address)
     console.log('🎯 Frontend: Wallet connected:', address)
   }
 
@@ -730,6 +738,11 @@ export default function Rewards() {
                           }}>
                             <div style={{ color: '#888' }}>
                               Progress: {milestone.current_value} / {milestone.threshold_value}
+                              {milestone.milestone_type === 'comments' && (
+                                <span style={{ color: '#00ff88', marginLeft: '10px' }}>
+                                  ({milestone.is_eligible ? '✅ Eligible' : '❌ Not Eligible'})
+                                </span>
+                              )}
                             </div>
                             <div style={{
                               backgroundColor: '#333',
