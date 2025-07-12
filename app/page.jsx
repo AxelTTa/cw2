@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from './components/Header'
 import MatchDiscussion from './community/page'
 import PublicComments from './components/PublicComments'
 
@@ -386,142 +387,7 @@ export default function Home() {
         </div>
       ))}
 
-      {/* Header */}
-      <header className="mobile-header" style={{
-        padding: '20px',
-        borderBottom: '1px solid #333',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backdropFilter: 'blur(15px)',
-        backgroundColor: 'rgba(10, 10, 10, 0.9)',
-        position: 'sticky',
-        top: 0,
-        zIndex: 100
-      }}>
-        <div 
-          className="mobile-title"
-          style={{
-            fontSize: '24px',
-            fontWeight: 'bold',
-            color: '#00ff88',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease'
-          }}
-          onClick={() => window.location.href = '/'}
-          onMouseEnter={(e) => {
-            e.target.style.transform = 'scale(1.15)'
-            e.target.style.textShadow = '0 0 25px #00ff88'
-            e.target.style.filter = 'brightness(1.2)'
-          }}
-          onMouseLeave={(e) => {
-            e.target.style.transform = 'scale(1)'
-            e.target.style.textShadow = 'none'
-            e.target.style.filter = 'brightness(1)'
-          }}
-        >
-          Clutch
-        </div>
-        
-        {/* Mobile Menu Button */}
-        <button
-          style={{
-            display: 'none',
-            background: 'none',
-            border: '2px solid #00ff88',
-            borderRadius: '8px',
-            color: '#00ff88',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            fontSize: '16px',
-            transition: 'all 0.3s ease'
-          }}
-          className="mobile-menu-btn"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? '✕' : '☰'}
-        </button>
-        
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav" style={{ 
-          display: 'flex', 
-          gap: '30px' 
-        }}>
-          {[
-            { href: '/', label: 'Home', active: true },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '8px 0'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateY(-3px)'
-                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.textShadow = 'none'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-        
-        {/* Mobile Navigation */}
-        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
-          {[
-            { href: '/', label: 'Home', active: true },
-            { href: '/live', label: 'Live' },
-            { href: '/players', label: 'Players' },
-            { href: '/stats', label: 'Stats' },
-            { href: '/teams', label: 'Teams' },
-            { href: '/community', label: 'Community' },
-            { href: '/about', label: 'About' },
-            { href: '/rewards', label: 'Rewards' }
-          ].map((item, index) => (
-            <a 
-              key={item.href}
-              href={item.href} 
-              style={{ 
-                color: item.active ? '#ffffff' : '#888', 
-                textDecoration: 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                padding: '12px 0',
-                fontSize: '18px',
-                borderBottom: '1px solid #333'
-              }}
-              onClick={() => setMobileMenuOpen(false)}
-              onMouseEnter={(e) => {
-                e.target.style.color = '#00ff88'
-                e.target.style.transform = 'translateX(10px)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.color = item.active ? '#ffffff' : '#888'
-                e.target.style.transform = 'translateX(0)'
-              }}
-            >
-              {item.label}
-            </a>
-          ))}
-        </nav>
-      </header>
+      <Header />
 
       {/* Hero Section */}
       <main className="hero-bg mobile-hero" style={{ 
@@ -562,8 +428,99 @@ export default function Home() {
           </p>
         </div>
 
+        {/* Top Goal Scorers - Compact Section */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '60px auto 40px',
+          padding: '0 20px'
+        }}>
+          <div style={{
+            backgroundColor: '#111',
+            borderRadius: '12px',
+            border: '2px solid #333',
+            padding: '20px',
+            marginBottom: '40px'
+          }}>
+            <h3 style={{
+              fontSize: '18px',
+              fontWeight: '700',
+              marginBottom: '15px',
+              color: '#00ff88',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              ⚽ Top Goal Scorers
+            </h3>
+            <div style={{
+              display: 'flex',
+              gap: '12px',
+              overflowX: 'auto',
+              paddingBottom: '5px'
+            }}>
+              {[
+                { name: 'Haaland', team: 'Man City', goals: 15, flag: '🇳🇴' },
+                { name: 'Mbappé', team: 'Real Madrid', goals: 12, flag: '🇫🇷' },
+                { name: 'Messi', team: 'Inter Miami', goals: 11, flag: '🇦🇷' },
+                { name: 'Benzema', team: 'Al-Ittihad', goals: 10, flag: '🇫🇷' },
+                { name: 'Vini Jr.', team: 'Real Madrid', goals: 9, flag: '🇧🇷' }
+              ].map((player, index) => (
+                <div key={index} style={{
+                  minWidth: '120px',
+                  backgroundColor: '#1a1a1a',
+                  border: '1px solid #333',
+                  borderRadius: '8px',
+                  padding: '12px 8px',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = '#00ff88'
+                  e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 255, 136, 0.2)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
+                  e.currentTarget.style.boxShadow = 'none'
+                }}
+                >
+                  <div style={{
+                    fontSize: '20px',
+                    fontWeight: 'bold',
+                    color: '#00ff88',
+                    marginBottom: '4px'
+                  }}>
+                    {player.goals}
+                  </div>
+                  <div style={{
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: '#fff',
+                    marginBottom: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px'
+                  }}>
+                    <span>{player.flag}</span>
+                    {player.name}
+                  </div>
+                  <div style={{
+                    fontSize: '10px',
+                    color: '#888'
+                  }}>
+                    {player.team}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Recent Matches Section */}
-        <div className="mobile-grid" style={{
+        <div style={{
           maxWidth: '1200px',
           margin: '80px auto',
           padding: '0 20px'
@@ -576,7 +533,7 @@ export default function Home() {
             color: '#ffffff',
             animation: 'slideInUp 1s ease-out 0.5s both'
           }}>
-            🏆 Recent Club World Cup Results
+            🏆 Recent Match Results
           </h2>
           
           {loading ? (
@@ -622,8 +579,10 @@ export default function Home() {
                     borderRadius: '16px',
                     padding: '25px',
                     animation: `slideInUp 0.8s ease-out ${index * 0.15}s both`,
-                    position: 'relative'
+                    position: 'relative',
+                    cursor: 'pointer'
                   }}
+                  onClick={() => window.location.href = `/matches/${match.id}`}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.borderColor = '#00ff88'
                     e.currentTarget.style.backgroundColor = '#1a1a1a'
@@ -689,7 +648,10 @@ export default function Home() {
                       cursor: 'pointer',
                       transition: 'transform 0.3s ease'
                     }}
-                    onClick={() => window.location.href = `/teams/${match.homeTeam.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = `/teams/${match.homeTeam.id}`
+                    }}
                     onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
@@ -735,7 +697,10 @@ export default function Home() {
                       cursor: 'pointer',
                       transition: 'transform 0.3s ease'
                     }}
-                    onClick={() => window.location.href = `/teams/${match.awayTeam.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      window.location.href = `/teams/${match.awayTeam.id}`
+                    }}
                     onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.08)'}
                     onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                     >
@@ -814,8 +779,210 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Top Competitions Section */}
+        <div style={{
+          maxWidth: '1200px',
+          margin: '80px auto',
+          padding: '0 20px'
+        }}>
+          <h2 style={{
+            fontSize: '36px',
+            fontWeight: '700',
+            marginBottom: '40px',
+            textAlign: 'center',
+            color: '#ffffff',
+            animation: 'slideInUp 1s ease-out 0.7s both'
+          }}>
+            🏆 Top Current Competitions
+          </h2>
+          
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: '20px'
+          }}>
+            {[
+              {
+                name: 'FIFA Club World Cup 2025',
+                status: 'LIVE',
+                statusColor: '#00ff88',
+                stage: 'Group Stage',
+                teams: '32 Teams',
+                location: '🇺🇸 USA',
+                prize: '$100M',
+                logo: 'https://media.api-sports.io/football/leagues/15.png'
+              },
+              {
+                name: 'UEFA Champions League',
+                status: 'ONGOING',
+                statusColor: '#0099ff',
+                stage: 'League Phase',
+                teams: '36 Teams',
+                location: '🇪🇺 Europe',
+                prize: '€2.03B',
+                logo: 'https://media.api-sports.io/football/leagues/2.png'
+              },
+              {
+                name: 'AFC Champions League',
+                status: 'ONGOING',
+                statusColor: '#0099ff',
+                stage: 'League Stage',
+                teams: '24 Teams',
+                location: '🌏 Asia',
+                prize: '$12M',
+                logo: 'https://media.api-sports.io/football/leagues/1.png'
+              },
+              {
+                name: 'Copa Libertadores',
+                status: 'COMPLETED',
+                statusColor: '#888',
+                stage: 'Final',
+                teams: '47 Teams',
+                location: '🌎 South America',
+                prize: '$23M',
+                logo: 'https://media.api-sports.io/football/leagues/13.png'
+              },
+              {
+                name: 'CAF Champions League',
+                status: 'UPCOMING',
+                statusColor: '#ff6b35',
+                stage: 'Group Stage',
+                teams: '16 Teams',
+                location: '🌍 Africa',
+                prize: '$2.5M',
+                logo: 'https://media.api-sports.io/football/leagues/12.png'
+              }
+            ].map((competition, index) => (
+              <div
+                key={index}
+                className="card-hover"
+                style={{
+                  backgroundColor: '#111',
+                  border: '2px solid #333',
+                  borderRadius: '12px',
+                  padding: '20px',
+                  animation: `slideInUp 0.8s ease-out ${0.8 + index * 0.1}s both`,
+                  cursor: 'pointer'
+                }}
+                onClick={() => window.location.href = '/competitions'}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = competition.statusColor
+                  e.currentTarget.style.backgroundColor = '#1a1a1a'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = '#333'
+                  e.currentTarget.style.backgroundColor = '#111'
+                }}
+              >
+                {/* Status Badge */}
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '15px'
+                }}>
+                  <img 
+                    src={competition.logo} 
+                    alt={competition.name}
+                    style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '4px'
+                    }}
+                  />
+                  <span style={{
+                    color: competition.statusColor,
+                    fontSize: '10px',
+                    fontWeight: 'bold',
+                    backgroundColor: `${competition.statusColor}20`,
+                    padding: '3px 8px',
+                    borderRadius: '10px'
+                  }}>
+                    {competition.status}
+                  </span>
+                </div>
+
+                {/* Competition Name */}
+                <h4 style={{
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '12px',
+                  lineHeight: '1.3'
+                }}>
+                  {competition.name}
+                </h4>
+
+                {/* Quick Info */}
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '6px',
+                  fontSize: '11px',
+                  color: '#888'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Stage:</span>
+                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{competition.stage}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Teams:</span>
+                    <span style={{ color: '#00ff88' }}>{competition.teams}</span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Prize:</span>
+                    <span style={{ color: '#0099ff' }}>{competition.prize}</span>
+                  </div>
+                  <div style={{ 
+                    textAlign: 'center',
+                    marginTop: '8px',
+                    padding: '6px',
+                    backgroundColor: '#0a0a0a',
+                    borderRadius: '6px',
+                    fontSize: '10px',
+                    color: '#ffdd00'
+                  }}>
+                    {competition.location}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{
+            textAlign: 'center',
+            marginTop: '30px'
+          }}>
+            <a 
+              href="/competitions" 
+              style={{
+                display: 'inline-block',
+                backgroundColor: 'transparent',
+                color: '#00ff88',
+                border: '2px solid #00ff88',
+                textDecoration: 'none',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.backgroundColor = '#00ff88'
+                e.target.style.color = '#000'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.backgroundColor = 'transparent'
+                e.target.style.color = '#00ff88'
+              }}
+            >
+              View All Competitions →
+            </a>
+          </div>
+        </div>
+
         {/* Feature Cards */}
-        <div className="mobile-grid" style={{
+        <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '35px',
@@ -825,8 +992,8 @@ export default function Home() {
         }}>
           {[
             {
-              title: 'Live Statistics 📊',
-              desc: 'Real-time player and team stats from all 32 Club World Cup teams. Track goals, assists, and performances.',
+              title: 'Match Analytics 📊',
+              desc: 'Real-time match data and insights from top competitions worldwide. Track scores, goals, and key moments.',
               color: '#00ff88',
               delay: '0.2s'
             },
@@ -838,7 +1005,7 @@ export default function Home() {
             },
             {
               title: 'Player Profiles 👤',
-              desc: 'Explore detailed profiles of all Club World Cup players. View stats, photos, and career highlights.',
+              desc: 'Explore detailed profiles of players from top competitions worldwide. View career highlights and achievements.',
               color: '#ff6b35',
               delay: '0.6s'
             }

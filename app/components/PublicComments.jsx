@@ -183,7 +183,7 @@ export default function PublicComments({ matchId = null, showForm = true }) {
                 Want to join the discussion? Post comments and memes!
               </p>
               <button
-                onClick={() => window.location.href = '/'}
+                onClick={() => window.location.href = '/login'}
                 style={{
                   backgroundColor: '#00ff88',
                   border: 'none',

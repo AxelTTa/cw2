@@ -1,23 +1,27 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Header from '../components/Header'
 
 export default function Players() {
   const [allPlayers, setAllPlayers] = useState([])
   const [filteredPlayers, setFilteredPlayers] = useState([])
   const [displayedPlayers, setDisplayedPlayers] = useState([])
+  const [loadedPlayers, setLoadedPlayers] = useState([])
   const [loading, setLoading] = useState(true)
+  const [backgroundLoading, setBackgroundLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedTeam, setSelectedTeam] = useState('')
   const [selectedPosition, setSelectedPosition] = useState('')
-  const [playersPerPage] = useState(24)
+  const [sortBy, setSortBy] = useState('name')
+  const [playersPerPage] = useState(25)
   const [currentPage, setCurrentPage] = useState(1)
   const [teams, setTeams] = useState([])
   const [isVisible, setIsVisible] = useState(false)
   const [floatingTrophies, setFloatingTrophies] = useState([])
   const [searchFocused, setSearchFocused] = useState(false)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchLoading, setSearchLoading] = useState(false)
 
   useEffect(() => {
     fetchPlayers()
@@ -132,7 +136,16 @@ export default function Players() {
 
   // Filter and search functionality
   useEffect(() => {
-    let filtered = allPlayers
+    // Determine which dataset to use for filtering
+    const datasetToFilter = allPlayers.length > 0 ? allPlayers : loadedPlayers
+    let filtered = datasetToFilter
+
+    // Check if we're searching for something not in loaded players
+    if (searchTerm && allPlayers.length === 0) {
+      setSearchLoading(true)
+    } else {
+      setSearchLoading(false)
+    }
 
     // Apply search filter
     if (searchTerm) {
@@ -153,17 +166,97 @@ export default function Players() {
       filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
     }
 
+    // Apply sorting
+    filtered = sortPlayers(filtered, sortBy)
+
     setFilteredPlayers(filtered)
     setCurrentPage(1)
     setDisplayedPlayers(filtered.slice(0, playersPerPage))
-  }, [searchTerm, selectedTeam, selectedPosition, allPlayers, playersPerPage])
+  }, [searchTerm, selectedTeam, selectedPosition, sortBy, allPlayers, loadedPlayers, playersPerPage])
 
-  // Pagination for display
-  const handleNextPage = () => {
-    const startIndex = currentPage * playersPerPage
-    const endIndex = startIndex + playersPerPage
-    setDisplayedPlayers(filteredPlayers.slice(0, endIndex))
-    setCurrentPage(currentPage + 1)
+  const sortPlayers = (players, sortCriteria) => {
+    return [...players].sort((a, b) => {
+      const playerA = a.player
+      const playerB = b.player
+      const statsA = a.statistics
+      const statsB = b.statistics
+
+      switch (sortCriteria) {
+        case 'name':
+          return (playerA?.name || '').localeCompare(playerB?.name || '')
+        case 'age':
+          return (playerB?.age || 0) - (playerA?.age || 0)
+        case 'goals':
+          return (statsB?.goals || 0) - (statsA?.goals || 0)
+        case 'assists':
+          return (statsB?.assists || 0) - (statsA?.assists || 0)
+        case 'rating':
+          return (parseFloat(statsB?.rating) || 0) - (parseFloat(statsA?.rating) || 0)
+        case 'games':
+          return (statsB?.games || 0) - (statsA?.games || 0)
+        case 'team':
+          return (a.team?.name || '').localeCompare(b.team?.name || '')
+        default:
+          return 0
+      }
+    })
+  }
+
+  // Load more players
+  const handleLoadMore = async () => {
+    if (allPlayers.length > 0) {
+      // If all players are already loaded, just show more from filtered results
+      const startIndex = displayedPlayers.length
+      const endIndex = startIndex + playersPerPage
+      const newPlayers = filteredPlayers.slice(startIndex, endIndex)
+      setDisplayedPlayers(prev => [...prev, ...newPlayers])
+    } else {
+      // Load more from API
+      try {
+        const offset = loadedPlayers.length
+        const response = await fetch(`/api/players?limit=${playersPerPage}&offset=${offset}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        
+        if (response.ok) {
+          const apiData = await response.json()
+          const newPlayersData = apiData.players
+          
+          if (newPlayersData && newPlayersData.length > 0) {
+            const updatedLoadedPlayers = [...loadedPlayers, ...newPlayersData]
+            setLoadedPlayers(updatedLoadedPlayers)
+            
+            // Apply current filters to the new combined dataset
+            let filtered = updatedLoadedPlayers
+            
+            if (searchTerm) {
+              filtered = filtered.filter(playerData => 
+                playerData.player?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                playerData.team?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                playerData.player?.nationality?.toLowerCase().includes(searchTerm.toLowerCase())
+              )
+            }
+            if (selectedTeam) {
+              filtered = filtered.filter(playerData => playerData.team?.name === selectedTeam)
+            }
+            if (selectedPosition) {
+              filtered = filtered.filter(playerData => playerData.player?.position === selectedPosition)
+            }
+            
+            // Apply sorting to filtered results
+            filtered = sortPlayers(filtered, sortBy)
+            
+            setFilteredPlayers(filtered)
+            setDisplayedPlayers(filtered.slice(0, displayedPlayers.length + playersPerPage))
+          }
+        }
+      } catch (err) {
+        console.error('Error loading more players:', err)
+      }
+    }
   }
 
   const hasMorePlayers = displayedPlayers.length < filteredPlayers.length
@@ -784,6 +877,39 @@ export default function Players() {
               <option value="Attacker">⚽ Attacker</option>
             </select>
             
+            {/* Sort Filter */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              style={{
+                padding: '16px 20px',
+                borderRadius: '12px',
+                border: '2px solid #333',
+                backgroundColor: '#111',
+                color: '#fff',
+                fontSize: '16px',
+                minWidth: '180px',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.borderColor = '#ffdd00'
+                e.target.style.backgroundColor = '#1a1a1a'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.borderColor = '#333'
+                e.target.style.backgroundColor = '#111'
+              }}
+            >
+              <option value="name">📝 Sort by Name</option>
+              <option value="goals">⚽ Sort by Goals</option>
+              <option value="assists">🎯 Sort by Assists</option>
+              <option value="rating">⭐ Sort by Rating</option>
+              <option value="games">🏃 Sort by Games</option>
+              <option value="age">🎂 Sort by Age</option>
+              <option value="team">🏟️ Sort by Team</option>
+            </select>
+            
             {/* Results Count */}
             <div style={{
               color: '#00ff88',
@@ -895,6 +1021,7 @@ export default function Players() {
                 setSearchTerm('')
                 setSelectedTeam('')
                 setSelectedPosition('')
+                setSortBy('name')
               }}
               style={{
                 backgroundColor: '#00ff88',
@@ -1094,7 +1221,7 @@ export default function Players() {
                 marginTop: '50px'
               }}>
                 <button 
-                  onClick={handleNextPage}
+                  onClick={handleLoadMore}
                   style={{
                     backgroundColor: '#00ff88',
                     color: '#000',
@@ -1120,6 +1247,15 @@ export default function Players() {
                 >
                   Load More Stars ⭐ ({filteredPlayers.length - displayedPlayers.length} remaining)
                 </button>
+                {backgroundLoading && (
+                  <div style={{
+                    marginTop: '10px',
+                    fontSize: '14px',
+                    color: '#888'
+                  }}>
+                    Loading all players in background...
+                  </div>
+                )}
               </div>
             )}
 

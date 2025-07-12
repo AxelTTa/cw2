@@ -47,8 +47,22 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
       border: '1px solid #333',
       borderRadius: '8px',
       padding: '16px',
-      marginBottom: '12px'
-    }}>
+      marginBottom: '12px',
+      transition: 'all 0.2s ease',
+      willChange: 'transform, box-shadow',
+      transform: 'translateZ(0)'
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.transform = 'translateY(-2px) translateZ(0)'
+      e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)'
+      e.currentTarget.style.borderColor = '#555'
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.transform = 'translateY(0) translateZ(0)'
+      e.currentTarget.style.boxShadow = 'none'
+      e.currentTarget.style.borderColor = '#333'
+    }}
+    >
       {/* User info */}
       <div style={{
         display: 'flex',
@@ -56,25 +70,35 @@ export default function CommentCard({ comment, onUpvote, onDownvote, onReply }) 
         gap: '12px',
         marginBottom: '12px'
       }}>
-        <img
-          src={comment.user?.avatar_url || '/default-avatar.png'}
-          alt={comment.user?.display_name || 'User'}
-          style={{
-            width: '32px',
-            height: '32px',
-            borderRadius: '50%',
-            objectFit: 'cover'
-          }}
-        />
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          backgroundColor: '#00ff88',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          color: '#000'
+        }}>
+          {comment.profiles?.display_name?.[0]?.toUpperCase() || 
+           comment.user?.display_name?.[0]?.toUpperCase() || 
+           '?'}
+        </div>
         <div>
           <div style={{ color: '#ffffff', fontSize: '14px', fontWeight: 'bold' }}>
-            {comment.user?.display_name || 'Anonymous'}
+            {comment.profiles?.display_name || 
+             comment.user?.display_name || 
+             'Anonymous User'}
           </div>
           <div style={{ color: '#888', fontSize: '12px' }}>
-            @{comment.user?.username || 'anonymous'} • {formatTimeAgo(comment.created_at)}
-            {comment.user?.level && (
+            @{comment.profiles?.username || 
+              comment.user?.username || 
+              'anonymous'} • {formatTimeAgo(comment.created_at)}
+            {(comment.profiles?.level || comment.user?.level) && (
               <span style={{ color: '#00ff88', marginLeft: '8px' }}>
-                Level {comment.user.level}
+                Level {comment.profiles?.level || comment.user?.level}
               </span>
             )}
           </div>
