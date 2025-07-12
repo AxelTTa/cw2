@@ -37,29 +37,54 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    // Upsert wallet connection
-    const { data: connection, error: upsertError } = await supabaseAdmin
+    // Try to update existing connection first
+    const { data: existingUpdate, error: updateError } = await supabaseAdmin
       .from('wallet_connections')
-      .upsert({
-        user_id,
-        wallet_address: wallet_address.toLowerCase(),
+      .update({
         wallet_type,
         is_primary: true,
         connected_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'user_id,wallet_address'
       })
+      .eq('user_id', user_id)
+      .eq('wallet_address', wallet_address.toLowerCase())
       .select()
       .single()
 
-    if (upsertError) {
-      console.error('Error upserting wallet connection:', upsertError)
+    let connection = existingUpdate
+
+    // If no existing connection, create new one
+    if (updateError && updateError.code === 'PGRST116') {
+      const { data: newConnection, error: insertError } = await supabaseAdmin
+        .from('wallet_connections')
+        .insert({
+          user_id,
+          wallet_address: wallet_address.toLowerCase(),
+          wallet_type,
+          is_primary: true,
+          connected_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Error inserting wallet connection:', insertError)
+        return NextResponse.json({ 
+          success: false, 
+          error: 'Failed to save wallet connection' 
+        }, { status: 500 })
+      }
+      
+      connection = newConnection
+    } else if (updateError) {
+      console.error('Error updating wallet connection:', updateError)
       return NextResponse.json({ 
         success: false, 
-        error: 'Failed to save wallet connection' 
+        error: 'Failed to update wallet connection' 
       }, { status: 500 })
     }
+
 
     // Update user profile with primary wallet address
     const { error: profileError } = await supabaseAdmin
