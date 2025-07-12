@@ -6,6 +6,30 @@ import Link from 'next/link'
 import { supabase } from '../utils/supabase'
 import { apiFootball } from '../utils/api-football'
 
+// Comprehensive logging utility
+const logger = {
+  info: (message, data = null) => {
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] ℹ️ LiveMatch:`, message, data || '')
+  },
+  error: (message, error = null) => {
+    const timestamp = new Date().toISOString()
+    console.error(`[${timestamp}] ❌ LiveMatch:`, message, error || '')
+  },
+  warn: (message, data = null) => {
+    const timestamp = new Date().toISOString()
+    console.warn(`[${timestamp}] ⚠️ LiveMatch:`, message, data || '')
+  },
+  debug: (message, data = null) => {
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] 🐛 LiveMatch:`, message, data || '')
+  },
+  component: (componentName, action, data = null) => {
+    const timestamp = new Date().toISOString()
+    console.log(`[${timestamp}] 🧩 ${componentName}:`, action, data || '')
+  }
+}
+
 // UI Components (inline to keep file count low)
 const Button = ({ children, onClick, variant = 'default', size = 'default', className = '', ...props }) => {
   const baseStyles = 'inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50'
@@ -60,7 +84,12 @@ const Skeleton = ({ className = '' }) => (
 
 // Match Components
 const MatchHeader = ({ match, isLive }) => {
-  if (!match) return <Skeleton className="h-32 w-full" />
+  logger.component('MatchHeader', 'render', { hasMatch: !!match, isLive })
+  
+  if (!match) {
+    logger.component('MatchHeader', 'no match data - showing skeleton')
+    return <Skeleton className="h-32 w-full" />
+  }
 
   return (
     <Card className="p-6 mb-6">
@@ -126,7 +155,10 @@ const MatchHeader = ({ match, isLive }) => {
 }
 
 const GameFeed = ({ events, onEventClick }) => {
+  logger.component('GameFeed', 'render', { eventsCount: events?.length || 0 })
+  
   if (!events || events.length === 0) {
+    logger.component('GameFeed', 'no events available')
     return (
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Match Events</h3>
@@ -169,7 +201,10 @@ const GameFeed = ({ events, onEventClick }) => {
 }
 
 const Lineups = ({ lineup, team }) => {
+  logger.component('Lineups', 'render', { hasLineup: !!lineup, hasTeam: !!team, teamName: team?.name })
+  
   if (!lineup || !team) {
+    logger.component('Lineups', 'missing data - showing fallback')
     return (
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">{team?.name || 'Team'} Lineup</h3>
@@ -234,7 +269,10 @@ const Lineups = ({ lineup, team }) => {
 }
 
 const BettingOdds = ({ odds }) => {
+  logger.component('BettingOdds', 'render', { hasOdds: !!odds, bookmakerCount: odds?.bookmakers?.length || 0 })
+  
   if (!odds || !odds.bookmakers || odds.bookmakers.length === 0) {
+    logger.component('BettingOdds', 'no odds data available')
     return (
       <Card className="p-6">
         <h3 className="text-lg font-semibold mb-4">Betting Odds</h3>
@@ -277,6 +315,8 @@ const BettingOdds = ({ odds }) => {
 }
 
 const UserPrediction = ({ matchId, onPredict }) => {
+  logger.component('UserPrediction', 'render', { matchId })
+  
   const [selectedPrediction, setSelectedPrediction] = useState(null)
   const [confidence, setConfidence] = useState(75)
 
@@ -345,6 +385,7 @@ const UserPrediction = ({ matchId, onPredict }) => {
 
 const LiveTicker = ({ events, isLive }) => {
   const recentEvents = events?.slice(-5) || []
+  logger.component('LiveTicker', 'render', { totalEvents: events?.length || 0, recentEvents: recentEvents.length, isLive })
 
   return (
     <Card className="p-6">
@@ -376,34 +417,56 @@ const LiveTicker = ({ events, isLive }) => {
 
 // Main Component with Search Params
 function TestLiveMatchContent() {
+  logger.info('TestLiveMatchContent component initializing')
+  
   const searchParams = useSearchParams()
   const matchId = searchParams.get('id') || '1035011' // Default match ID
+  
+  logger.info('Component params', { matchId, searchParamsId: searchParams.get('id') })
   
   const [matchData, setMatchData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isLive, setIsLive] = useState(false)
   const [selectedEvent, setSelectedEvent] = useState(null)
+  
+  // Component mount/unmount tracking
+  useEffect(() => {
+    logger.info('🚀 TestLiveMatchContent mounted', { matchId })
+    
+    return () => {
+      logger.info('🔥 TestLiveMatchContent unmounting')
+    }
+  }, [])
 
   // Load match data
   useEffect(() => {
+    logger.info('useEffect triggered for data loading', { matchId, isLive })
     loadMatchData()
     
     // Set up live updates if match is live
     const interval = setInterval(() => {
       if (isLive) {
+        logger.info('Live update interval triggered')
         loadMatchData()
       }
     }, 30000) // Update every 30 seconds
 
-    return () => clearInterval(interval)
+    return () => {
+      logger.debug('Cleaning up live update interval')
+      clearInterval(interval)
+    }
   }, [matchId, isLive])
 
   const loadMatchData = async () => {
+    logger.info('loadMatchData started', { matchId })
+    
     try {
       setLoading(true)
+      logger.debug('Setting loading state to true')
       
       // Fetch from our API routes which use API Football
+      logger.info('Fetching data from API routes')
       const [fixtureRes, eventsRes, oddsRes, lineupsRes] = await Promise.all([
         fetch(`/api/matches/${matchId}`).catch(() => null),
         fetch(`/api/matches/${matchId}/events`).catch(() => null),
@@ -417,19 +480,30 @@ function TestLiveMatchContent() {
       let lineups = { home: null, away: null }
 
       // Parse responses
+      logger.debug('Parsing API responses')
+      
       if (fixtureRes?.ok) {
         const fixtureData = await fixtureRes.json()
         match = fixtureData.response?.[0]
+        logger.debug('Fixture data received', { hasMatch: !!match, status: fixtureRes.status })
+      } else {
+        logger.warn('Fixture request failed', { status: fixtureRes?.status, ok: fixtureRes?.ok })
       }
 
       if (eventsRes?.ok) {
         const eventsData = await eventsRes.json()
         events = eventsData.response || []
+        logger.debug('Events data received', { eventsCount: events.length, status: eventsRes.status })
+      } else {
+        logger.warn('Events request failed', { status: eventsRes?.status, ok: eventsRes?.ok })
       }
 
       if (oddsRes?.ok) {
         const oddsData = await oddsRes.json()
         odds = oddsData.response?.[0]
+        logger.debug('Odds data received', { hasOdds: !!odds, status: oddsRes.status })
+      } else {
+        logger.warn('Odds request failed', { status: oddsRes?.status, ok: oddsRes?.ok })
       }
 
       if (lineupsRes?.ok) {
@@ -439,10 +513,19 @@ function TestLiveMatchContent() {
           home: lineupsArray.find(l => l.team.name === match?.teams?.home?.name),
           away: lineupsArray.find(l => l.team.name === match?.teams?.away?.name)
         }
+        logger.debug('Lineups data received', { 
+          lineupsCount: lineupsArray.length, 
+          hasHome: !!lineups.home, 
+          hasAway: !!lineups.away, 
+          status: lineupsRes.status 
+        })
+      } else {
+        logger.warn('Lineups request failed', { status: lineupsRes?.status, ok: lineupsRes?.ok })
       }
 
       // If API routes fail, create mock data for demonstration
       if (!match) {
+        logger.info('API routes failed, creating mock data for demonstration')
         const teams = await apiFootball.fetchClubWorldCupTeams()
         const homeTeam = teams[0]?.team || { id: 1, name: 'Real Madrid', logo: 'x' }
         const awayTeam = teams[1]?.team || { id: 2, name: 'Manchester City', logo: 'x' }
@@ -503,24 +586,42 @@ function TestLiveMatchContent() {
         }
       }
 
-      setMatchData({
+      const matchDataObj = {
         match,
         events,
         odds,
         lineups
+      }
+      
+      logger.info('Setting match data', {
+        hasMatch: !!match,
+        eventsCount: events.length,
+        hasOdds: !!odds,
+        hasHomeLineup: !!lineups.home,
+        hasAwayLineup: !!lineups.away,
+        matchStatus: match?.fixture?.status?.long
       })
+      
+      setMatchData(matchDataObj)
 
-      setIsLive(match?.fixture?.status?.long === 'In Play')
+      const isLiveStatus = match?.fixture?.status?.long === 'In Play'
+      setIsLive(isLiveStatus)
       setError(null)
+      
+      logger.info('Data loading completed successfully', { isLive: isLiveStatus })
 
     } catch (err) {
+      logger.error('Error loading match data', err)
       setError(err.message)
     } finally {
       setLoading(false)
+      logger.debug('Setting loading state to false')
     }
   }
 
   const handlePrediction = async (prediction, confidence) => {
+    logger.info('Handling prediction', { prediction, confidence, matchId })
+    
     try {
       // Save prediction to Supabase
       const { data: { user } } = await supabase.auth.getUser()
@@ -538,18 +639,36 @@ function TestLiveMatchContent() {
             }
           ])
 
-        if (error) throw error
+        if (error) {
+          logger.error('Supabase prediction save error', error)
+          throw error
+        }
+        
+        logger.info('Prediction saved successfully to Supabase')
+      } else {
+        logger.warn('No authenticated user for prediction save')
       }
     } catch (err) {
-      console.error('Error saving prediction:', err)
+      logger.error('Error saving prediction', err)
     }
   }
 
   const handleRefresh = () => {
+    logger.info('Manual refresh triggered')
     loadMatchData()
   }
 
+  logger.debug('Render state check', { loading, error: !!error, hasMatchData: !!matchData })
+  
+  // Force re-render check - if we're seeing raw HTML, this should help debug
+  if (typeof window !== 'undefined') {
+    logger.debug('Client-side rendering confirmed')
+  } else {
+    logger.debug('Server-side rendering detected')
+  }
+  
   if (loading) {
+    logger.info('Rendering loading state')
     return (
       <div className="min-h-screen p-4">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -570,6 +689,7 @@ function TestLiveMatchContent() {
   }
 
   if (error) {
+    logger.info('Rendering error state', { error })
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center max-w-md">
@@ -589,6 +709,8 @@ function TestLiveMatchContent() {
     )
   }
 
+  logger.info('Rendering main match interface')
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header Navigation */}
@@ -626,6 +748,42 @@ function TestLiveMatchContent() {
       <div className="max-w-7xl mx-auto p-4 space-y-6">
         {/* Match Header */}
         <MatchHeader match={matchData?.match} isLive={isLive} />
+
+        {/* Debug Information Panel */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <h3 className="text-lg font-semibold text-blue-800 mb-2">🐛 Debug Information</h3>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <strong>Match ID:</strong> {matchId}
+            </div>
+            <div>
+              <strong>Loading:</strong> {loading ? 'Yes' : 'No'}
+            </div>
+            <div>
+              <strong>Error:</strong> {error ? 'Yes' : 'No'}
+            </div>
+            <div>
+              <strong>Is Live:</strong> {isLive ? 'Yes' : 'No'}
+            </div>
+            <div>
+              <strong>Match Data:</strong> {matchData ? 'Loaded' : 'None'}
+            </div>
+            <div>
+              <strong>Events Count:</strong> {matchData?.events?.length || 0}
+            </div>
+            <div>
+              <strong>Match Status:</strong> {matchData?.match?.fixture?.status?.long || 'Unknown'}
+            </div>
+            <div>
+              <strong>Component:</strong> TestLiveMatch
+            </div>
+          </div>
+          {error && (
+            <div className="mt-2 p-2 bg-red-100 text-red-800 rounded text-sm">
+              <strong>Error Details:</strong> {error}
+            </div>
+          )}
+        </div>
 
         {/* Main Grid Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -692,27 +850,87 @@ function TestLiveMatchContent() {
   )
 }
 
-// Export with Suspense wrapper
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null, errorInfo: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error, errorInfo) {
+    logger.error('ErrorBoundary caught an error', { error: error.message, errorInfo })
+    this.setState({
+      error: error,
+      errorInfo: errorInfo
+    })
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="text-center max-w-2xl">
+            <div className="text-6xl mb-4">💥</div>
+            <h1 className="text-2xl font-bold mb-2">Component Error</h1>
+            <p className="text-gray-600 mb-4">The test-livematch component encountered an error.</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-left">
+              <h3 className="font-semibold text-red-800 mb-2">Error Details:</h3>
+              <pre className="text-sm text-red-700 whitespace-pre-wrap">
+                {this.state.error && this.state.error.toString()}
+                <br />
+                {this.state.errorInfo.componentStack}
+              </pre>
+            </div>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Reload Page
+            </button>
+          </div>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+// Export with Suspense wrapper and Error Boundary
 export default function TestLiveMatch() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen p-4">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="animate-pulse bg-gray-200 rounded h-8 w-64" />
-          <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-6">
-              <div className="animate-pulse bg-gray-200 rounded h-96 w-full" />
-            </div>
-            <div className="space-y-6">
-              <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
-              <div className="animate-pulse bg-gray-200 rounded h-48 w-full" />
-            </div>
+  logger.info('TestLiveMatch wrapper component rendering')
+  
+  const suspenseFallback = (
+    <div className="min-h-screen p-4">
+      <div className="max-w-7xl mx-auto space-y-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">⏳ Loading Test LiveMatch...</h3>
+          <p className="text-yellow-700">Initializing component and fetching match data...</p>
+        </div>
+        <div className="animate-pulse bg-gray-200 rounded h-8 w-64" />
+        <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <div className="animate-pulse bg-gray-200 rounded h-96 w-full" />
+          </div>
+          <div className="space-y-6">
+            <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+            <div className="animate-pulse bg-gray-200 rounded h-48 w-full" />
           </div>
         </div>
       </div>
-    }>
-      <TestLiveMatchContent />
-    </Suspense>
+    </div>
+  )
+  
+  return (
+    <ErrorBoundary>
+      <Suspense fallback={suspenseFallback}>
+        <TestLiveMatchContent />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

@@ -65,37 +65,124 @@ export default function PlayerDetail() {
   }, [params.id])
 
   const getCountryFlag = (country) => {
+    if (!country || country === 'Unknown') return '🏳️'
+    
     const flagMap = {
+      // Major European countries
       'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
       'Spain': '🇪🇸',
       'Germany': '🇩🇪',
       'France': '🇫🇷',
       'Italy': '🇮🇹',
+      'Portugal': '🇵🇹',
+      'Netherlands': '🇳🇱',
+      'Belgium': '🇧🇪',
+      'Austria': '🇦🇹',
+      'Switzerland': '🇨🇭',
+      'Norway': '🇳🇴',
+      'Sweden': '🇸🇪',
+      'Denmark': '🇩🇰',
+      'Finland': '🇫🇮',
+      'Iceland': '🇮🇸',
+      
+      // Eastern Europe
+      'Poland': '🇵🇱',
+      'Czech Republic': '🇨🇿',
+      'Slovakia': '🇸🇰',
+      'Hungary': '🇭🇺',
+      'Romania': '🇷🇴',
+      'Bulgaria': '🇧🇬',
+      'Croatia': '🇭🇷',
+      'Serbia': '🇷🇸',
+      'Slovenia': '🇸🇮',
+      'Bosnia and Herzegovina': '🇧🇦',
+      'Montenegro': '🇲🇪',
+      'North Macedonia': '🇲🇰',
+      'Albania': '🇦🇱',
+      'Kosovo': '🇽🇰',
+      'Ukraine': '🇺🇦',
+      'Belarus': '🇧🇾',
+      'Lithuania': '🇱🇹',
+      'Latvia': '🇱🇻',
+      'Estonia': '🇪🇪',
+      'Moldova': '🇲🇩',
+      'Georgia': '🇬🇪',
+      'Armenia': '🇦🇲',
+      'Azerbaijan': '🇦🇿',
+      'Kazakhstan': '🇰🇿',
+      
+      // Balkans and Mediterranean
+      'Greece': '🇬🇷',
+      'Turkey': '🇹🇷',
+      'Cyprus': '🇨🇾',
+      'Malta': '🇲🇹',
+      
+      // British Isles
+      'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      'Wales': '🏴󠁧󠁢󠁷󠁬󠁳󠁿',
+      'Northern Ireland': '🇬🇧',
+      'Ireland': '🇮🇪',
+      
+      // Americas
       'Brazil': '🇧🇷',
       'Argentina': '🇦🇷',
       'USA': '🇺🇸',
       'Mexico': '🇲🇽',
-      'Japan': '🇯🇵',
-      'South Korea': '🇰🇷',
-      'South-Korea': '🇰🇷',
-      'Morocco': '🇲🇦',
-      'Egypt': '🇪🇬',
-      'Australia': '🇦🇺',
-      'Saudi Arabia': '🇸🇦',
-      'Saudi-Arabia': '🇸🇦',
       'Uruguay': '🇺🇾',
       'Colombia': '🇨🇴',
       'Chile': '🇨🇱',
       'Peru': '🇵🇪',
       'Ecuador': '🇪🇨',
-      'Portugal': '🇵🇹',
-      'Austria': '🇦🇹',
+      'Venezuela': '🇻🇪',
+      'Bolivia': '🇧🇴',
+      'Paraguay': '🇵🇾',
+      'Canada': '🇨🇦',
+      'Costa Rica': '🇨🇷',
+      'Panama': '🇵🇦',
+      'Jamaica': '🇯🇲',
+      
+      // Africa
+      'Morocco': '🇲🇦',
+      'Egypt': '🇪🇬',
       'Tunisia': '🇹🇳',
-      'New-Zealand': '🇳🇿',
+      'Algeria': '🇩🇿',
+      'Nigeria': '🇳🇬',
+      'Ghana': '🇬🇭',
+      'Senegal': '🇸🇳',
+      'Cameroon': '🇨🇲',
+      'Ivory Coast': '🇨🇮',
+      'South Africa': '🇿🇦',
       'South-Africa': '🇿🇦',
-      'United-Arab-Emirates': '🇦🇪'
+      'Kenya': '🇰🇪',
+      'Mali': '🇲🇱',
+      'Burkina Faso': '🇧🇫',
+      
+      // Asia
+      'Japan': '🇯🇵',
+      'South Korea': '🇰🇷',
+      'South-Korea': '🇰🇷',
+      'China': '🇨🇳',
+      'Australia': '🇦🇺',
+      'New Zealand': '🇳🇿',
+      'New-Zealand': '🇳🇿',
+      'Saudi Arabia': '🇸🇦',
+      'Saudi-Arabia': '🇸🇦',
+      'United Arab Emirates': '🇦🇪',
+      'United-Arab-Emirates': '🇦🇪',
+      'Qatar': '🇶🇦',
+      'Iran': '🇮🇷',
+      'Iraq': '🇮🇶',
+      'Israel': '🇮🇱',
+      'India': '🇮🇳',
+      'Thailand': '🇹🇭',
+      'Vietnam': '🇻🇳',
+      'Indonesia': '🇮🇩',
+      'Malaysia': '🇲🇾',
+      'Singapore': '🇸🇬',
+      'Philippines': '🇵🇭'
     }
-    return flagMap[country] || '🏳️'
+    
+    return flagMap[country] || '🌍'
   }
 
   const getPositionColor = (position) => {
