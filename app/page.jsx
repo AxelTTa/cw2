@@ -37,6 +37,36 @@ export default function Home() {
     }
   ]
 
+  const testimonials = [
+    {
+      name: 'Alex Thompson',
+      username: '@crypto_king',
+      text: 'Made 45 CHZ in my first week! The live predictions are incredibly accurate.',
+      earnings: '+45 CHZ',
+      avatar: '👑',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 215, 0, 0.1))'
+    },
+    {
+      name: 'Sarah Martinez',
+      username: '@sports_prophet',
+      text: 'Finally, a platform that rewards sports knowledge. Love the community!',
+      earnings: '+32 CHZ',
+      avatar: '🔮',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, rgba(58, 190, 249, 0.3), rgba(58, 190, 249, 0.1))'
+    },
+    {
+      name: 'Mike Chen',
+      username: '@clutch_master',
+      text: 'The real-time stats helped me make better predictions. Already climbing the leaderboard!',
+      earnings: '+28 CHZ',
+      avatar: '⚡',
+      verified: true,
+      bgColor: 'linear-gradient(135deg, rgba(0, 255, 170, 0.3), rgba(0, 255, 170, 0.1))'
+    }
+  ]
+
   const playerStats = {
     1: {
       name: 'CryptoKing88',
@@ -88,8 +118,8 @@ export default function Home() {
   useEffect(() => {
     setIsVisible(true)
     
-    // Create animated particles
-    const particleArray = Array.from({ length: 50 }, (_, i) => ({
+    // Create fewer animated particles for better performance
+    const particleArray = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -100,7 +130,7 @@ export default function Home() {
     }))
     setParticles(particleArray)
 
-    // Animate particles
+    // Animate particles less frequently
     const animateParticles = () => {
       setParticles(prev => prev.map(particle => ({
         ...particle,
@@ -109,16 +139,21 @@ export default function Home() {
       })))
     }
 
-    const particleInterval = setInterval(animateParticles, 50)
+    const particleInterval = setInterval(animateParticles, 100)
 
-    // Cycle testimonials
+    // Cycle testimonials less frequently
     const testimonialInterval = setInterval(() => {
       setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
-    }, 4000)
+    }, 6000)
 
-    // Mouse tracking
+    // Throttled mouse tracking for better performance
+    let mouseTimeout
     const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY })
+      if (mouseTimeout) return
+      mouseTimeout = setTimeout(() => {
+        setMousePosition({ x: e.clientX, y: e.clientY })
+        mouseTimeout = null
+      }, 50)
     }
     window.addEventListener('mousemove', handleMouseMove)
 
@@ -140,10 +175,8 @@ export default function Home() {
     }}>
       <style jsx>{`
         @keyframes float3D {
-          0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
-          25% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
-          50% { transform: translateY(-10px) rotateX(-5deg) rotateY(-5deg); }
-          75% { transform: translateY(-15px) rotateX(5deg) rotateY(-10deg); }
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-10px); }
         }
         @keyframes gradientWave {
           0% { background-position: 0% 50%; }
@@ -151,43 +184,39 @@ export default function Home() {
           100% { background-position: 0% 50%; }
         }
         @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(60px); }
+          from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 20px rgba(58, 190, 249, 0.3), 0 0 40px rgba(0, 255, 170, 0.2); }
-          50% { box-shadow: 0 0 40px rgba(58, 190, 249, 0.6), 0 0 60px rgba(0, 255, 170, 0.4); }
-        }
-        @keyframes rotateHue {
-          0% { filter: hue-rotate(0deg); }
-          100% { filter: hue-rotate(360deg); }
+          0%, 100% { box-shadow: 0 0 15px rgba(58, 190, 249, 0.2); }
+          50% { box-shadow: 0 0 25px rgba(58, 190, 249, 0.4); }
         }
         @keyframes bounce3D {
-          0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotateY(0deg); }
-          40% { transform: translateY(-20px) rotateY(180deg); }
-          60% { transform: translateY(-10px) rotateY(360deg); }
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-10px); }
         }
         @keyframes shimmerFlow {
-          0% { transform: translateX(-100%) skewX(-15deg); }
-          100% { transform: translateX(200%) skewX(-15deg); }
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(200%); }
         }
         @keyframes numberCount {
-          from { transform: translateY(20px); opacity: 0; }
-          to { transform: translateY(0); opacity: 1; }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
         
         .particle {
           position: absolute;
           border-radius: 50%;
           pointer-events: none;
-          opacity: 0.6;
-          animation: float3D 6s ease-in-out infinite;
+          opacity: 0.4;
+          animation: float3D 8s ease-in-out infinite;
+          will-change: transform;
         }
         
         .crypto-bg {
           background: linear-gradient(-45deg, #0a0a0a, #1a1a2e, #16213e, #0f3460, #0a0a0a);
-          background-size: 400% 400%;
-          animation: gradientWave 15s ease infinite;
+          background-size: 200% 200%;
+          animation: gradientWave 20s ease infinite;
           position: relative;
         }
         
