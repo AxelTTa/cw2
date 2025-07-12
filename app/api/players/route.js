@@ -19,6 +19,30 @@ const EUROPEAN_LEAGUE_IDS = [
   61,   // Ligue 1 (France)
 ]
 
+// Major European teams we want to ensure are included  
+const MAJOR_TEAM_IDS = [
+  // Spanish teams
+  541,  // Real Madrid
+  529,  // Barcelona
+  530,  // Atletico Madrid
+  // English teams  
+  50,   // Manchester City
+  40,   // Liverpool
+  42,   // Arsenal
+  49,   // Chelsea
+  33,   // Manchester United
+  47,   // Tottenham
+  // Italian teams
+  489,  // AC Milan
+  505,  // Inter Milan
+  496,  // Juventus
+  // German teams
+  157,  // Bayern Munich
+  165,  // Borussia Dortmund
+  // French teams
+  85,   // Paris Saint Germain
+]
+
 // All leagues combined for comprehensive player coverage
 const ALL_LEAGUE_IDS = [...CLUB_WORLD_CUP_LEAGUE_IDS, ...EUROPEAN_LEAGUE_IDS]
 
@@ -90,11 +114,71 @@ const logApiError = (endpoint, error) => {
   })
 }
 
+async function fetchMajorEuropeanTeams() {
+  console.log('🔍 Backend Fetching major European teams directly...')
+  const majorTeams = []
+  
+  // Fetch each major team individually to ensure we get them
+  for (const teamId of MAJOR_TEAM_IDS) {
+    try {
+      console.log(`🎯 Backend Fetching team ID: ${teamId}`)
+      
+      const response = await fetch(`${BASE_URL}/teams?id=${teamId}`, {
+        method: 'GET',
+        headers: {
+          'X-RapidAPI-Key': API_KEY,
+          'X-RapidAPI-Host': 'v3.football.api-sports.io'
+        }
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.response && data.response.length > 0) {
+        const teamData = data.response[0]
+        
+        // Determine the primary league for this team
+        let primaryLeague = 'Unknown'
+        if ([541, 529, 530].includes(teamId)) primaryLeague = 'La Liga'
+        else if ([50, 40, 42, 49, 33, 47].includes(teamId)) primaryLeague = 'Premier League'
+        else if ([489, 505, 496].includes(teamId)) primaryLeague = 'Serie A'
+        else if ([157, 165].includes(teamId)) primaryLeague = 'Bundesliga'
+        else if ([85].includes(teamId)) primaryLeague = 'Ligue 1'
+        
+        const teamWithLeague = {
+          ...teamData,
+          league: {
+            id: 0, // Generic ID for direct team fetch
+            name: primaryLeague
+          }
+        }
+        
+        majorTeams.push(teamWithLeague)
+        console.log(`✅ Backend Added major team: ${teamData.team.name}`)
+      } else {
+        console.log(`⚠️ Backend No data for team ${teamId}:`, data)
+      }
+    } catch (error) {
+      console.error(`❌ Backend Error fetching team ${teamId}:`, error.message)
+      continue
+    }
+  }
+  
+  return majorTeams
+}
+
 async function fetchAllEuropeanAndClubWorldCupTeams() {
   console.log('🔍 Backend Starting teams fetch for ALL European clubs + Club World Cup...')
   const allTeams = []
+  const teamIdsSeen = new Set() // To avoid duplicates across leagues
   
-  // Fetch teams from all leagues
+  // First, fetch major teams directly to ensure we have them
+  const majorTeams = await fetchMajorEuropeanTeams()
+  for (const team of majorTeams) {
+    teamIdsSeen.add(team.team.id)
+    allTeams.push(team)
+  }
+  
+  // Then fetch teams from all leagues
   for (const leagueId of ALL_LEAGUE_IDS) {
     try {
       console.log(`🎯 Backend Trying League ID: ${leagueId} for teams`)
@@ -112,16 +196,25 @@ async function fetchAllEuropeanAndClubWorldCupTeams() {
       if (response.ok && data.response && data.response.length > 0) {
         console.log(`✅ Backend Found ${data.response.length} teams for League ID ${leagueId}`)
         
-        // Add league information to each team
-        const teamsWithLeague = data.response.map(teamData => ({
-          ...teamData,
-          league: {
-            id: leagueId,
-            name: getLeagueName(leagueId)
+        // Process each team and avoid duplicates
+        for (const teamData of data.response) {
+          const teamId = teamData.team.id
+          
+          if (!teamIdsSeen.has(teamId)) {
+            teamIdsSeen.add(teamId)
+            
+            // Add league information to team
+            const teamWithLeague = {
+              ...teamData,
+              league: {
+                id: leagueId,
+                name: getLeagueName(leagueId)
+              }
+            }
+            
+            allTeams.push(teamWithLeague)
           }
-        }))
-        
-        allTeams.push(...teamsWithLeague)
+        }
       }
     } catch (error) {
       console.error(`❌ Backend Error with League ID ${leagueId}:`, error.message)
@@ -146,14 +239,23 @@ async function fetchAllEuropeanAndClubWorldCupTeams() {
 
         const data = await response.json()
         if (response.ok && data.response && data.response.length > 0) {
-          const teamsWithLeague = data.response.map(teamData => ({
-            ...teamData,
-            league: {
-              id: leagueId,
-              name: getLeagueName(leagueId)
+          for (const teamData of data.response) {
+            const teamId = teamData.team.id
+            
+            if (!teamIdsSeen.has(teamId)) {
+              teamIdsSeen.add(teamId)
+              
+              const teamWithLeague = {
+                ...teamData,
+                league: {
+                  id: leagueId,
+                  name: getLeagueName(leagueId)
+                }
+              }
+              
+              allTeams.push(teamWithLeague)
             }
-          }))
-          allTeams.push(...teamsWithLeague)
+          }
         }
       } catch (error) {
         continue
