@@ -4,6 +4,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import UniversalComments from '../../components/UniversalComments'
 
+export async function generateStaticParams() {
+  return []
+}
+
 export default function TeamDetail() {
   const params = useParams()
   const router = useRouter()
