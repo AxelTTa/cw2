@@ -151,7 +151,8 @@ export default function MatchDetail() {
           comment_type: commentData.comment_type,
           is_meme: commentData.is_meme,
           meme_url: commentData.meme_url,
-          meme_caption: commentData.meme_caption
+          meme_caption: commentData.meme_caption,
+          image_url: commentData.image_url
         })
       })
 
