@@ -390,26 +390,33 @@ export default function PredictionGrid() {
     try {
       console.log('🔍 Checking user authentication...')
       
-      // First check if there's a session
+      // Try to get user session, but don't redirect if not found
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError) {
         console.error('❌ Session error:', sessionError)
-        throw sessionError
+        // Don't throw error, just continue without auth
       }
       
       if (!session) {
-        console.log('⚠️ No active session found, redirecting to login')
-        router.push('/login')
+        console.log('⚠️ No active session found, continuing as guest')
+        setUser(null)
+        setUserBalance(0)
         return
       }
       
       console.log('✅ Session found, getting user details')
       const { data: { user }, error } = await supabase.auth.getUser()
-      if (error) throw error
+      if (error) {
+        console.error('❌ User error:', error)
+        setUser(null)
+        setUserBalance(0)
+        return
+      }
 
       if (!user) {
-        console.log('⚠️ No user found, redirecting to login')
-        router.push('/login')
+        console.log('⚠️ No user found, continuing as guest')
+        setUser(null)
+        setUserBalance(0)
         return
       }
 
@@ -426,7 +433,8 @@ export default function PredictionGrid() {
 
       if (profileError) {
         console.error('❌ Profile error:', profileError)
-        throw profileError
+        setUserBalance(0)
+        return
       }
       
       console.log('✅ User profile loaded, balance:', profile.fan_tokens)
@@ -434,45 +442,82 @@ export default function PredictionGrid() {
 
     } catch (error) {
       console.error('❌ Auth error:', error)
-      setError(error.message)
-      setLoading(false)
+      setUser(null)
+      setUserBalance(0)
     }
   }
 
   const loadLiveMatches = async () => {
     try {
-      console.log('🔍 Loading live matches...')
-      const { data: matches, error } = await supabase
+      console.log('🔍 Loading matches for predictions...')
+      
+      // Get live matches first
+      const { data: liveMatches, error: liveError } = await supabase
         .from('matches')
         .select(`
           id, home_team, away_team, match_date, status, home_team_id, away_team_id,
-          home_team_logo, away_team_logo
+          home_team_logo, away_team_logo, league
         `)
         .in('status', ['1H', '2H', 'HT', 'ET', 'P'])
         .order('match_date', { ascending: true })
-        .limit(10)
+        .limit(5)
 
-      if (error) {
-        console.error('❌ Database error loading matches:', error)
-        throw error
+      // Get upcoming matches (next 7 days) 
+      const { data: upcomingMatches, error: upcomingError } = await supabase
+        .from('matches')
+        .select(`
+          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
+          home_team_logo, away_team_logo, league
+        `)
+        .eq('status', 'ns')
+        .gte('match_date', new Date().toISOString())
+        .lte('match_date', new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+        .order('match_date', { ascending: true })
+        .limit(5)
+
+      // Get recent finished matches as backup
+      const { data: recentMatches, error: recentError } = await supabase
+        .from('matches')
+        .select(`
+          id, home_team, away_team, match_date, status, home_team_id, away_team_id,
+          home_team_logo, away_team_logo, league
+        `)
+        .eq('status', 'ft')
+        .order('match_date', { ascending: false })
+        .limit(3)
+
+      if (liveError && upcomingError && recentError) {
+        console.error('❌ All match queries failed')
+        throw new Error('Failed to load any matches')
       }
       
-      console.log('✅ Matches loaded:', matches?.length || 0, 'live matches found')
-      setLiveMatches(matches || [])
+      // Combine all matches with priority: live > upcoming > recent
+      const allMatches = [
+        ...(liveMatches || []),
+        ...(upcomingMatches || []),
+        ...(recentMatches || [])
+      ]
       
-      // Auto-select first live match
-      if (matches && matches.length > 0 && !selectedMatch) {
-        console.log('🎯 Auto-selecting first match:', matches[0].home_team, 'vs', matches[0].away_team)
-        setSelectedMatch(matches[0])
+      console.log('✅ Matches loaded:', {
+        live: liveMatches?.length || 0,
+        upcoming: upcomingMatches?.length || 0,
+        recent: recentMatches?.length || 0,
+        total: allMatches.length
+      })
+      
+      setLiveMatches(allMatches)
+      
+      // Auto-select first match
+      if (allMatches && allMatches.length > 0 && !selectedMatch) {
+        console.log('🎯 Auto-selecting first match:', allMatches[0].home_team, 'vs', allMatches[0].away_team)
+        setSelectedMatch(allMatches[0])
       }
       
-      // Set loading to false if no matches or user not authenticated
-      if (!matches || matches.length === 0 || !user) {
-        console.log('⏹️ Setting loading to false - matches:', matches?.length, 'user:', !!user)
-        setLoading(false)
-      }
+      // Always set loading to false after loading matches
+      setLoading(false)
+      
     } catch (error) {
-      console.error('❌ Failed to load live matches:', error)
+      console.error('❌ Failed to load matches:', error)
       setLoading(false)
       setError(error.message)
     }
