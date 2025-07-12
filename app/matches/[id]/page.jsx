@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Header from '../../components/Header'
 import GoogleAuth from '../../components/GoogleAuth'
-import CommentForm from '../../components/CommentForm'
+import UniversalComments from '../../components/UniversalComments'
 import { supabase } from '../../utils/supabase'
 
 export default function MatchDetail() {
@@ -12,12 +12,8 @@ export default function MatchDetail() {
   const [match, setMatch] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [comments, setComments] = useState([])
   const [user, setUser] = useState(null)
   const [userProfile, setUserProfile] = useState(null)
-  const [replyTo, setReplyTo] = useState(null)
-  const [sortBy, setSortBy] = useState('newest')
-  const [commentsLoading, setCommentsLoading] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -37,11 +33,6 @@ export default function MatchDetail() {
     }
   }, [params.id])
 
-  useEffect(() => {
-    if (match) {
-      loadComments()
-    }
-  }, [match, sortBy])
 
   const initializePage = async () => {
     await getCurrentUser()
@@ -118,104 +109,7 @@ export default function MatchDetail() {
     }
   }
 
-  const loadComments = async () => {
-    if (!match) return
-    
-    setCommentsLoading(true)
-    try {
-      const response = await fetch(`/api/comments?match_id=${match.id}&limit=100`)
-      const data = await response.json()
-      if (data.success) {
-        setComments(data.comments || [])
-      }
-    } catch (error) {
-      console.error('Error loading comments:', error)
-    }
-    setCommentsLoading(false)
-  }
 
-  const handleSubmitComment = async (commentData) => {
-    if (!user || !match) return
-
-    try {
-      const response = await fetch('/api/comments', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          user_id: user.id,
-          match_id: match.id,
-          parent_id: replyTo,
-          content: commentData.content,
-          comment_type: commentData.comment_type,
-          is_meme: commentData.is_meme,
-          meme_url: commentData.meme_url,
-          meme_caption: commentData.meme_caption,
-          image_url: commentData.image_url
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        setReplyTo(null)
-        await loadComments()
-      }
-    } catch (error) {
-      console.error('Error submitting comment:', error)
-    }
-  }
-
-  const handleUpvote = async (commentId) => {
-    if (!user) return
-    
-    try {
-      const response = await fetch('/api/comments', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          comment_id: commentId,
-          action: 'upvote',
-          user_id: user.id
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        await loadComments()
-      }
-    } catch (error) {
-      console.error('Error upvoting comment:', error)
-    }
-  }
-
-  const handleReaction = async (commentId, reactionType) => {
-    if (!user) return
-
-    try {
-      const response = await fetch('/api/comments', {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          comment_id: commentId,
-          action: 'reaction',
-          user_id: user.id,
-          reaction_type: reactionType
-        })
-      })
-
-      const data = await response.json()
-      if (data.success) {
-        await loadComments()
-      }
-    } catch (error) {
-      console.error('Error adding reaction:', error)
-    }
-  }
 
   const handleAuthSuccess = (userData) => {
     setUser(userData)
@@ -965,6 +859,15 @@ export default function MatchDetail() {
             </div>
           )}
         </div>
+
+        {/* Comments Section */}
+        {match && (
+          <UniversalComments 
+            entityType="match"
+            entityId={match.id}
+            entityName={`${match.homeTeam.name} vs ${match.awayTeam.name}`}
+          />
+        )}
 
         {/* Quick Actions */}
         <div style={{

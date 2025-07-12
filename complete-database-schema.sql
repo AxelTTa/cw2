@@ -40,6 +40,10 @@ CREATE TABLE IF NOT EXISTS profiles (
   total_chz_earned DECIMAL(18,8) DEFAULT 0.0,
   wallet_address VARCHAR(42),
   
+  -- Test transaction tracking
+  last_test_transaction TIMESTAMP WITH TIME ZONE,
+  last_test_amount VARCHAR(50),
+  
   -- Timestamps
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -217,7 +221,7 @@ CREATE TABLE IF NOT EXISTS reactions (
   comment_id UUID NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
   reaction_type VARCHAR(20) NOT NULL, -- 'like', 'dislike', 'love', 'laugh', 'angry'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  UNIQUE(user_id, comment_id, reaction_type)
+  UNIQUE(user_id, comment_id) -- One reaction per user per comment
 );
 
 -- ===================================================
@@ -306,6 +310,40 @@ CREATE TABLE IF NOT EXISTS token_transactions (
   description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
   confirmed_at TIMESTAMP WITH TIME ZONE
+);
+
+-- ===================================================
+-- DAILY REWARDS SYSTEM
+-- ===================================================
+
+-- Daily commentator scores tracking
+CREATE TABLE IF NOT EXISTS daily_commentator_scores (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  comments_count INTEGER DEFAULT 0,
+  total_upvotes INTEGER DEFAULT 0,
+  final_score INTEGER DEFAULT 0,
+  rank INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(user_id, date)
+);
+
+-- Daily CHZ rewards tracking
+CREATE TABLE IF NOT EXISTS daily_chz_rewards (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  date DATE NOT NULL,
+  rank INTEGER NOT NULL,
+  chz_amount DECIMAL(18,8) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'distributed', 'failed'
+  wallet_address VARCHAR(42),
+  transaction_hash VARCHAR(66),
+  awarded_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(user_id, date)
 );
 
 -- ===================================================
@@ -424,6 +462,14 @@ CREATE INDEX IF NOT EXISTS idx_wallet_connections_address ON wallet_connections(
 CREATE INDEX IF NOT EXISTS idx_token_transactions_user_id ON token_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_hash ON token_transactions(transaction_hash) WHERE transaction_hash IS NOT NULL;
 
+-- Daily rewards indexes
+CREATE INDEX IF NOT EXISTS idx_daily_commentator_scores_user_id ON daily_commentator_scores(user_id);
+CREATE INDEX IF NOT EXISTS idx_daily_commentator_scores_date ON daily_commentator_scores(date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_commentator_scores_rank ON daily_commentator_scores(date DESC, rank ASC);
+CREATE INDEX IF NOT EXISTS idx_daily_chz_rewards_user_id ON daily_chz_rewards(user_id);
+CREATE INDEX IF NOT EXISTS idx_daily_chz_rewards_date ON daily_chz_rewards(date DESC);
+CREATE INDEX IF NOT EXISTS idx_daily_chz_rewards_status ON daily_chz_rewards(status);
+
 -- ===================================================
 -- XP CALCULATION FUNCTIONS
 -- ===================================================
@@ -531,7 +577,7 @@ $$ LANGUAGE plpgsql;
 -- COMMENT SYSTEM FUNCTIONS
 -- ===================================================
 
--- Function to get comments for any entity type
+-- Function to get comments with user info included  
 CREATE OR REPLACE FUNCTION get_entity_comments(
     p_entity_type VARCHAR(20), 
     p_entity_id VARCHAR(50), 
@@ -542,6 +588,9 @@ CREATE OR REPLACE FUNCTION get_entity_comments(
 RETURNS TABLE (
     id UUID,
     user_id UUID,
+    username VARCHAR(100),
+    display_name VARCHAR(255),
+    avatar_url TEXT,
     entity_type VARCHAR(20),
     entity_id VARCHAR(50),
     parent_id UUID,
@@ -556,68 +605,49 @@ RETURNS TABLE (
     is_pinned BOOLEAN,
     created_at TIMESTAMP WITH TIME ZONE,
     updated_at TIMESTAMP WITH TIME ZONE,
-    profiles JSON,
-    reactions JSON
+    user_reaction VARCHAR(20)
 ) AS $$
 BEGIN
     RETURN QUERY
-    WITH comment_data AS (
-        SELECT 
-            c.*,
-            row_to_json(p.*) as profile_data,
-            COALESCE(
-                json_agg(
-                    json_build_object(
-                        'id', r.id,
-                        'user_id', r.user_id,
-                        'reaction_type', r.reaction_type,
-                        'created_at', r.created_at
-                    )
-                ) FILTER (WHERE r.id IS NOT NULL),
-                '[]'::json
-            ) as reaction_data
-        FROM comments c
-        LEFT JOIN profiles p ON p.id = c.user_id
-        LEFT JOIN reactions r ON r.comment_id = c.id
-        WHERE c.entity_type = p_entity_type 
-        AND c.entity_id = p_entity_id 
-        AND c.parent_id IS NULL
-        AND c.is_deleted = FALSE
-        GROUP BY c.id, c.user_id, c.entity_type, c.entity_id, c.parent_id, 
-                 c.content, c.comment_type, c.is_meme, c.meme_url, c.meme_caption,
-                 c.image_url, c.upvotes, c.downvotes, c.is_pinned,
-                 c.created_at, c.updated_at, p.*
-    )
     SELECT 
-        cd.id,
-        cd.user_id,
-        cd.entity_type,
-        cd.entity_id,
-        cd.parent_id,
-        cd.content,
-        cd.comment_type,
-        cd.is_meme,
-        cd.meme_url,
-        cd.meme_caption,
-        cd.image_url,
-        cd.upvotes,
-        cd.downvotes,
-        cd.is_pinned,
-        cd.created_at,
-        cd.updated_at,
-        cd.profile_data as profiles,
-        cd.reaction_data as reactions
-    FROM comment_data cd
+        c.id,
+        c.user_id,
+        p.username,
+        p.display_name,
+        p.avatar_url,
+        c.entity_type,
+        c.entity_id,
+        c.parent_id,
+        c.content,
+        c.comment_type,
+        c.is_meme,
+        c.meme_url,
+        c.meme_caption,
+        c.image_url,
+        c.upvotes,
+        c.downvotes,
+        c.is_pinned,
+        c.created_at,
+        c.updated_at,
+        r.reaction_type as user_reaction
+    FROM comments c
+    INNER JOIN profiles p ON p.id = c.user_id
+    LEFT JOIN reactions r ON r.comment_id = c.id
+    WHERE c.entity_type = p_entity_type 
+    AND c.entity_id = p_entity_id 
+    AND c.parent_id IS NULL
+    AND c.is_deleted = FALSE
+    AND p.username IS NOT NULL
     ORDER BY 
-        cd.is_pinned DESC,
+        c.is_pinned DESC,
         CASE 
-            WHEN p_sort_by = 'newest' THEN cd.created_at 
-            WHEN p_sort_by = 'oldest' THEN cd.created_at
-            WHEN p_sort_by = 'popular' THEN cd.created_at
-            ELSE cd.created_at 
+            WHEN p_sort_by = 'newest' THEN c.created_at 
+            WHEN p_sort_by = 'oldest' THEN c.created_at
+            WHEN p_sort_by = 'popular' THEN c.created_at
+            ELSE c.created_at 
         END DESC,
         CASE 
-            WHEN p_sort_by = 'popular' THEN cd.upvotes - cd.downvotes
+            WHEN p_sort_by = 'popular' THEN c.upvotes - c.downvotes
             ELSE 0 
         END DESC
     LIMIT p_limit OFFSET p_offset;
@@ -767,57 +797,175 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to award XP when likes are received
-CREATE OR REPLACE FUNCTION handle_like_xp()
+-- Function to handle reaction changes (likes/dislikes)
+CREATE OR REPLACE FUNCTION handle_reaction_change()
 RETURNS trigger AS $$
 DECLARE
   comment_author_id UUID;
+  old_reaction_type VARCHAR(20);
+  new_reaction_type VARCHAR(20);
 BEGIN
   -- Get the comment author
   SELECT user_id INTO comment_author_id 
   FROM comments 
-  WHERE id = NEW.comment_id;
+  WHERE id = COALESCE(NEW.comment_id, OLD.comment_id);
   
-  -- Only award XP for 'like' reactions
-  IF NEW.reaction_type = 'like' AND comment_author_id IS NOT NULL THEN
-    -- Award XP to comment author
-    PERFORM award_xp(
-      comment_author_id,
-      'like_received',
-      2,
-      NEW.comment_id,
-      'Received a like on comment'
-    );
+  IF TG_OP = 'INSERT' THEN
+    new_reaction_type := NEW.reaction_type;
+    
+    -- Update comment vote counts
+    IF new_reaction_type = 'like' THEN
+      UPDATE comments SET upvotes = upvotes + 1 WHERE id = NEW.comment_id;
+      -- Award XP to comment author
+      PERFORM award_xp(
+        comment_author_id,
+        'like_received',
+        2,
+        NEW.comment_id,
+        'Received a like on comment'
+      );
+    ELSIF new_reaction_type = 'dislike' THEN
+      UPDATE comments SET downvotes = downvotes + 1 WHERE id = NEW.comment_id;
+    END IF;
+    
+    RETURN NEW;
+    
+  ELSIF TG_OP = 'UPDATE' THEN
+    old_reaction_type := OLD.reaction_type;
+    new_reaction_type := NEW.reaction_type;
+    
+    -- Remove old reaction counts
+    IF old_reaction_type = 'like' THEN
+      UPDATE comments SET upvotes = upvotes - 1 WHERE id = NEW.comment_id;
+      -- Remove XP from comment author
+      PERFORM award_xp(
+        comment_author_id,
+        'like_removed',
+        -2,
+        NEW.comment_id,
+        'Like removed from comment'
+      );
+    ELSIF old_reaction_type = 'dislike' THEN
+      UPDATE comments SET downvotes = downvotes - 1 WHERE id = NEW.comment_id;
+    END IF;
+    
+    -- Add new reaction counts
+    IF new_reaction_type = 'like' THEN
+      UPDATE comments SET upvotes = upvotes + 1 WHERE id = NEW.comment_id;
+      -- Award XP to comment author
+      PERFORM award_xp(
+        comment_author_id,
+        'like_received',
+        2,
+        NEW.comment_id,
+        'Received a like on comment'
+      );
+    ELSIF new_reaction_type = 'dislike' THEN
+      UPDATE comments SET downvotes = downvotes + 1 WHERE id = NEW.comment_id;
+    END IF;
+    
+    RETURN NEW;
+    
+  ELSIF TG_OP = 'DELETE' THEN
+    old_reaction_type := OLD.reaction_type;
+    
+    -- Remove reaction counts
+    IF old_reaction_type = 'like' THEN
+      UPDATE comments SET upvotes = upvotes - 1 WHERE id = OLD.comment_id;
+      -- Remove XP from comment author
+      PERFORM award_xp(
+        comment_author_id,
+        'like_removed',
+        -2,
+        OLD.comment_id,
+        'Like removed from comment'
+      );
+    ELSIF old_reaction_type = 'dislike' THEN
+      UPDATE comments SET downvotes = downvotes - 1 WHERE id = OLD.comment_id;
+    END IF;
+    
+    RETURN OLD;
   END IF;
   
-  RETURN NEW;
+  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
 
--- Function to remove XP when likes are removed
-CREATE OR REPLACE FUNCTION handle_like_removal_xp()
-RETURNS trigger AS $$
-DECLARE
-  comment_author_id UUID;
+-- Alternative function for getting comments with specific user reactions
+CREATE OR REPLACE FUNCTION get_comments_with_user_reactions(
+    p_entity_type VARCHAR(20), 
+    p_entity_id VARCHAR(50), 
+    p_requesting_user_id UUID DEFAULT NULL,
+    p_limit INTEGER DEFAULT 50, 
+    p_offset INTEGER DEFAULT 0,
+    p_sort_by TEXT DEFAULT 'newest'
+)
+RETURNS TABLE (
+    id UUID,
+    user_id UUID,
+    username VARCHAR(100),
+    display_name VARCHAR(255),
+    avatar_url TEXT,
+    entity_type VARCHAR(20),
+    entity_id VARCHAR(50),
+    parent_id UUID,
+    content TEXT,
+    comment_type VARCHAR(20),
+    is_meme BOOLEAN,
+    meme_url TEXT,
+    meme_caption TEXT,
+    image_url TEXT,
+    upvotes INTEGER,
+    downvotes INTEGER,
+    is_pinned BOOLEAN,
+    created_at TIMESTAMP WITH TIME ZONE,
+    updated_at TIMESTAMP WITH TIME ZONE,
+    user_reaction VARCHAR(20)
+) AS $$
 BEGIN
-  -- Get the comment author
-  SELECT user_id INTO comment_author_id 
-  FROM comments 
-  WHERE id = OLD.comment_id;
-  
-  -- Only remove XP for 'like' reactions
-  IF OLD.reaction_type = 'like' AND comment_author_id IS NOT NULL THEN
-    -- Remove XP from comment author
-    PERFORM award_xp(
-      comment_author_id,
-      'like_removed',
-      -2,
-      OLD.comment_id,
-      'Like removed from comment'
-    );
-  END IF;
-  
-  RETURN OLD;
+    RETURN QUERY
+    SELECT 
+        c.id,
+        c.user_id,
+        p.username,
+        p.display_name,
+        p.avatar_url,
+        c.entity_type,
+        c.entity_id,
+        c.parent_id,
+        c.content,
+        c.comment_type,
+        c.is_meme,
+        c.meme_url,
+        c.meme_caption,
+        c.image_url,
+        c.upvotes,
+        c.downvotes,
+        c.is_pinned,
+        c.created_at,
+        c.updated_at,
+        r.reaction_type as user_reaction
+    FROM comments c
+    INNER JOIN profiles p ON p.id = c.user_id
+    LEFT JOIN reactions r ON r.comment_id = c.id AND r.user_id = p_requesting_user_id
+    WHERE c.entity_type = p_entity_type 
+    AND c.entity_id = p_entity_id 
+    AND c.parent_id IS NULL
+    AND c.is_deleted = FALSE
+    AND p.username IS NOT NULL
+    ORDER BY 
+        c.is_pinned DESC,
+        CASE 
+            WHEN p_sort_by = 'newest' THEN c.created_at 
+            WHEN p_sort_by = 'oldest' THEN c.created_at
+            WHEN p_sort_by = 'popular' THEN c.created_at
+            ELSE c.created_at 
+        END DESC,
+        CASE 
+            WHEN p_sort_by = 'popular' THEN c.upvotes - c.downvotes
+            ELSE 0 
+        END DESC
+    LIMIT p_limit OFFSET p_offset;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -829,6 +977,7 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trigger_comment_xp ON comments;
 DROP TRIGGER IF EXISTS trigger_like_xp ON reactions;
 DROP TRIGGER IF EXISTS trigger_like_removal_xp ON reactions;
+DROP TRIGGER IF EXISTS trigger_reaction_change ON reactions;
 
 -- Create triggers
 CREATE TRIGGER trigger_comment_xp
@@ -836,15 +985,10 @@ CREATE TRIGGER trigger_comment_xp
   FOR EACH ROW
   EXECUTE FUNCTION handle_comment_xp();
 
-CREATE TRIGGER trigger_like_xp
-  AFTER INSERT ON reactions
+CREATE TRIGGER trigger_reaction_change
+  AFTER INSERT OR UPDATE OR DELETE ON reactions
   FOR EACH ROW
-  EXECUTE FUNCTION handle_like_xp();
-
-CREATE TRIGGER trigger_like_removal_xp
-  AFTER DELETE ON reactions
-  FOR EACH ROW
-  EXECUTE FUNCTION handle_like_removal_xp();
+  EXECUTE FUNCTION handle_reaction_change();
 
 -- ===================================================
 -- VIEWS FOR ANALYTICS AND PERFORMANCE
@@ -903,6 +1047,8 @@ ALTER TABLE memes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wallet_connections ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reward_claims ENABLE ROW LEVEL SECURITY;
 ALTER TABLE token_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_commentator_scores ENABLE ROW LEVEL SECURITY;
+ALTER TABLE daily_chz_rewards ENABLE ROW LEVEL SECURITY;
 
 -- Create permissive policies for development (adjust for production)
 CREATE POLICY "Allow all operations on profiles" ON profiles FOR ALL USING (true) WITH CHECK (true);
@@ -918,6 +1064,8 @@ CREATE POLICY "Allow all operations on wallet_connections" ON wallet_connections
 CREATE POLICY "Allow all operations on reward_milestones" ON reward_milestones FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on reward_claims" ON reward_claims FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on token_transactions" ON token_transactions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on daily_commentator_scores" ON daily_commentator_scores FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all operations on daily_chz_rewards" ON daily_chz_rewards FOR ALL USING (true) WITH CHECK (true);
 
 -- ===================================================
 -- INITIAL DATA SEEDING
@@ -961,6 +1109,109 @@ INSERT INTO memes (title, template_url, category, tags) VALUES
 ('Change My Mind', 'https://i.imgflip.com/24y43o.jpg', 'opinion', ARRAY['debate', 'opinion', 'convince']),
 ('Success Kid', 'https://i.imgflip.com/1bhk.jpg', 'celebration', ARRAY['success', 'victory', 'achievement'])
 ON CONFLICT DO NOTHING;
+
+-- ===================================================
+-- ATOMIC VOTING FUNCTION TO PREVENT DUPLICATE VOTES
+-- ===================================================
+
+CREATE OR REPLACE FUNCTION handle_comment_vote(
+  p_user_id UUID,
+  p_comment_id UUID,
+  p_vote_type TEXT
+) RETURNS JSON AS $$
+DECLARE
+  existing_reaction RECORD;
+  vote_action TEXT;
+  vote_message TEXT;
+BEGIN
+  -- Check for existing reaction of this type
+  SELECT * INTO existing_reaction
+  FROM reactions 
+  WHERE user_id = p_user_id 
+    AND comment_id = p_comment_id 
+    AND reaction_type = p_vote_type;
+
+  IF FOUND THEN
+    -- Remove existing vote (toggle off)
+    DELETE FROM reactions 
+    WHERE user_id = p_user_id 
+      AND comment_id = p_comment_id 
+      AND reaction_type = p_vote_type;
+    
+    -- Update comment counts
+    IF p_vote_type = 'like' THEN
+      UPDATE comments 
+      SET upvotes = GREATEST(0, upvotes - 1) 
+      WHERE id = p_comment_id;
+      vote_message := 'Upvote removed';
+    ELSE
+      UPDATE comments 
+      SET downvotes = GREATEST(0, downvotes - 1) 
+      WHERE id = p_comment_id;
+      vote_message := 'Downvote removed';
+    END IF;
+    
+    vote_action := 'removed';
+  ELSE
+    -- Check if user has opposite reaction and remove it
+    IF p_vote_type = 'like' THEN
+      DELETE FROM reactions 
+      WHERE user_id = p_user_id 
+        AND comment_id = p_comment_id 
+        AND reaction_type = 'dislike';
+      UPDATE comments 
+      SET downvotes = GREATEST(0, downvotes - 1) 
+      WHERE id = p_comment_id 
+        AND EXISTS (
+          SELECT 1 FROM reactions 
+          WHERE user_id = p_user_id 
+            AND comment_id = p_comment_id 
+            AND reaction_type = 'dislike'
+        );
+    ELSE
+      DELETE FROM reactions 
+      WHERE user_id = p_user_id 
+        AND comment_id = p_comment_id 
+        AND reaction_type = 'like';
+      UPDATE comments 
+      SET upvotes = GREATEST(0, upvotes - 1) 
+      WHERE id = p_comment_id 
+        AND EXISTS (
+          SELECT 1 FROM reactions 
+          WHERE user_id = p_user_id 
+            AND comment_id = p_comment_id 
+            AND reaction_type = 'like'
+        );
+    END IF;
+    
+    -- Add new reaction (protected by unique constraint)
+    INSERT INTO reactions (user_id, comment_id, reaction_type)
+    VALUES (p_user_id, p_comment_id, p_vote_type)
+    ON CONFLICT (user_id, comment_id, reaction_type) DO NOTHING;
+    
+    -- Update comment counts
+    IF p_vote_type = 'like' THEN
+      UPDATE comments 
+      SET upvotes = upvotes + 1 
+      WHERE id = p_comment_id;
+      vote_message := 'Upvote added';
+    ELSE
+      UPDATE comments 
+      SET downvotes = downvotes + 1 
+      WHERE id = p_comment_id;
+      vote_message := 'Downvote added';
+    END IF;
+    
+    vote_action := 'added';
+  END IF;
+
+  RETURN json_build_object(
+    'action', vote_action,
+    'message', vote_message,
+    'success', true
+  );
+END;
+$$ LANGUAGE plpgsql;
 
 -- ===================================================
 -- COMPLETION MESSAGE
