@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Header from '../components/Header'
+import Web3WalletConnect from '../components/Web3WalletConnect'
 
 export default function DailyLeaderboard() {
   const [leaderboard, setLeaderboard] = useState([])
@@ -11,14 +12,18 @@ export default function DailyLeaderboard() {
   const [calculating, setCalculating] = useState(false)
   const [distributing, setDistributing] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [user, setUser] = useState(null)
+  const [walletConnected, setWalletConnected] = useState(false)
+  const [testingTransaction, setTestingTransaction] = useState(false)
 
   useEffect(() => {
-    // Check if user is admin (you can implement your own admin check logic)
+    // Get current user and check admin status
     const userData = localStorage.getItem('user_profile')
     if (userData) {
-      const user = JSON.parse(userData)
-      // For demo purposes, you can set admin status here
-      // setIsAdmin(user.email === 'admin@yourapp.com')
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      // For demo purposes, set admin to true for testing
+      setIsAdmin(true) // Enable admin controls for testing
     }
     
     loadDailyData()
@@ -96,6 +101,38 @@ export default function DailyLeaderboard() {
     } finally {
       setDistributing(false)
     }
+  }
+
+  const testTransaction = async () => {
+    setTestingTransaction(true)
+    try {
+      const response = await fetch('/api/daily-rewards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'test-transaction', amount: 0.001 })
+      })
+      
+      const data = await response.json()
+      if (data.success) {
+        alert(`Test transaction successful!\nTX Hash: ${data.transaction_hash}\nAmount: ${data.amount} CHZ`)
+      } else {
+        alert('Test transaction failed: ' + data.error)
+      }
+    } catch (error) {
+      alert('Test transaction error: ' + error.message)
+    } finally {
+      setTestingTransaction(false)
+    }
+  }
+
+  const handleWalletConnected = (connection) => {
+    setWalletConnected(true)
+    console.log('Wallet connected:', connection)
+  }
+
+  const handleWalletDisconnected = () => {
+    setWalletConnected(false)
+    console.log('Wallet disconnected')
   }
 
   const formatDate = (dateString) => {
@@ -214,6 +251,27 @@ export default function DailyLeaderboard() {
         </div>
       </section>
 
+      {/* Wallet Connection Section */}
+      <section style={{
+        padding: '20px',
+        maxWidth: '800px',
+        margin: '0 auto'
+      }}>
+        <h3 style={{
+          fontSize: '24px',
+          textAlign: 'center',
+          marginBottom: '20px',
+          color: '#ffffff'
+        }}>
+          💳 Connect Wallet for Testing
+        </h3>
+        <Web3WalletConnect
+          onWalletConnected={handleWalletConnected}
+          onWalletDisconnected={handleWalletDisconnected}
+          currentUser={user}
+        />
+      </section>
+
       {/* Admin Controls */}
       {isAdmin && (
         <section style={{
@@ -229,7 +287,7 @@ export default function DailyLeaderboard() {
             padding: '20px'
           }}>
             <h3 style={{ color: '#ff6b35', marginBottom: '20px' }}>Admin Controls</h3>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={calculateRewards}
                 disabled={calculating}
@@ -262,6 +320,23 @@ export default function DailyLeaderboard() {
                 }}
               >
                 {distributing ? 'Distributing...' : 'Distribute Rewards'}
+              </button>
+              
+              <button
+                onClick={testTransaction}
+                disabled={testingTransaction}
+                style={{
+                  backgroundColor: testingTransaction ? '#666' : '#ff6b35',
+                  color: testingTransaction ? '#ccc' : '#fff',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  cursor: testingTransaction ? 'not-allowed' : 'pointer'
+                }}
+              >
+                {testingTransaction ? 'Testing...' : '🧪 Test CHZ Transaction'}
               </button>
             </div>
           </div>
@@ -459,7 +534,7 @@ export default function DailyLeaderboard() {
                       color: getRankColor(user.rank),
                       fontWeight: 'bold'
                     }}>
-                      {user.rank === 1 ? '50 CHZ' : user.rank === 2 ? '30 CHZ' : '20 CHZ'}
+                      10 CHZ
                     </div>
                   )}
                 </div>

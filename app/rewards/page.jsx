@@ -508,17 +508,17 @@ export default function Rewards() {
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥇</div>
               <div style={{ color: '#FFD700', fontSize: '24px', fontWeight: 'bold' }}>1st Place</div>
-              <div style={{ color: '#888', fontSize: '18px' }}>50 CHZ Daily</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>10 CHZ Daily</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥈</div>
               <div style={{ color: '#C0C0C0', fontSize: '24px', fontWeight: 'bold' }}>2nd Place</div>
-              <div style={{ color: '#888', fontSize: '18px' }}>30 CHZ Daily</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>10 CHZ Daily</div>
             </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: '48px', marginBottom: '10px' }}>🥉</div>
               <div style={{ color: '#CD7F32', fontSize: '24px', fontWeight: 'bold' }}>3rd Place</div>
-              <div style={{ color: '#888', fontSize: '18px' }}>20 CHZ Daily</div>
+              <div style={{ color: '#888', fontSize: '18px' }}>10 CHZ Daily</div>
             </div>
           </div>
           
