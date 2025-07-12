@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import UniversalComments from '../../components/UniversalComments'
 
 export default function PlayerDetail() {
   const params = useParams()
@@ -560,6 +561,15 @@ export default function PlayerDetail() {
               )}
             </div>
           </div>
+        </div>
+
+        {/* Comments Section */}
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <UniversalComments 
+            entityType="player"
+            entityId={playerData.player?.id}
+            entityName={playerData.player?.name}
+          />
         </div>
       </main>
     </div>

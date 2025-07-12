@@ -523,48 +523,83 @@ export default function Competitions() {
           </div>
         )}
 
-        {/* Competition Bracket Section */}
+        {/* Competition Bracket Modal */}
         {selectedCompetition && (
           <div style={{
-            marginTop: '40px',
-            padding: '30px',
-            backgroundColor: '#111',
-            borderRadius: '16px',
-            border: '2px solid #333'
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.95)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '20px',
+            backdropFilter: 'blur(10px)'
           }}>
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '30px'
+              backgroundColor: '#111',
+              borderRadius: '16px',
+              border: '2px solid #333',
+              maxWidth: '95vw',
+              maxHeight: '95vh',
+              width: '100%',
+              overflow: 'auto',
+              position: 'relative'
             }}>
-              <h2 style={{
-                color: '#fff',
-                fontSize: '28px',
-                fontWeight: 'bold',
-                margin: 0
+              <div style={{
+                position: 'sticky',
+                top: 0,
+                backgroundColor: '#111',
+                padding: '20px 30px',
+                borderBottom: '2px solid #333',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                zIndex: 10
               }}>
-                {selectedCompetition.name} - Tournament Info
-              </h2>
-              <button
-                onClick={() => setSelectedCompetition(null)}
-                style={{
-                  backgroundColor: '#333',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '8px 16px',
+                <h2 style={{
                   color: '#fff',
-                  fontSize: '14px',
-                  cursor: 'pointer'
-                }}
-              >
-                ✕ Close
-              </button>
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  margin: 0
+                }}>
+                  🏆 {selectedCompetition.name} - Tournament Bracket
+                </h2>
+                <button
+                  onClick={() => setSelectedCompetition(null)}
+                  style={{
+                    backgroundColor: '#ff4444',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '12px 20px',
+                    color: '#fff',
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.backgroundColor = '#cc3333'
+                    e.target.style.transform = 'scale(1.05)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.backgroundColor = '#ff4444'
+                    e.target.style.transform = 'scale(1)'
+                  }}
+                >
+                  ✕ Close
+                </button>
+              </div>
+              <div style={{ padding: '30px' }}>
+                <CompetitionBracket 
+                  competition={selectedCompetition}
+                  onClose={() => setSelectedCompetition(null)}
+                />
+              </div>
             </div>
-            <CompetitionBracket 
-              competition={selectedCompetition}
-              onClose={() => setSelectedCompetition(null)}
-            />
           </div>
         )}
       </main>

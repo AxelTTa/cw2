@@ -527,7 +527,78 @@ export default function Teams() {
         />
       ))}
 
-      <Header />
+      {/* Header */}
+      <header style={{
+        padding: '20px',
+        borderBottom: '1px solid #333',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backdropFilter: 'blur(15px)',
+        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
+      }}>
+        <div 
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+          onClick={() => window.location.href = '/'}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.15)'
+            e.target.style.textShadow = '0 0 25px #00ff88'
+            e.target.style.filter = 'brightness(1.2)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)'
+            e.target.style.textShadow = 'none'
+            e.target.style.filter = 'brightness(1)'
+          }}
+        >
+          Clutch
+        </div>
+        <nav style={{ display: 'flex', gap: '30px' }}>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players' },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams', active: true },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '8px 0'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateY(-3px)'
+                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.textShadow = 'none'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </header>
 
       {/* Teams Content */}
       <main className="hero-bg mobile-main-content" style={{ padding: '60px 20px' }}>

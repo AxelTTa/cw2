@@ -48,10 +48,11 @@ export default function Players() {
       setLoading(true)
       setError(null)
       
-      console.log('🚀 Frontend: Starting players fetch from API...')
+      console.log('🚀 Frontend: Starting players fetch from API (first 25)...')
       console.log('📅 Frontend: Current time:', new Date().toISOString())
       
-      const response = await fetch('/api/players', {
+      // Load first 25 players
+      const response = await fetch(`/api/players?limit=${playersPerPage}&offset=0`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -84,12 +85,10 @@ export default function Players() {
       
       const playersData = apiData.players
       
-      console.log('✅ Frontend: Successfully received players data:', {
+      console.log('✅ Frontend: Successfully received first 25 players:', {
         playersCount: playersData?.length || 0,
         firstPlayer: playersData?.[0]?.player?.name || 'None',
         timestamp: new Date().toISOString(),
-        fullPlayersData: playersData,
-        playersDataStructure: playersData?.length > 0 ? Object.keys(playersData[0]) : [],
         firstFewPlayers: playersData?.slice(0, 3)
       })
       
@@ -99,14 +98,18 @@ export default function Players() {
         return
       }
       
-      // Extract unique teams
+      // Extract unique teams from first batch
       const uniqueTeams = [...new Set(playersData.map(p => p.team?.name).filter(Boolean))]
         .sort()
       setTeams(uniqueTeams)
       
-      setAllPlayers(playersData)
+      setLoadedPlayers(playersData)
       setFilteredPlayers(playersData)
-      setDisplayedPlayers(playersData.slice(0, playersPerPage))
+      setDisplayedPlayers(playersData)
+      
+      // Start loading remaining players in background
+      loadRemainingPlayersInBackground()
+      
     } catch (err) {
       console.error('❌ Frontend: Error loading players:', {
         error: err.message,
@@ -130,7 +133,53 @@ export default function Players() {
       setError(errorMessage)
     } finally {
       setLoading(false)
-      console.log('🏁 Frontend: Players fetch completed')
+      console.log('🏁 Frontend: Initial players fetch completed')
+    }
+  }
+
+  async function loadRemainingPlayersInBackground() {
+    try {
+      setBackgroundLoading(true)
+      console.log('🔄 Frontend: Loading remaining players in background...')
+      
+      // Load all players
+      const response = await fetch('/api/players', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      
+      if (!response.ok) {
+        console.warn('Failed to load all players in background')
+        return
+      }
+      
+      const apiData = await response.json()
+      const allPlayersData = apiData.players
+      
+      if (allPlayersData && allPlayersData.length > playersPerPage) {
+        console.log('✅ Frontend: All players loaded in background:', {
+          totalPlayers: allPlayersData.length,
+          additionalPlayers: allPlayersData.length - playersPerPage
+        })
+        
+        // Extract all unique teams
+        const allUniqueTeams = [...new Set(allPlayersData.map(p => p.team?.name).filter(Boolean))]
+          .sort()
+        setTeams(allUniqueTeams)
+        
+        setAllPlayers(allPlayersData)
+        
+        // If user hasn't filtered yet, update the filtered players to include all
+        if (loadedPlayers.length === filteredPlayers.length && !searchTerm && !selectedTeam && !selectedPosition) {
+          setFilteredPlayers(allPlayersData)
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load all players in background:', err)
+    } finally {
+      setBackgroundLoading(false)
     }
   }
 
@@ -140,8 +189,8 @@ export default function Players() {
     const datasetToFilter = allPlayers.length > 0 ? allPlayers : loadedPlayers
     let filtered = datasetToFilter
 
-    // Check if we're searching for something not in loaded players
-    if (searchTerm && allPlayers.length === 0) {
+    // Show loading indicator if searching but all players aren't loaded yet
+    if ((searchTerm || selectedTeam || selectedPosition) && allPlayers.length === 0) {
       setSearchLoading(true)
     } else {
       setSearchLoading(false)
@@ -614,7 +663,138 @@ export default function Players() {
         />
       ))}
 
-      <Header />
+      {/* Header */}
+      <header className="mobile-header" style={{
+        padding: '20px',
+        borderBottom: '1px solid #333',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backdropFilter: 'blur(15px)',
+        backgroundColor: 'rgba(10, 10, 10, 0.9)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 100,
+        animation: isVisible ? 'slideInUp 0.8s ease-out' : 'none'
+      }}>
+        <div 
+          className="mobile-title"
+          style={{
+            fontSize: '24px',
+            fontWeight: 'bold',
+            color: '#00ff88',
+            cursor: 'pointer',
+            transition: 'all 0.3s ease'
+          }}
+          onClick={() => window.location.href = '/'}
+          onMouseEnter={(e) => {
+            e.target.style.transform = 'scale(1.15)'
+            e.target.style.textShadow = '0 0 25px #00ff88'
+            e.target.style.filter = 'brightness(1.2)'
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.transform = 'scale(1)'
+            e.target.style.textShadow = 'none'
+            e.target.style.filter = 'brightness(1)'
+          }}
+        >
+          Clutch
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          style={{
+            display: 'none',
+            background: 'none',
+            border: '2px solid #00ff88',
+            borderRadius: '8px',
+            color: '#00ff88',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            fontSize: '16px',
+            transition: 'all 0.3s ease'
+          }}
+          className="mobile-menu-btn"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          {mobileMenuOpen ? '✕' : '☰'}
+        </button>
+
+        {/* Desktop Navigation */}
+        <nav className="desktop-nav" style={{ display: 'flex', gap: '30px' }}>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players', active: true },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '8px 0'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateY(-3px)'
+                e.target.style.textShadow = '0 5px 10px rgba(0, 255, 136, 0.3)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.textShadow = 'none'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        {/* Mobile Navigation */}
+        <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+          {[
+            { href: '/', label: 'Home' },
+            { href: '/live', label: 'Live' },
+            { href: '/players', label: 'Players', active: true },
+            { href: '/stats', label: 'Stats' },
+            { href: '/teams', label: 'Teams' },
+            { href: '/about', label: 'About' },
+            { href: '/rewards', label: 'Rewards' }
+          ].map((item, index) => (
+            <a 
+              key={item.href}
+              href={item.href} 
+              style={{ 
+                color: item.active ? '#ffffff' : '#888', 
+                textDecoration: 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                padding: '12px 0',
+                fontSize: '18px',
+                borderBottom: '1px solid #333'
+              }}
+              onClick={() => setMobileMenuOpen(false)}
+              onMouseEnter={(e) => {
+                e.target.style.color = '#00ff88'
+                e.target.style.transform = 'translateX(10px)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = item.active ? '#ffffff' : '#888'
+                e.target.style.transform = 'translateX(0)'
+              }}
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+      </header>
 
       {/* Players Content */}
       <main className="hero-bg" style={{ padding: '60px 20px' }}>
@@ -1173,9 +1353,11 @@ export default function Players() {
                     border: '2px solid #00ff88'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#00ff88' }}>
-                      {allPlayers.length}
+                      {allPlayers.length > 0 ? allPlayers.length : `${loadedPlayers.length}+`}
                     </div>
-                    <div style={{ fontSize: '16px', color: '#888' }}>Total Players</div>
+                    <div style={{ fontSize: '16px', color: '#888' }}>
+                      {allPlayers.length > 0 ? 'Total Players' : 'Players Loaded'}
+                    </div>
                   </div>
                   <div style={{
                     padding: '20px',
@@ -1195,7 +1377,7 @@ export default function Players() {
                     border: '2px solid #ff6b35'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ff6b35' }}>
-                      {allPlayers.filter(p => p.player?.position === 'Goalkeeper').length}
+                      {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Goalkeeper').length}
                     </div>
                     <div style={{ fontSize: '16px', color: '#888' }}>Goalkeepers</div>
                   </div>
@@ -1206,7 +1388,7 @@ export default function Players() {
                     border: '2px solid #ef4444'
                   }}>
                     <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ef4444' }}>
-                      {allPlayers.filter(p => p.player?.position === 'Attacker').length}
+                      {(allPlayers.length > 0 ? allPlayers : loadedPlayers).filter(p => p.player?.position === 'Attacker').length}
                     </div>
                     <div style={{ fontSize: '16px', color: '#888' }}>Attackers</div>
                   </div>
