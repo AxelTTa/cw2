@@ -118,8 +118,8 @@ export default function Home() {
   useEffect(() => {
     setIsVisible(true)
     
-    // Create fewer animated particles for better performance
-    const particleArray = Array.from({ length: 15 }, (_, i) => ({
+    // Create animated particles
+    const particleArray = Array.from({ length: 50 }, (_, i) => ({
       id: i,
       x: Math.random() * 100,
       y: Math.random() * 100,
@@ -139,27 +139,22 @@ export default function Home() {
       })))
     }
 
-    const particleInterval = setInterval(animateParticles, 100)
+    const particleInterval = setInterval(animateParticles, 50)
 
-    // Cycle features
-    const featureInterval = setInterval(() => {
-      setCurrentTestimonial(prev => (prev + 1) % features.length)
+    // Cycle testimonials
+    const testimonialInterval = setInterval(() => {
+      setCurrentTestimonial(prev => (prev + 1) % testimonials.length)
     }, 4000)
 
-    // Throttled mouse tracking for better performance
-    let mouseTimeout
+    // Mouse tracking
     const handleMouseMove = (e) => {
-      if (mouseTimeout) return
-      mouseTimeout = setTimeout(() => {
-        setMousePosition({ x: e.clientX, y: e.clientY })
-        mouseTimeout = null
-      }, 50)
+      setMousePosition({ x: e.clientX, y: e.clientY })
     }
     window.addEventListener('mousemove', handleMouseMove)
 
     return () => {
       clearInterval(particleInterval)
-      clearInterval(featureInterval)
+      clearInterval(testimonialInterval)
       window.removeEventListener('mousemove', handleMouseMove)
     }
   }, [])
@@ -175,8 +170,10 @@ export default function Home() {
     }}>
       <style jsx>{`
         @keyframes float3D {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
+          0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
+          25% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
+          50% { transform: translateY(-10px) rotateX(-5deg) rotateY(-5deg); }
+          75% { transform: translateY(-15px) rotateX(5deg) rotateY(-10deg); }
         }
         @keyframes gradientWave {
           0% { background-position: 0% 50%; }
@@ -184,33 +181,37 @@ export default function Home() {
           100% { background-position: 0% 50%; }
         }
         @keyframes slideInUp {
-          from { opacity: 0; transform: translateY(30px); }
+          from { opacity: 0; transform: translateY(60px); }
           to { opacity: 1; transform: translateY(0); }
         }
         @keyframes pulseGlow {
-          0%, 100% { box-shadow: 0 0 15px rgba(58, 190, 249, 0.2); }
-          50% { box-shadow: 0 0 25px rgba(58, 190, 249, 0.4); }
+          0%, 100% { box-shadow: 0 0 20px rgba(58, 190, 249, 0.3), 0 0 40px rgba(0, 255, 170, 0.2); }
+          50% { box-shadow: 0 0 40px rgba(58, 190, 249, 0.6), 0 0 60px rgba(0, 255, 170, 0.4); }
+        }
+        @keyframes rotateHue {
+          0% { filter: hue-rotate(0deg); }
+          100% { filter: hue-rotate(360deg); }
         }
         @keyframes bounce3D {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+          0%, 20%, 50%, 80%, 100% { transform: translateY(0) rotateY(0deg); }
+          40% { transform: translateY(-20px) rotateY(180deg); }
+          60% { transform: translateY(-10px) rotateY(360deg); }
         }
         @keyframes shimmerFlow {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(200%); }
+          0% { transform: translateX(-100%) skewX(-15deg); }
+          100% { transform: translateX(200%) skewX(-15deg); }
         }
         @keyframes numberCount {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from { transform: translateY(20px); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
         }
         
         .particle {
           position: absolute;
           border-radius: 50%;
           pointer-events: none;
-          opacity: 0.4;
-          animation: float3D 8s ease-in-out infinite;
-          will-change: transform;
+          opacity: 0.6;
+          animation: float3D 6s ease-in-out infinite;
         }
         
         .crypto-bg {

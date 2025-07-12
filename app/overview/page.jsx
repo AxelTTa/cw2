@@ -23,24 +23,16 @@ export default function Overview() {
       setLoading(true)
       setError(null)
 
-      // Fetch top players
-      const playersResponse = await fetch('/api/players?limit=6')
+      // Fetch top 10 key players only
+      const playersResponse = await fetch('/api/players?limit=10')
       const playersData = await playersResponse.json()
       
-      // Fetch teams
-      const teamsResponse = await fetch('/api/teams?limit=6')
+      // Fetch top 10 teams only
+      const teamsResponse = await fetch('/api/teams?limit=10')
       const teamsData = await teamsResponse.json()
 
-      // Mock competitions data (could be fetched from API)
+      // Key competitions only (reduce to most important ones)
       const competitions = [
-        {
-          id: 'club-world-cup-2025',
-          name: 'FIFA Club World Cup 2025',
-          logo: 'https://media.api-sports.io/football/leagues/15.png',
-          status: 'ongoing',
-          teams: 32,
-          currentStage: 'Group Stage'
-        },
         {
           id: 'champions-league-2024',
           name: 'UEFA Champions League 2024/25',
@@ -50,19 +42,19 @@ export default function Overview() {
           currentStage: 'League Phase'
         },
         {
-          id: 'copa-libertadores-2024',
-          name: 'CONMEBOL Libertadores 2024',
-          logo: 'https://media.api-sports.io/football/leagues/13.png',
-          status: 'completed',
-          teams: 47,
-          currentStage: 'Final'
+          id: 'club-world-cup-2025',
+          name: 'FIFA Club World Cup 2025',
+          logo: 'https://media.api-sports.io/football/leagues/15.png',
+          status: 'ongoing',
+          teams: 32,
+          currentStage: 'Group Stage'
         }
       ]
 
       setData({
-        topPlayers: playersData.players?.slice(0, 6) || [],
+        topPlayers: playersData.players?.slice(0, 10) || [],
         competitions: competitions,
-        topTeams: teamsData.teams?.slice(0, 6) || []
+        topTeams: teamsData.teams?.slice(0, 10) || []
       })
     } catch (err) {
       console.error('Error loading overview data:', err)
