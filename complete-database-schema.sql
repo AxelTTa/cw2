@@ -217,7 +217,6 @@ CREATE TABLE IF NOT EXISTS reactions (
   comment_id UUID NOT NULL REFERENCES comments(id) ON DELETE CASCADE,
   reaction_type VARCHAR(20) NOT NULL, -- 'like', 'dislike', 'love', 'laugh', 'angry'
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  -- Ensure user can only have ONE of each reaction type per comment
   UNIQUE(user_id, comment_id, reaction_type)
 );
 
@@ -345,72 +344,6 @@ CREATE TABLE IF NOT EXISTS predictions (
 );
 
 -- ===================================================
--- DAILY LEADERBOARD SYSTEM
--- ===================================================
-
--- Daily commentator scores for leaderboard
-CREATE TABLE IF NOT EXISTS daily_commentator_scores (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  date DATE NOT NULL DEFAULT CURRENT_DATE,
-  comments_count INTEGER DEFAULT 0,
-  total_upvotes INTEGER DEFAULT 0,
-  total_downvotes INTEGER DEFAULT 0,
-  final_score DECIMAL(10,2) DEFAULT 0.0,
-  rank INTEGER,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-  UNIQUE(user_id, date)
-);
-
--- Function to calculate and update daily scores
-CREATE OR REPLACE FUNCTION update_daily_commentator_scores(target_date DATE DEFAULT CURRENT_DATE)
-RETURNS INTEGER AS $$
-DECLARE
-  scores_updated INTEGER := 0;
-BEGIN
-  -- Delete existing scores for the target date
-  DELETE FROM daily_commentator_scores WHERE date = target_date;
-  
-  -- Calculate and insert new daily scores
-  WITH daily_stats AS (
-    SELECT 
-      c.user_id,
-      COUNT(c.id) as comments_count,
-      COALESCE(SUM(c.upvotes), 0) as total_upvotes,
-      COALESCE(SUM(c.downvotes), 0) as total_downvotes,
-      -- Calculate final score: comments * 10 + upvotes * 2 - downvotes * 1
-      (COUNT(c.id) * 10) + (COALESCE(SUM(c.upvotes), 0) * 2) - (COALESCE(SUM(c.downvotes), 0) * 1) as final_score
-    FROM comments c
-    WHERE DATE(c.created_at) = target_date
-    AND c.is_deleted = FALSE
-    GROUP BY c.user_id
-    HAVING COUNT(c.id) > 0 -- Only include users who commented
-  ),
-  ranked_scores AS (
-    SELECT 
-      user_id,
-      comments_count,
-      total_upvotes,
-      total_downvotes,
-      final_score,
-      ROW_NUMBER() OVER (ORDER BY final_score DESC, comments_count DESC, total_upvotes DESC) as rank
-    FROM daily_stats
-  )
-  INSERT INTO daily_commentator_scores (
-    user_id, date, comments_count, total_upvotes, total_downvotes, final_score, rank
-  )
-  SELECT 
-    user_id, target_date, comments_count, total_upvotes, total_downvotes, final_score, rank
-  FROM ranked_scores;
-  
-  GET DIAGNOSTICS scores_updated = ROW_COUNT;
-  
-  RETURN scores_updated;
-END;
-$$ LANGUAGE plpgsql;
-
--- ===================================================
 -- MODERATION AND REPORTING
 -- ===================================================
 
@@ -490,11 +423,6 @@ CREATE INDEX IF NOT EXISTS idx_wallet_connections_user_id ON wallet_connections(
 CREATE INDEX IF NOT EXISTS idx_wallet_connections_address ON wallet_connections(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_user_id ON token_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_hash ON token_transactions(transaction_hash) WHERE transaction_hash IS NOT NULL;
-
--- Daily leaderboard indexes
-CREATE INDEX IF NOT EXISTS idx_daily_scores_date ON daily_commentator_scores(date DESC);
-CREATE INDEX IF NOT EXISTS idx_daily_scores_user_date ON daily_commentator_scores(user_id, date);
-CREATE INDEX IF NOT EXISTS idx_daily_scores_rank ON daily_commentator_scores(date, rank);
 
 -- ===================================================
 -- XP CALCULATION FUNCTIONS
@@ -600,115 +528,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ===================================================
--- REACTION MANAGEMENT FUNCTIONS
--- ===================================================
-
--- Function to handle user reactions (like/dislike) with proper constraints
-CREATE OR REPLACE FUNCTION upsert_reaction(
-  p_user_id UUID,
-  p_comment_id UUID,
-  p_reaction_type VARCHAR(20)
-)
-RETURNS JSON AS $$
-DECLARE
-  existing_reaction RECORD;
-  result JSON;
-  comment_author_id UUID;
-  xp_change INTEGER := 0;
-BEGIN
-  -- Get the comment author for XP calculations
-  SELECT user_id INTO comment_author_id 
-  FROM comments 
-  WHERE id = p_comment_id;
-  
-  IF comment_author_id IS NULL THEN
-    RETURN json_build_object('success', false, 'error', 'Comment not found');
-  END IF;
-  
-  -- Don't allow users to react to their own comments
-  IF comment_author_id = p_user_id THEN
-    RETURN json_build_object('success', false, 'error', 'Cannot react to your own comment');
-  END IF;
-  
-  -- Check for existing reaction of the same type
-  SELECT * INTO existing_reaction
-  FROM reactions
-  WHERE user_id = p_user_id AND comment_id = p_comment_id AND reaction_type = p_reaction_type;
-  
-  -- If same reaction type exists, remove it (toggle off)
-  IF existing_reaction.id IS NOT NULL THEN
-    DELETE FROM reactions 
-    WHERE user_id = p_user_id AND comment_id = p_comment_id AND reaction_type = p_reaction_type;
-    
-    -- Calculate XP change for removal
-    IF p_reaction_type = 'like' THEN
-      xp_change := -2;
-      PERFORM award_xp(comment_author_id, 'like_removed', xp_change, p_comment_id, 'Like removed from comment');
-    END IF;
-    
-    result := json_build_object(
-      'success', true,
-      'action', 'removed',
-      'reaction_type', p_reaction_type,
-      'xp_change', xp_change
-    );
-    
-  -- No existing reaction of this type, create new one
-  ELSE
-    INSERT INTO reactions (user_id, comment_id, reaction_type)
-    VALUES (p_user_id, p_comment_id, p_reaction_type);
-    
-    -- Award XP for new reaction
-    IF p_reaction_type = 'like' THEN
-      xp_change := 2;
-      PERFORM award_xp(comment_author_id, 'like_received', xp_change, p_comment_id, 'Received a like on comment');
-    END IF;
-    
-    result := json_build_object(
-      'success', true,
-      'action', 'created',
-      'reaction_type', p_reaction_type,
-      'xp_change', xp_change
-    );
-  END IF;
-  
-  RETURN result;
-END;
-$$ LANGUAGE plpgsql;
-
--- ===================================================
 -- COMMENT SYSTEM FUNCTIONS
 -- ===================================================
-
--- Function to validate comment constraints before creation
-CREATE OR REPLACE FUNCTION validate_comment_constraints()
-RETURNS trigger AS $$
-BEGIN
-  -- If this is a reply to another comment
-  IF NEW.parent_id IS NOT NULL THEN
-    -- Check if user has already replied to this comment
-    IF EXISTS (
-      SELECT 1 FROM comments 
-      WHERE user_id = NEW.user_id 
-      AND parent_id = NEW.parent_id 
-      AND is_deleted = FALSE
-    ) THEN
-      RAISE EXCEPTION 'User can only reply once to each comment';
-    END IF;
-    
-    -- Ensure parent comment exists and is not deleted
-    IF NOT EXISTS (
-      SELECT 1 FROM comments 
-      WHERE id = NEW.parent_id 
-      AND is_deleted = FALSE
-    ) THEN
-      RAISE EXCEPTION 'Parent comment not found or deleted';
-    END IF;
-  END IF;
-  
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Function to get comments for any entity type
 CREATE OR REPLACE FUNCTION get_entity_comments(
@@ -946,8 +767,59 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- NOTE: Reaction XP handling is now managed by the upsert_reaction function
--- This ensures proper constraint handling and prevents duplicate reactions
+-- Function to award XP when likes are received
+CREATE OR REPLACE FUNCTION handle_like_xp()
+RETURNS trigger AS $$
+DECLARE
+  comment_author_id UUID;
+BEGIN
+  -- Get the comment author
+  SELECT user_id INTO comment_author_id 
+  FROM comments 
+  WHERE id = NEW.comment_id;
+  
+  -- Only award XP for 'like' reactions
+  IF NEW.reaction_type = 'like' AND comment_author_id IS NOT NULL THEN
+    -- Award XP to comment author
+    PERFORM award_xp(
+      comment_author_id,
+      'like_received',
+      2,
+      NEW.comment_id,
+      'Received a like on comment'
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Function to remove XP when likes are removed
+CREATE OR REPLACE FUNCTION handle_like_removal_xp()
+RETURNS trigger AS $$
+DECLARE
+  comment_author_id UUID;
+BEGIN
+  -- Get the comment author
+  SELECT user_id INTO comment_author_id 
+  FROM comments 
+  WHERE id = OLD.comment_id;
+  
+  -- Only remove XP for 'like' reactions
+  IF OLD.reaction_type = 'like' AND comment_author_id IS NOT NULL THEN
+    -- Remove XP from comment author
+    PERFORM award_xp(
+      comment_author_id,
+      'like_removed',
+      -2,
+      OLD.comment_id,
+      'Like removed from comment'
+    );
+  END IF;
+  
+  RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
 
 -- ===================================================
 -- CREATE TRIGGERS
@@ -958,16 +830,21 @@ DROP TRIGGER IF EXISTS trigger_comment_xp ON comments;
 DROP TRIGGER IF EXISTS trigger_like_xp ON reactions;
 DROP TRIGGER IF EXISTS trigger_like_removal_xp ON reactions;
 
--- Create triggers for comments
-CREATE TRIGGER trigger_comment_constraints
-  BEFORE INSERT ON comments
-  FOR EACH ROW
-  EXECUTE FUNCTION validate_comment_constraints();
-
+-- Create triggers
 CREATE TRIGGER trigger_comment_xp
   AFTER INSERT ON comments
   FOR EACH ROW
   EXECUTE FUNCTION handle_comment_xp();
+
+CREATE TRIGGER trigger_like_xp
+  AFTER INSERT ON reactions
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_like_xp();
+
+CREATE TRIGGER trigger_like_removal_xp
+  AFTER DELETE ON reactions
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_like_removal_xp();
 
 -- ===================================================
 -- VIEWS FOR ANALYTICS AND PERFORMANCE
@@ -1110,10 +987,8 @@ BEGIN
     AND table_type = 'VIEW'
   );
   RAISE NOTICE 'Indexes created: Multiple performance indexes added';
-  RAISE NOTICE 'Triggers created: XP reward system + comment constraints';
+  RAISE NOTICE 'Triggers created: XP reward system triggers active';
   RAISE NOTICE 'RLS policies: Permissive policies for development';
-  RAISE NOTICE 'Constraints: One like/dislike/reply per comment (each action once)';
   RAISE NOTICE 'Initial data: Reward milestones and meme templates seeded';
-  RAISE NOTICE 'Daily leaderboard: Table and scoring function created';
   RAISE NOTICE '========================================';
 END $$;

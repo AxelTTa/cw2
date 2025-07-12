@@ -4,9 +4,9 @@ import { ethers } from 'ethers'
 
 // Daily CHZ reward amounts
 const DAILY_REWARDS = {
-  1: 50, // 1st place
-  2: 30, // 2nd place
-  3: 20  // 3rd place
+  1: 10, // 1st place
+  2: 10, // 2nd place
+  3: 10  // 3rd place
 }
 
 export async function GET(request) {
@@ -91,18 +91,53 @@ async function calculateDailyRewards(date) {
   try {
     console.log(`Calculating daily rewards for ${date}`)
 
-    // Call the database function to calculate scores
-    const { data: scores, error } = await supabaseAdmin
-      .rpc('calculate_daily_commentator_scores', { target_date: date })
+    // First, calculate scores from real comment data
+    const { data: commentData, error: commentError } = await supabaseAdmin
+      .from('comments')
+      .select('user_id, upvotes')
+      .gte('created_at', `${date}T00:00:00Z`)
+      .lt('created_at', `${date}T23:59:59Z`)
+      .not('user_id', 'is', null)
 
-    if (error) {
-      throw error
+    if (commentError) {
+      throw commentError
     }
 
-    if (!scores || scores.length === 0) {
+    if (!commentData || commentData.length === 0) {
       return NextResponse.json({
         success: true,
-        message: 'No activity found for this date',
+        message: 'No comments found for this date',
+        date,
+        scores: []
+      })
+    }
+
+    // Calculate user scores
+    const userScores = {}
+    commentData.forEach(comment => {
+      if (!userScores[comment.user_id]) {
+        userScores[comment.user_id] = {
+          user_id: comment.user_id,
+          comments_count: 0,
+          total_upvotes: 0,
+          final_score: 0
+        }
+      }
+      userScores[comment.user_id].comments_count += 1
+      userScores[comment.user_id].total_upvotes += comment.upvotes || 0
+    })
+
+    // Calculate final scores and rank
+    const scores = Object.values(userScores).map(user => ({
+      ...user,
+      final_score: (user.comments_count * 10) + (user.total_upvotes * 5)
+    })).sort((a, b) => b.final_score - a.final_score)
+    .map((user, index) => ({ ...user, rank: index + 1 }))
+
+    if (scores.length === 0) {
+      return NextResponse.json({
+        success: true,
+        message: 'No valid scores calculated for this date',
         date,
         scores: []
       })
@@ -115,8 +150,11 @@ async function calculateDailyRewards(date) {
         .upsert({
           user_id: score.user_id,
           date: date,
-          final_score: score.score,
+          comments_count: score.comments_count,
+          total_upvotes: score.total_upvotes,
+          final_score: score.final_score,
           rank: score.rank,
+          created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
 
@@ -152,7 +190,9 @@ async function calculateDailyRewards(date) {
       topThree: topThree.map(w => ({
         rank: w.rank,
         user_id: w.user_id,
-        score: w.score,
+        score: w.final_score,
+        comments: w.comments_count,
+        upvotes: w.total_upvotes,
         reward: DAILY_REWARDS[w.rank]
       }))
     })
@@ -288,6 +328,51 @@ export async function POST(request) {
     return NextResponse.json({ 
       success: false, 
       error: 'Internal server error' 
+    }, { status: 500 })
+  }
+}
+
+// Manual test endpoint for devs
+export async function PUT(request) {
+  try {
+    const { action, amount = 0.001 } = await request.json() // Default test amount is 0.001 CHZ
+    
+    if (action === 'test-transaction') {
+      // Test CHZ transaction
+      const provider = new ethers.JsonRpcProvider(process.env.CHZ_RPC_URL || 'https://rpc.chiliz.com')
+      const adminWallet = new ethers.Wallet(process.env.ADMIN_WALLET_PRIVATE_KEY, provider)
+      
+      // Send small test amount to admin wallet (self-transaction)
+      const amountInWei = ethers.parseEther(amount.toString())
+      
+      const tx = await adminWallet.sendTransaction({
+        to: process.env.ADMIN_WALLET_ADDRESS,
+        value: amountInWei
+      })
+      
+      console.log(`Test transaction sent: ${tx.hash}`)
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Test transaction completed successfully',
+        transaction_hash: tx.hash,
+        amount: amount,
+        from: adminWallet.address,
+        to: process.env.ADMIN_WALLET_ADDRESS,
+        network: 'Chiliz Chain'
+      })
+    }
+    
+    return NextResponse.json({ 
+      success: false, 
+      error: 'Invalid test action' 
+    }, { status: 400 })
+    
+  } catch (error) {
+    console.error('Test transaction error:', error)
+    return NextResponse.json({ 
+      success: false, 
+      error: `Test failed: ${error.message}` 
     }, { status: 500 })
   }
 }
