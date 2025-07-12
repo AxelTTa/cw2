@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '../utils/supabase'
@@ -374,8 +374,8 @@ const LiveTicker = ({ events, isLive }) => {
   )
 }
 
-// Main Component
-export default function TestLiveMatch() {
+// Main Component with Search Params
+function TestLiveMatchContent() {
   const searchParams = useSearchParams()
   const matchId = searchParams.get('id') || '1035011' // Default match ID
   
@@ -689,5 +689,30 @@ export default function TestLiveMatch() {
         </div>
       )}
     </div>
+  )
+}
+
+// Export with Suspense wrapper
+export default function TestLiveMatch() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen p-4">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="animate-pulse bg-gray-200 rounded h-8 w-64" />
+          <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="animate-pulse bg-gray-200 rounded h-96 w-full" />
+            </div>
+            <div className="space-y-6">
+              <div className="animate-pulse bg-gray-200 rounded h-64 w-full" />
+              <div className="animate-pulse bg-gray-200 rounded h-48 w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <TestLiveMatchContent />
+    </Suspense>
   )
 }
