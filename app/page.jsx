@@ -168,7 +168,28 @@ export default function Home() {
       position: 'relative',
       overflow: 'hidden'
     }}>
-      <style jsx>{`
+      <style jsx global>{`
+        * {
+          box-sizing: border-box !important;
+        }
+        
+        body, html {
+          overflow-x: hidden !important;
+          width: 100% !important;
+          max-width: 100vw !important;
+        }
+        
+        div, section, article, main {
+          max-width: 100% !important;
+          overflow-wrap: break-word !important;
+          word-wrap: break-word !important;
+        }
+        
+        img {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+        
         @keyframes float3D {
           0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
           25% { transform: translateY(-20px) rotateX(10deg) rotateY(10deg); }
@@ -375,28 +396,97 @@ export default function Home() {
         /* Mobile Responsive */
         @media (max-width: 768px) {
           .crypto-bg {
-            padding: 60px 20px 80px !important;
+            padding: 30px 10px 40px !important;
+            overflow: hidden !important;
           }
           .hero-title {
-            font-size: 48px !important;
-            line-height: 1.2 !important;
+            font-size: 24px !important;
+            line-height: 1.1 !important;
+            margin-bottom: 15px !important;
+            padding: 0 5px !important;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
           }
           .hero-subtitle {
-            font-size: 20px !important;
+            font-size: 14px !important;
+            margin-bottom: 20px !important;
+            padding: 0 10px !important;
+            line-height: 1.3 !important;
           }
           .feature-grid {
             grid-template-columns: 1fr !important;
-            gap: 24px !important;
+            gap: 15px !important;
+            padding: 0 5px !important;
           }
           .feature-icon-3d {
-            font-size: 60px !important;
+            font-size: 35px !important;
           }
           .btn-crypto {
-            padding: 16px 28px !important;
-            font-size: 16px !important;
+            padding: 12px 16px !important;
+            font-size: 12px !important;
+            width: 90% !important;
+            max-width: 250px !important;
+            margin: 5px auto !important;
+            display: block !important;
           }
           .rank-card {
-            padding: 20px !important;
+            padding: 12px 8px !important;
+            margin: 6px 5px !important;
+          }
+          .testimonial-card {
+            padding: 15px 10px !important;
+          }
+          .modal-content {
+            width: 95% !important;
+            max-width: 95vw !important;
+            padding: 15px 10px !important;
+            margin: 5px !important;
+            max-height: 90vh !important;
+          }
+          .glass-card {
+            padding: 15px 10px !important;
+            margin: 0 5px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .crypto-bg {
+            padding: 20px 5px 30px !important;
+          }
+          .hero-title {
+            font-size: 20px !important;
+            margin-bottom: 10px !important;
+          }
+          .hero-subtitle {
+            font-size: 12px !important;
+            margin-bottom: 15px !important;
+          }
+          .btn-crypto {
+            padding: 10px 12px !important;
+            font-size: 11px !important;
+            width: 95% !important;
+          }
+          .feature-icon-3d {
+            font-size: 30px !important;
+          }
+          .glass-card {
+            padding: 12px 8px !important;
+          }
+          .rank-card {
+            padding: 10px 6px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .hero-title {
+            font-size: 18px !important;
+          }
+          .hero-subtitle {
+            font-size: 11px !important;
+          }
+          .btn-crypto {
+            font-size: 10px !important;
+            padding: 8px 10px !important;
           }
         }
       `}</style>
@@ -467,9 +557,12 @@ export default function Home() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '40px',
-            marginBottom: '50px',
-            flexWrap: 'wrap'
+            gap: '10px',
+            marginBottom: '30px',
+            flexWrap: 'wrap',
+            padding: '0 5px',
+            maxWidth: '100%',
+            overflow: 'hidden'
           }}>
             {[
               { label: 'Hackathon Demo', value: 'Live Now', icon: '🚀' },
@@ -482,12 +575,13 @@ export default function Home() {
               }}>
                 <div style={{ fontSize: '32px', marginBottom: '8px' }}>{stat.icon}</div>
                 <div style={{
-                  fontSize: '28px',
+                  fontSize: 'clamp(16px, 4vw, 24px)',
                   fontWeight: 'bold',
                   color: '#00FFAA',
-                  animation: 'numberCount 1s ease-out'
+                  animation: 'numberCount 1s ease-out',
+                  textAlign: 'center'
                 }}>{stat.value}</div>
-                <div style={{ fontSize: '14px', color: '#aaa' }}>{stat.label}</div>
+                <div style={{ fontSize: 'clamp(10px, 2.5vw, 14px)', color: '#aaa', textAlign: 'center' }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -536,8 +630,8 @@ export default function Home() {
 
         <div className="feature-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '50px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '30px'
         }}>
           {/* Real-Time Stats */}
           <div className="glass-card" style={{
@@ -820,9 +914,9 @@ export default function Home() {
         
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
-          gap: '30px',
-          marginBottom: '50px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px',
+          marginBottom: '40px'
         }}>
           {testimonials.map((testimonial, index) => (
             <div key={index} 

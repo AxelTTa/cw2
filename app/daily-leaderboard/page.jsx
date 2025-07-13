@@ -180,12 +180,12 @@ export default function DailyLeaderboard() {
       <Header />
       
       {/* Hero Section */}
-      <section style={{
+      <section className="hero-section" style={{
         padding: '60px 20px 40px',
         textAlign: 'center',
         background: 'linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)'
       }}>
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: '48px',
           fontWeight: '900',
           marginBottom: '20px',
@@ -207,7 +207,7 @@ export default function DailyLeaderboard() {
         </p>
 
         {/* Date Selector */}
-        <div style={{
+        <div className="date-selector" style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -219,6 +219,7 @@ export default function DailyLeaderboard() {
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
+            className="date-input"
             style={{
               backgroundColor: '#111',
               border: '2px solid #333',
@@ -236,7 +237,7 @@ export default function DailyLeaderboard() {
       </section>
 
       {/* Wallet Connection Section */}
-      <section style={{
+      <section className="wallet-section" style={{
         padding: '20px',
         maxWidth: '800px',
         margin: '0 auto'
@@ -271,10 +272,11 @@ export default function DailyLeaderboard() {
             padding: '20px'
           }}>
             <h3 style={{ color: '#ff6b35', marginBottom: '20px' }}>Admin Controls</h3>
-            <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
+            <div className="admin-controls" style={{ display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
                 onClick={calculateRewards}
                 disabled={calculating}
+                className="admin-button"
                 style={{
                   backgroundColor: calculating ? '#666' : '#00ff88',
                   color: calculating ? '#ccc' : '#000',
@@ -292,6 +294,7 @@ export default function DailyLeaderboard() {
               <button
                 onClick={distributeRewards}
                 disabled={distributing || rewards.length === 0}
+                className="admin-button"
                 style={{
                   backgroundColor: distributing || rewards.length === 0 ? '#666' : '#0099ff',
                   color: distributing || rewards.length === 0 ? '#ccc' : '#fff',
@@ -327,7 +330,7 @@ export default function DailyLeaderboard() {
             🎉 Daily CHZ Winners
           </h2>
           
-          <div style={{
+          <div className="rewards-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
             gap: '20px'
@@ -335,6 +338,7 @@ export default function DailyLeaderboard() {
             {rewards.map((reward) => (
               <div
                 key={reward.id}
+                className="reward-card"
                 style={{
                   backgroundColor: '#111',
                   border: `2px solid ${getRankColor(reward.rank)}`,
@@ -344,7 +348,7 @@ export default function DailyLeaderboard() {
                   position: 'relative'
                 }}
               >
-                <div style={{
+                <div className="reward-emoji" style={{
                   fontSize: '48px',
                   marginBottom: '15px'
                 }}>
@@ -401,7 +405,7 @@ export default function DailyLeaderboard() {
         maxWidth: '1200px',
         margin: '0 auto'
       }}>
-        <h2 style={{
+        <h2 className="section-title" style={{
           fontSize: '32px',
           textAlign: 'center',
           marginBottom: '30px',
@@ -435,6 +439,7 @@ export default function DailyLeaderboard() {
             {leaderboard.map((user, index) => (
               <div
                 key={user.user_id}
+                className="leaderboard-item"
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -443,7 +448,7 @@ export default function DailyLeaderboard() {
                   backgroundColor: user.rank <= 3 ? `${getRankColor(user.rank)}10` : 'transparent'
                 }}
               >
-                <div style={{
+                <div className="leaderboard-rank" style={{
                   fontSize: '24px',
                   fontWeight: 'bold',
                   color: getRankColor(user.rank),
@@ -453,7 +458,7 @@ export default function DailyLeaderboard() {
                   {getRankEmoji(user.rank)}
                 </div>
                 
-                <div style={{
+                <div className="leaderboard-avatar" style={{
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
@@ -469,7 +474,7 @@ export default function DailyLeaderboard() {
                   {(user.display_name || user.username)?.[0]?.toUpperCase() || '?'}
                 </div>
                 
-                <div style={{ flex: 1 }}>
+                <div className="leaderboard-user" style={{ flex: 1 }}>
                   <div style={{
                     fontSize: '18px',
                     fontWeight: 'bold',
@@ -478,7 +483,7 @@ export default function DailyLeaderboard() {
                   }}>
                     {user.display_name || user.username}
                   </div>
-                  <div style={{
+                  <div className="leaderboard-stats" style={{
                     fontSize: '14px',
                     color: '#888'
                   }}>
@@ -533,7 +538,7 @@ export default function DailyLeaderboard() {
             How Daily Rewards Work
           </h3>
           
-          <div style={{
+          <div className="how-it-works-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
             gap: '20px',
@@ -567,6 +572,119 @@ export default function DailyLeaderboard() {
           </div>
         </div>
       </section>
+      <style jsx>{`
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          .hero-section {
+            padding: 30px 10px 20px !important;
+            overflow: hidden;
+          }
+          
+          .hero-title {
+            font-size: 22px !important;
+            margin-bottom: 10px !important;
+            line-height: 1.2;
+            word-wrap: break-word;
+            padding: 0 5px;
+          }
+          
+          .date-selector {
+            flex-direction: column !important;
+            gap: 10px !important;
+            padding: 0 10px !important;
+          }
+          
+          .date-input {
+            width: 100% !important;
+            max-width: 200px !important;
+          }
+          
+          .admin-controls {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          .admin-button {
+            width: 100% !important;
+            padding: 15px 20px !important;
+          }
+          
+          .rewards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .reward-card {
+            padding: 20px 15px !important;
+          }
+          
+          .leaderboard-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 15px !important;
+            padding: 15px !important;
+          }
+          
+          .leaderboard-main {
+            display: flex !important;
+            align-items: center !important;
+            width: 100% !important;
+            justify-content: space-between !important;
+          }
+          
+          .leaderboard-user {
+            display: flex !important;
+            align-items: center !important;
+            gap: 10px !important;
+            flex: 1 !important;
+          }
+          
+          .leaderboard-stats {
+            font-size: 12px !important;
+            margin-top: 5px !important;
+          }
+          
+          .how-it-works-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .how-it-works-card {
+            padding: 20px 15px !important;
+          }
+          
+          .wallet-section {
+            padding: 15px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .hero-title {
+            font-size: 28px !important;
+          }
+          
+          .section-title {
+            font-size: 20px !important;
+            padding: 0 10px;
+            word-wrap: break-word;
+          }
+          
+          .reward-emoji {
+            font-size: 32px !important;
+          }
+          
+          .leaderboard-rank {
+            min-width: 40px !important;
+            font-size: 18px !important;
+          }
+          
+          .leaderboard-avatar {
+            width: 35px !important;
+            height: 35px !important;
+            font-size: 14px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }

@@ -26,61 +26,169 @@ export default function PredictionGrid() {
 
   const initializeApp = async () => {
     try {
-      await checkUser()
-      await loadMatches()
+      console.log('🚀 [PREDICTION-GRID] Starting app initialization...')
+      
+      // Check user first, then load matches - this ensures user state is set before UI renders
+      const userResult = await checkUser()
+      console.log('👤 [PREDICTION-GRID] User check completed, now loading matches...')
+      
+      // Pass user state to loadMatches to avoid race condition
+      await loadMatches(userResult)
     } catch (error) {
-      console.error('Failed to initialize app:', error)
+      console.error('❌ [PREDICTION-GRID] Failed to initialize app:', error)
       setError(error.message)
     } finally {
       setLoading(false)
+      console.log('✅ [PREDICTION-GRID] App initialization completed')
     }
   }
 
   const checkUser = async () => {
+    let authenticatedUser = null;
+    
     try {
+      console.log('🔍 [PREDICTION-GRID] Checking user authentication...')
+      
+      // First check localStorage for stored user profile and tokens
+      const storedProfile = localStorage.getItem('user_profile')
+      const sessionToken = localStorage.getItem('session_token')
+      const accessToken = localStorage.getItem('access_token')
+      
+      console.log('🔍 [PREDICTION-GRID] LocalStorage check:', {
+        hasProfile: !!storedProfile,
+        hasSessionToken: !!sessionToken,
+        hasAccessToken: !!accessToken
+      })
+      
+      // If we have stored auth data, use it
+      if (storedProfile && (sessionToken || accessToken)) {
+        const userProfile = JSON.parse(storedProfile)
+        console.log('✅ [PREDICTION-GRID] Found stored user profile:', {
+          id: userProfile.id,
+          email: userProfile.email,
+          fanTokens: userProfile.fan_tokens
+        })
+        
+        const userObj = {
+          id: userProfile.id,
+          email: userProfile.email,
+          user_metadata: {
+            display_name: userProfile.display_name,
+            avatar_url: userProfile.avatar_url
+          }
+        }
+        
+        setUser(userObj)
+        authenticatedUser = userObj
+        
+        // Get fresh user balance from database
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('fan_tokens, wallet_address')
+          .eq('id', userProfile.id)
+          .single()
+        
+        if (profileError) {
+          console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError)
+          // Fall back to stored balance
+          setUserBalance(parseFloat(userProfile.fan_tokens || 0))
+        } else {
+          console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile)
+          setUserBalance(parseFloat(profile.fan_tokens || 0))
+          
+          if (profile.wallet_address) {
+            setWalletAddress(profile.wallet_address)
+            setWalletConnected(true)
+          }
+        }
+        
+        console.log('✅ [PREDICTION-GRID] User authenticated via localStorage')
+        return authenticatedUser
+      }
+      
+      // Fall back to Supabase auth session check
+      console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...')
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError) throw sessionError
-
-      if (!session) {
-        setUser(null)
-        setUserBalance(0)
-        return
+      if (sessionError) {
+        console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError)
+        throw sessionError
       }
 
+      if (!session) {
+        console.log('❌ [PREDICTION-GRID] No active session found')
+        setUser(null)
+        setUserBalance(0)
+        return null
+      }
+      
+      console.log('✅ [PREDICTION-GRID] Found Supabase session:', {
+        userId: session.user.id,
+        email: session.user.email
+      })
+
       const { data: { user }, error } = await supabase.auth.getUser()
-      if (error) throw error
+      if (error) {
+        console.error('❌ [PREDICTION-GRID] Error getting user:', error)
+        throw error
+      }
 
       setUser(user)
+      authenticatedUser = user
 
       // Get user balance
+      console.log('📊 [PREDICTION-GRID] Fetching user profile...')
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('fan_tokens, wallet_address')
         .eq('id', user.id)
         .single()
 
-      if (profileError) throw profileError
+      if (profileError) {
+        console.error('❌ [PREDICTION-GRID] Profile error:', profileError)
+        throw profileError
+      }
+      
+      console.log('📊 [PREDICTION-GRID] User profile loaded:', {
+        fanTokens: profile.fan_tokens,
+        hasWallet: !!profile.wallet_address
+      })
+      
       setUserBalance(parseFloat(profile.fan_tokens || 0))
       
       if (profile.wallet_address) {
         setWalletAddress(profile.wallet_address)
         setWalletConnected(true)
+        console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...')
       }
 
+      console.log('✅ [PREDICTION-GRID] User authenticated via Supabase')
+      return authenticatedUser
+
     } catch (error) {
-      console.error('Auth error:', error)
+      console.error('❌ [PREDICTION-GRID] Auth error:', error)
       setUser(null)
       setUserBalance(0)
+      return null
     }
   }
 
-  const loadMatches = async () => {
+  const loadMatches = async (authenticatedUser = null) => {
     try {
-      console.log('🔍 Loading matches...')
+      console.log('🔍 [PREDICTION-GRID] Loading matches...', {
+        hasUserFromParam: !!authenticatedUser,
+        hasUserFromState: !!user,
+        userId: authenticatedUser?.id || user?.id
+      })
       
       // Fetch upcoming matches using the same API as matches page
       const response = await fetch('/api/matches?status=upcoming&limit=20')
       const data = await response.json()
+      
+      console.log('📡 [PREDICTION-GRID] Matches API response:', {
+        success: !!data.matches,
+        count: data.matches?.length || 0,
+        error: data.error
+      })
       
       if (data.matches && data.matches.length > 0) {
         // Convert API response to format expected by betting card
@@ -106,79 +214,225 @@ export default function PredictionGrid() {
           }
         }))
         
+        console.log('⚽ [PREDICTION-GRID] Matches loaded:', {
+          count: formattedMatches.length,
+          matches: formattedMatches.map(m => ({
+            id: m.fixture.id,
+            homeTeam: m.teams.home.name,
+            awayTeam: m.teams.away.name,
+            date: m.fixture.date
+          }))
+        })
+        
         setMatches(formattedMatches)
 
-        // Load existing bets if user is logged in
-        if (user) {
+        // Load existing bets if user is logged in (use parameter to avoid race condition)
+        const currentUser = authenticatedUser || user
+        if (currentUser) {
+          console.log('🎯 [PREDICTION-GRID] User is logged in, loading bets for user:', currentUser.id)
           const matchIds = formattedMatches.map(m => m.fixture.id)
-          await loadUserBets(matchIds)
+          await loadUserBets(matchIds, currentUser)
+        } else {
+          console.log('❌ [PREDICTION-GRID] No user logged in, skipping bet loading')
+          setUserBets({}) // Clear any existing bets
         }
       } else {
+        console.log('❌ [PREDICTION-GRID] No matches found in API response')
         setMatches([])
       }
 
     } catch (error) {
-      console.error('Failed to load matches:', error)
+      console.error('❌ [PREDICTION-GRID] Failed to load matches:', error)
       setMatches([])
     }
   }
 
-  const loadUserBets = async (matchIds) => {
-    if (!user || matchIds.length === 0) return
+  const loadUserBets = async (matchIds, currentUser = null) => {
+    const userToCheck = currentUser || user
+    
+    if (!userToCheck || matchIds.length === 0) {
+      console.log('⚠️ [PREDICTION-GRID] Cannot load user bets:', {
+        hasUser: !!userToCheck,
+        matchCount: matchIds.length,
+        userId: userToCheck?.id
+      })
+      return
+    }
 
     try {
+      console.log('🎯 [PREDICTION-GRID] Loading user bets for matches:', {
+        userId: userToCheck.id,
+        matchIds: matchIds,
+        matchCount: matchIds.length
+      })
+      
       const { data: betsData, error } = await supabase
         .from('match_bets')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userToCheck.id)
         .in('match_id', matchIds)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [PREDICTION-GRID] Error loading bets:', error)
+        throw error
+      }
+
+      console.log('🎯 [PREDICTION-GRID] Bets loaded from database:', {
+        count: betsData?.length || 0,
+        bets: betsData?.map(bet => ({
+          id: bet.id,
+          matchId: bet.match_id,
+          teamBet: bet.team_bet,
+          amount: bet.amount,
+          status: bet.status,
+          createdAt: bet.created_at
+        })) || []
+      })
 
       const betsMap = {}
       betsData?.forEach(bet => {
         betsMap[bet.match_id] = bet
       })
+      
+      console.log('🎯 [PREDICTION-GRID] Bets mapped to state:', {
+        mapKeys: Object.keys(betsMap),
+        mapEntries: Object.entries(betsMap).map(([matchId, bet]) => ({
+          matchId,
+          teamBet: bet.team_bet,
+          amount: bet.amount
+        }))
+      })
+      
       setUserBets(betsMap)
 
     } catch (error) {
-      console.error('Failed to load user bets:', error)
+      console.error('❌ [PREDICTION-GRID] Failed to load user bets:', error)
+      setUserBets({}) // Clear bets on error
     }
   }
 
   const placeBet = async (matchId, teamBet, amount) => {
     try {
+      console.log('💰 [PREDICTION-GRID] Starting bet placement process...', {
+        matchId,
+        teamBet,
+        amount,
+        userId: user?.id,
+        currentBalance: userBalance,
+        hasUser: !!user,
+        timestamp: new Date().toISOString()
+      })
+      
+      // Validation checks
+      if (!user) {
+        console.error('❌ [PREDICTION-GRID] Cannot place bet - no user logged in')
+        throw new Error('User not authenticated')
+      }
+      
+      if (amount > userBalance) {
+        console.error('❌ [PREDICTION-GRID] Cannot place bet - insufficient balance:', {
+          requestedAmount: amount,
+          currentBalance: userBalance,
+          deficit: amount - userBalance
+        })
+        throw new Error('Insufficient balance')
+      }
+      
+      if (amount <= 0) {
+        console.error('❌ [PREDICTION-GRID] Cannot place bet - invalid amount:', amount)
+        throw new Error('Invalid bet amount')
+      }
+      
+      console.log('✅ [PREDICTION-GRID] Validation passed, inserting bet into database...')
+      
       // Insert bet into database
+      const betData = {
+        user_id: user.id,
+        match_id: matchId,
+        team_bet: teamBet,
+        amount: amount,
+        status: 'active',
+        created_at: new Date().toISOString()
+      }
+      
+      console.log('📝 [PREDICTION-GRID] Bet data to insert:', betData)
+      
       const { data, error } = await supabase
         .from('match_bets')
-        .insert({
-          user_id: user.id,
-          match_id: matchId,
-          team_bet: teamBet,
-          amount: amount,
-          status: 'active'
-        })
+        .insert(betData)
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [PREDICTION-GRID] Database error inserting bet:', {
+          error,
+          errorMessage: error.message,
+          errorDetails: error.details,
+          errorHint: error.hint,
+          betData
+        })
+        throw error
+      }
+      
+      console.log('✅ [PREDICTION-GRID] Bet inserted successfully:', {
+        insertedBet: data,
+        betId: data.id,
+        insertedAt: data.created_at
+      })
 
       // Update user balance
-      const { error: balanceError } = await supabase
+      const newBalance = userBalance - amount
+      console.log('💰 [PREDICTION-GRID] Updating user balance...', {
+        userId: user.id,
+        oldBalance: userBalance,
+        newBalance,
+        betAmount: amount,
+        operation: 'subtract'
+      })
+      
+      const { error: balanceError, data: balanceData } = await supabase
         .from('profiles')
-        .update({ fan_tokens: userBalance - amount })
+        .update({ fan_tokens: newBalance })
         .eq('id', user.id)
+        .select()
 
-      if (balanceError) throw balanceError
+      if (balanceError) {
+        console.error('❌ [PREDICTION-GRID] Database error updating balance:', {
+          error: balanceError,
+          errorMessage: balanceError.message,
+          userId: user.id,
+          attemptedBalance: newBalance
+        })
+        throw balanceError
+      }
+      
+      console.log('💰 [PREDICTION-GRID] Balance updated successfully:', {
+        updatedProfile: balanceData,
+        newBalance,
+        balanceConfirmed: balanceData?.[0]?.fan_tokens
+      })
 
-      // Refresh data
+      // Refresh data to ensure UI consistency
+      console.log('🔄 [PREDICTION-GRID] Refreshing user data and bets...')
       await checkUser()
       await loadUserBets([matchId])
-
+      
+      console.log('✅ [PREDICTION-GRID] Bet placement completed successfully - all data refreshed')
       alert(`✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}`)
 
     } catch (error) {
-      console.error('Failed to place bet:', error)
+      console.error('❌ [PREDICTION-GRID] Failed to place bet - complete error details:', {
+        error,
+        errorMessage: error.message,
+        errorStack: error.stack,
+        matchId,
+        teamBet,
+        amount,
+        userId: user?.id,
+        userBalance,
+        timestamp: new Date().toISOString()
+      })
+      
       alert(`❌ Failed to place bet: ${error.message}`)
       throw error
     }
@@ -257,13 +511,13 @@ export default function PredictionGrid() {
       <Header />
 
       {/* Hero Section */}
-      <section style={{
+      <section className="hero-section" style={{
         background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
         padding: '60px 20px',
         textAlign: 'center',
         borderBottom: '2px solid #333'
       }}>
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: '48px',
           fontWeight: '800',
           marginBottom: '20px',
@@ -274,7 +528,7 @@ export default function PredictionGrid() {
         }}>
           🏆 Club World Cup 2025 Betting
         </h1>
-        <p style={{
+        <p className="hero-subtitle" style={{
           fontSize: '20px',
           color: '#cccccc',
           maxWidth: '600px',
@@ -535,7 +789,7 @@ export default function PredictionGrid() {
               ) : (
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                   gap: '24px'
                 }}>
                   {matches.map((match) => (
@@ -646,6 +900,86 @@ export default function PredictionGrid() {
         }
 
         @media (max-width: 768px) {
+          .hero-section {
+            padding: 30px 10px 20px !important;
+            overflow: hidden;
+          }
+          
+          .hero-title {
+            font-size: 22px !important;
+            margin-bottom: 10px !important;
+            line-height: 1.2;
+            word-wrap: break-word;
+            padding: 0 5px;
+          }
+          
+          .hero-subtitle {
+            font-size: 14px !important;
+            margin-bottom: 20px !important;
+            padding: 0 10px;
+            line-height: 1.3;
+          }
+          
+          .user-stats {
+            flex-direction: column !important;
+            gap: 10px !important;
+            align-items: center !important;
+          }
+          
+          .wallet-card {
+            max-width: 100% !important;
+            padding: 20px 15px !important;
+          }
+          
+          .wallet-connect-btn {
+            width: 100% !important;
+            padding: 15px 20px !important;
+          }
+          
+          .matches-header {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: center !important;
+          }
+          
+          .matches-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .match-card {
+            padding: 20px 15px !important;
+          }
+          
+          .match-teams {
+            gap: 10px !important;
+          }
+          
+          .team-info {
+            min-width: auto !important;
+            text-align: center !important;
+          }
+          
+          .team-logo {
+            width: 40px !important;
+            height: 40px !important;
+          }
+          
+          .betting-options {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          .bet-button {
+            width: 100% !important;
+            padding: 12px 15px !important;
+            font-size: 14px !important;
+          }
+          
+          .bet-input {
+            width: 100% !important;
+          }
+          
           section h2 {
             font-size: 24px !important;
           }
@@ -660,6 +994,34 @@ export default function PredictionGrid() {
             align-self: center !important;
           }
         }
+        
+        @media (max-width: 480px) {
+          .hero-title {
+            font-size: 28px !important;
+          }
+          
+          .hero-subtitle {
+            font-size: 14px !important;
+          }
+          
+          .wallet-card {
+            padding: 15px 10px !important;
+          }
+          
+          .match-card {
+            padding: 15px 10px !important;
+          }
+          
+          .team-logo {
+            width: 35px !important;
+            height: 35px !important;
+          }
+          
+          .bet-button {
+            padding: 10px 12px !important;
+            font-size: 13px !important;
+          }
+        }
       `}</style>
     </div>
   )
@@ -672,20 +1034,95 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
   const [isPlacing, setIsPlacing] = useState(false)
 
   const handlePlaceBet = async () => {
-    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) return
+    console.log('🎯 [MATCH-CARD] Attempting to place bet:', {
+      matchId: match.fixture.id,
+      selectedTeam,
+      betAmount,
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      isPlacing,
+      userBalance,
+      canAfford: betAmount <= userBalance,
+      hasExistingBet: !!existingBet,
+      existingBetDetails: existingBet ? {
+        teamBet: existingBet.team_bet,
+        amount: existingBet.amount,
+        status: existingBet.status
+      } : null,
+      timestamp: new Date().toISOString()
+    })
+    
+    // Detailed validation logging
+    const validationResults = {
+      hasSelectedTeam: !!selectedTeam,
+      hasUser: !!user,
+      isNotPlacing: !isPlacing,
+      canAfford: betAmount <= userBalance,
+      noExistingBet: !existingBet,
+      betAmountValid: betAmount > 0
+    }
+    
+    console.log('🔍 [MATCH-CARD] Bet validation results:', validationResults)
+    
+    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) {
+      console.log('❌ [MATCH-CARD] Cannot place bet - validation failed:', {
+        failureReasons: {
+          noTeamSelected: !selectedTeam,
+          noUser: !user,
+          alreadyPlacing: isPlacing,
+          insufficientFunds: betAmount > userBalance
+        },
+        validationResults
+      })
+      return
+    }
     
     setIsPlacing(true)
     try {
+      console.log('🎯 [MATCH-CARD] Starting bet placement for match:', {
+        matchId: match.fixture.id,
+        homeTeam: match.teams.home.name,
+        awayTeam: match.teams.away.name,
+        selectedTeam,
+        betAmount,
+        userBalance
+      })
+      
       await onPlaceBet(match.fixture.id, selectedTeam, betAmount)
       setSelectedTeam('')
+      console.log('✅ [MATCH-CARD] Bet placed successfully - clearing form')
     } catch (error) {
-      console.error('Failed to place bet:', error)
+      console.error('❌ [MATCH-CARD] Failed to place bet:', {
+        error,
+        errorMessage: error.message,
+        matchId: match.fixture.id,
+        selectedTeam,
+        betAmount,
+        userId: user?.id
+      })
     } finally {
+      console.log('🔄 [MATCH-CARD] Resetting placing state')
       setIsPlacing(false)
     }
   }
 
   const canBet = user && userBalance >= betAmount && !existingBet
+  
+  console.log('🎮 [MATCH-CARD] Match card render state:', {
+    matchId: match.fixture.id,
+    homeTeam: match.teams.home.name,
+    awayTeam: match.teams.away.name,
+    hasUser: !!user,
+    userId: user?.id,
+    userBalance,
+    betAmount,
+    canBet,
+    hasExistingBet: !!existingBet,
+    existingBetTeam: existingBet?.team_bet,
+    selectedTeam,
+    isPlacing
+  })
 
   return (
     <div style={{

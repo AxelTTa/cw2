@@ -23,7 +23,10 @@ export default function RootLayout({ children }) {
       <body style={{
         margin: 0,
         padding: 0,
-        overflowX: 'hidden'
+        overflowX: 'hidden',
+        width: '100%',
+        maxWidth: '100vw',
+        boxSizing: 'border-box'
       }}>
         <XPProvider>
           {children}
