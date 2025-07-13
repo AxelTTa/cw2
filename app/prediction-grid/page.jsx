@@ -122,7 +122,7 @@ export default function PredictionGrid() {
       console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...');
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError)
+        console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError);
         throw sessionError
       }
 
