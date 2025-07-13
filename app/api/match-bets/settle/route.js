@@ -4,18 +4,36 @@ import { sendChzFromAdmin } from '../../../utils/chiliz-token'
 
 export async function POST(request) {
   try {
-    const { matchId, winningTeam } = await request.json()
+    console.log('🚀 [BET-SETTLE] Starting bet settlement request...')
+    
+    const requestData = await request.json()
+    const { matchId, winningTeam } = requestData
+    
+    console.log('📥 [BET-SETTLE] Request data:', {
+      matchId,
+      winningTeam,
+      requestData,
+      timestamp: new Date().toISOString()
+    })
 
     if (!matchId || !winningTeam) {
+      console.log('❌ [BET-SETTLE] Invalid request - missing required fields:', {
+        hasMatchId: !!matchId,
+        hasWinningTeam: !!winningTeam,
+        receivedData: requestData
+      })
+      
       return NextResponse.json({ 
         success: false, 
         error: 'Missing matchId or winningTeam' 
       }, { status: 400 })
     }
 
-    console.log(`🏆 Settling bets for match ${matchId}, winner: ${winningTeam}`)
+    console.log(`🏆 [BET-SETTLE] Settling bets for match ${matchId}, winner: ${winningTeam}`)
 
     // Get all active bets for this match
+    console.log('🔍 [BET-SETTLE] Fetching active bets from database...')
+    
     const { data: bets, error: betsError } = await supabase
       .from('match_bets')
       .select('*')
@@ -23,10 +41,24 @@ export async function POST(request) {
       .eq('status', 'active')
 
     if (betsError) {
+      console.error('❌ [BET-SETTLE] Database error fetching bets:', betsError)
       throw new Error('Failed to fetch bets: ' + betsError.message)
     }
 
+    console.log('📊 [BET-SETTLE] Database query result:', {
+      betsFound: bets?.length || 0,
+      bets: bets?.map(bet => ({
+        id: bet.id,
+        userId: bet.user_id,
+        teamBet: bet.team_bet,
+        amount: bet.amount,
+        status: bet.status
+      })) || []
+    })
+
     if (!bets || bets.length === 0) {
+      console.log('⚠️ [BET-SETTLE] No active bets found for match:', matchId)
+      
       return NextResponse.json({
         success: true,
         message: 'No active bets found for this match',
@@ -34,17 +66,40 @@ export async function POST(request) {
       })
     }
 
-    console.log(`📊 Found ${bets.length} active bets to settle`)
+    console.log(`📊 [BET-SETTLE] Found ${bets.length} active bets to settle`)
 
     // Separate winning and losing bets
     const winningBets = bets.filter(bet => bet.team_bet === winningTeam)
     const losingBets = bets.filter(bet => bet.team_bet !== winningTeam)
 
-    console.log(`✅ ${winningBets.length} winning bets, ❌ ${losingBets.length} losing bets`)
+    console.log('🏆 [BET-SETTLE] Bet categorization:', {
+      winningBets: winningBets.length,
+      losingBets: losingBets.length,
+      winningTeam,
+      winningBetDetails: winningBets.map(bet => ({
+        id: bet.id,
+        userId: bet.user_id,
+        teamBet: bet.team_bet,
+        amount: bet.amount
+      })),
+      losingBetDetails: losingBets.map(bet => ({
+        id: bet.id,
+        userId: bet.user_id,
+        teamBet: bet.team_bet,
+        amount: bet.amount
+      }))
+    })
 
     // Calculate total pool and payouts
     const totalPool = bets.reduce((sum, bet) => sum + parseFloat(bet.amount), 0)
     const winningPool = winningBets.reduce((sum, bet) => sum + parseFloat(bet.amount), 0)
+    
+    console.log('💰 [BET-SETTLE] Pool calculations:', {
+      totalPool,
+      winningPool,
+      losingPool: totalPool - winningPool,
+      averageBet: totalPool / bets.length
+    })
     
     let results = []
 

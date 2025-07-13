@@ -3,16 +3,29 @@ import { supabaseAdmin } from '../../utils/supabase'
 
 export async function POST(request) {
   try {
-    const { code } = await request.json()
+    console.log('🔐 [EXCHANGE-TOKEN] Processing Google token exchange...')
+    
+    const requestBody = await request.json()
+    const { code } = requestBody
+    
+    console.log('📋 [EXCHANGE-TOKEN] Request data:', {
+      hasCode: !!code,
+      codeLength: code?.length || 0
+    })
 
     if (!code) {
+      console.log('❌ [EXCHANGE-TOKEN] Missing authorization code')
       return NextResponse.json({ 
         success: false, 
         error: 'Authorization code is required' 
       }, { status: 400 })
     }
+    
+    console.log('✅ [EXCHANGE-TOKEN] Authorization code received')
 
     // Exchange code for tokens
+    console.log('🔑 [EXCHANGE-TOKEN] Exchanging code for tokens with Google...')
+    
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: {
@@ -26,10 +39,17 @@ export async function POST(request) {
         grant_type: 'authorization_code'
       })
     })
+    
+    console.log('🔑 [EXCHANGE-TOKEN] Google token response status:', tokenResponse.status)
 
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text()
-      console.error('Token exchange error:', errorData)
+      console.error('❌ [EXCHANGE-TOKEN] Token exchange error:', {
+        status: tokenResponse.status,
+        statusText: tokenResponse.statusText,
+        errorData
+      })
+      
       return NextResponse.json({ 
         success: false, 
         error: 'Failed to exchange authorization code' 
@@ -37,8 +57,17 @@ export async function POST(request) {
     }
 
     const tokens = await tokenResponse.json()
+    
+    console.log('✅ [EXCHANGE-TOKEN] Tokens received from Google:', {
+      hasAccessToken: !!tokens.access_token,
+      hasRefreshToken: !!tokens.refresh_token,
+      hasIdToken: !!tokens.id_token,
+      expiresIn: tokens.expires_in
+    })
 
     // Fetch user profile from Google
+    console.log('👤 [EXCHANGE-TOKEN] Fetching user profile from Google...')
+    
     const profileResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
       headers: {
         'Authorization': `Bearer ${tokens.access_token}`
@@ -46,6 +75,11 @@ export async function POST(request) {
     })
 
     if (!profileResponse.ok) {
+      console.error('❌ [EXCHANGE-TOKEN] Failed to fetch profile:', {
+        status: profileResponse.status,
+        statusText: profileResponse.statusText
+      })
+      
       return NextResponse.json({ 
         success: false, 
         error: 'Failed to fetch user profile' 
@@ -53,16 +87,31 @@ export async function POST(request) {
     }
 
     const googleProfile = await profileResponse.json()
+    
+    console.log('👤 [EXCHANGE-TOKEN] Google profile received:', {
+      id: googleProfile.id,
+      email: googleProfile.email,
+      name: googleProfile.name,
+      verified_email: googleProfile.verified_email
+    })
 
     // Calculate token expiration
     const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000))
 
     // Check if user already exists in profiles table
+    console.log('💾 [EXCHANGE-TOKEN] Checking for existing profile...')
+    
     const { data: existingProfile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('*')
       .eq('google_id', googleProfile.id)
       .single()
+      
+    console.log('💾 [EXCHANGE-TOKEN] Profile check result:', {
+      profileExists: !!existingProfile,
+      errorCode: profileError?.code,
+      errorMessage: profileError?.message
+    })
 
     let userProfile
 
@@ -87,6 +136,8 @@ export async function POST(request) {
         bio: null
       }
 
+      console.log('👥 [EXCHANGE-TOKEN] Creating new user profile...')
+      
       const { data: createdProfile, error: createError } = await supabaseAdmin
         .from('profiles')
         .insert([newProfile])
@@ -94,16 +145,29 @@ export async function POST(request) {
         .single()
 
       if (createError) {
-        console.error('Profile creation error:', createError)
+        console.error('❌ [EXCHANGE-TOKEN] Profile creation error:', {
+          error: createError.message,
+          code: createError.code,
+          details: createError.details
+        })
+        
         return NextResponse.json({ 
           success: false, 
           error: 'Failed to create user profile' 
         }, { status: 500 })
       }
+      
+      console.log('✅ [EXCHANGE-TOKEN] New profile created:', {
+        id: createdProfile.id,
+        email: createdProfile.email,
+        fanTokens: createdProfile.fan_tokens
+      })
 
       userProfile = createdProfile
     } else {
       // User exists, update tokens and profile data
+      console.log('🔄 [EXCHANGE-TOKEN] Updating existing user profile...')
+      
       const { data: updatedProfile, error: updateError } = await supabaseAdmin
         .from('profiles')
         .update({
@@ -122,17 +186,30 @@ export async function POST(request) {
         .single()
 
       if (updateError) {
-        console.error('Profile update error:', updateError)
+        console.error('❌ [EXCHANGE-TOKEN] Profile update error:', {
+          error: updateError.message,
+          code: updateError.code,
+          details: updateError.details
+        })
+        
         return NextResponse.json({ 
           success: false, 
           error: 'Failed to update user profile' 
         }, { status: 500 })
       }
+      
+      console.log('✅ [EXCHANGE-TOKEN] Profile updated:', {
+        id: updatedProfile.id,
+        email: updatedProfile.email,
+        fanTokens: updatedProfile.fan_tokens
+      })
 
       userProfile = updatedProfile
     }
 
     // Generate session token
+    console.log('🎫 [EXCHANGE-TOKEN] Creating session...')
+    
     const sessionToken = generateSessionToken()
 
     // Create OAuth session
@@ -148,12 +225,19 @@ export async function POST(request) {
       }])
 
     if (sessionError) {
-      console.error('Session creation error:', sessionError)
+      console.error('⚠️ [EXCHANGE-TOKEN] Session creation error:', {
+        error: sessionError.message,
+        code: sessionError.code
+      })
       // Continue anyway, session creation is not critical
+    } else {
+      console.log('✅ [EXCHANGE-TOKEN] Session created successfully')
     }
 
     // Return success response
-    return NextResponse.json({
+    console.log('✅ [EXCHANGE-TOKEN] Token exchange completed successfully')
+    
+    const responseData = {
       success: true,
       user: {
         id: userProfile.id,
@@ -176,10 +260,25 @@ export async function POST(request) {
         expires_in: tokens.expires_in
       },
       session_token: sessionToken
+    }
+    
+    console.log('📦 [EXCHANGE-TOKEN] Response data:', {
+      success: responseData.success,
+      userId: responseData.user.id,
+      userEmail: responseData.user.email,
+      fanTokens: responseData.user.fan_tokens,
+      hasTokens: !!responseData.tokens.access_token
     })
+    
+    return NextResponse.json(responseData)
 
   } catch (error) {
-    console.error('Token exchange error:', error)
+    console.error('❌ [EXCHANGE-TOKEN] Unexpected error:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name
+    })
+    
     return NextResponse.json({ 
       success: false, 
       error: 'Internal server error' 
