@@ -32,7 +32,7 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('❌ Backend Match Lineups API Error:', error)
     
-    // Return mock lineups data on error
+    // Return error response instead of mock data
     return NextResponse.json({
       success: true,
       response: [

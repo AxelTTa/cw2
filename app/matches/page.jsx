@@ -38,8 +38,8 @@ export default function Matches() {
       const upcomingResponse = await fetch('/api/matches?status=upcoming&limit=20')
       const upcomingData = await upcomingResponse.json()
 
-      // Fetch past matches
-      const pastResponse = await fetch('/api/matches?status=finished&limit=20')
+      // Fetch past matches  
+      const pastResponse = await fetch('/api/matches?status=recent&limit=20')
       const pastData = await pastResponse.json()
 
       // Generate stats from the data

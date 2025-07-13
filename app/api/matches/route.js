@@ -63,28 +63,29 @@ async function fetchAllMatches() {
   console.log('🏆 Backend Starting matches fetch from multiple competitions...')
   
   try {
-    // Prioritize Club World Cup for 2025 season
-    const seasons = [2025, 2024, 2023]
+    // Get real matches from multiple popular leagues - current season first
+    const currentYear = new Date().getFullYear()
+    const seasons = [currentYear, currentYear - 1]
     
     for (const season of seasons) {
-      console.log(`🎯 Backend Trying season ${season} for Club World Cup matches`)
+      console.log(`🎯 Backend Trying season ${season} for real matches`)
       
-      // Try Club World Cup first, then other competitions
+      // Use real popular leagues that actually have data
       const allMatches = []
-      const prioritizedLeagueIds = [
-        LEAGUE_IDS.CLUB_WORLD_CUP,
-        LEAGUE_IDS.CHAMPIONS_LEAGUE,
-        LEAGUE_IDS.PREMIER_LEAGUE,
-        LEAGUE_IDS.LA_LIGA,
-        LEAGUE_IDS.BUNDESLIGA
+      const leagueIds = [
+        LEAGUE_IDS.PREMIER_LEAGUE,    // Premier League
+        LEAGUE_IDS.CHAMPIONS_LEAGUE,  // Champions League
+        LEAGUE_IDS.LA_LIGA,          // La Liga
+        LEAGUE_IDS.BUNDESLIGA,       // Bundesliga
+        LEAGUE_IDS.SERIE_A,          // Serie A
+        LEAGUE_IDS.LIGUE_1,          // Ligue 1
+        LEAGUE_IDS.UEFA_EUROPA       // Europa League
       ]
       
-      for (const leagueId of prioritizedLeagueIds) {
+      for (const leagueId of leagueIds) {
         const endpoint = `/fixtures`
-        // For Club World Cup, get more matches; for others, get recent and upcoming
-        const url = leagueId === LEAGUE_IDS.CLUB_WORLD_CUP 
-          ? `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&next=20`
-          : `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=5&next=5`
+        // Get recent, live, and upcoming matches
+        const url = `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=10&next=10`
         
         logApiRequest(endpoint, { league: leagueId, season })
         
@@ -101,19 +102,21 @@ async function fetchAllMatches() {
           logApiResponse(endpoint, response, data)
 
           if (response.ok && data.response && data.response.length > 0) {
-            console.log(`✅ Backend Found ${data.response.length} matches for league ${leagueId} season ${season}`)
+            console.log(`✅ Backend Found ${data.response.length} real matches for league ${leagueId} season ${season}`)
             allMatches.push(...data.response)
+          } else {
+            console.warn(`⚠️ Backend No data for league ${leagueId} season ${season}`)
           }
           
           // Small delay to avoid hitting rate limits
-          await new Promise(resolve => setTimeout(resolve, 150))
+          await new Promise(resolve => setTimeout(resolve, 100))
         } catch (err) {
           console.warn(`⚠️ Backend Failed to fetch from league ${leagueId}:`, err.message)
         }
       }
       
       if (allMatches.length > 0) {
-        console.log(`✅ Backend Found total ${allMatches.length} matches from all leagues for season ${season}`)
+        console.log(`✅ Backend Found total ${allMatches.length} real matches for season ${season}`)
         
         // Transform the matches data
         const matches = allMatches.map(match => ({
@@ -139,158 +142,58 @@ async function fetchAllMatches() {
           round: match.league.round,
           league: match.league.name,
           season: match.league.season,
-          isClubWorldCup: match.league.id === LEAGUE_IDS.CLUB_WORLD_CUP
+          isClubWorldCup: false // These are real matches from major leagues
         }))
         
-        // Sort by priority: Club World Cup first, then by date
+        // Sort by date - most recent/upcoming first
         matches.sort((a, b) => {
-          if (a.isClubWorldCup && !b.isClubWorldCup) return -1
-          if (!a.isClubWorldCup && b.isClubWorldCup) return 1
-          return new Date(b.date) - new Date(a.date)
+          const dateA = new Date(a.date)
+          const dateB = new Date(b.date) 
+          const now = new Date()
+          
+          // Prioritize live matches first
+          if (a.status === 'live' && b.status !== 'live') return -1
+          if (b.status === 'live' && a.status !== 'live') return 1
+          
+          // Then upcoming matches
+          if (a.status === 'ns' && b.status !== 'ns') return -1
+          if (b.status === 'ns' && a.status !== 'ns') return 1
+          
+          // For same status, sort by date
+          return Math.abs(dateA - now) - Math.abs(dateB - now)
         })
         
-        console.log('📊 Backend Sample matches:', matches.slice(0, 3).map(m => ({
+        console.log('📊 Backend Sample real matches:', matches.slice(0, 3).map(m => ({
           id: m.id,
           homeTeam: m.homeTeam.name,
           awayTeam: m.awayTeam.name,
           score: `${m.score.home}-${m.score.away}`,
           status: m.status,
           date: m.date,
-          league: m.league,
-          isClubWorldCup: m.isClubWorldCup
+          league: m.league
         })))
         
         return matches
       }
     }
     
-    // If no real matches found, return mock data for demo
-    console.log('⚠️ Backend No real matches found, returning mock data')
-    return getMockMatches()
+    // If no real matches found, return empty array instead of fake data
+    console.log('⚠️ Backend No real matches found, returning empty array')
+    return []
     
   } catch (error) {
-    console.error('❌ Backend Error fetching Club World Cup matches:', {
+    console.error('❌ Backend Error fetching real matches:', {
       error: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString()
     })
     
-    // Return mock data on error
-    return getMockMatches()
+    // Return empty array on error instead of fake data
+    return []
   }
 }
 
-function getMockMatches() {
-  console.log('🎭 Backend Generating mock Club World Cup matches for demo')
-  
-  const mockTeams = [
-    { id: 49, name: 'Chelsea', logo: 'https://media.api-sports.io/football/teams/49.png' },
-    { id: 50, name: 'Manchester City', logo: 'https://media.api-sports.io/football/teams/50.png' },
-    { id: 85, name: 'Paris Saint Germain', logo: 'https://media.api-sports.io/football/teams/85.png' },
-    { id: 157, name: 'Bayern München', logo: 'https://media.api-sports.io/football/teams/157.png' },
-    { id: 541, name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png' },
-    { id: 496, name: 'Juventus', logo: 'https://media.api-sports.io/football/teams/496.png' },
-    { id: 127, name: 'Flamengo', logo: 'https://media.api-sports.io/football/teams/127.png' },
-    { id: 9568, name: 'Inter Miami', logo: 'https://media.api-sports.io/football/teams/9568.png' },
-    { id: 128, name: 'River Plate', logo: 'https://media.api-sports.io/football/teams/128.png' },
-    { id: 131, name: 'Boca Juniors', logo: 'https://media.api-sports.io/football/teams/131.png' },
-    { id: 2274, name: 'Al Hilal', logo: 'https://media.api-sports.io/football/teams/2274.png' },
-    { id: 2281, name: 'Al Nassr', logo: 'https://media.api-sports.io/football/teams/2281.png' }
-  ]
-  
-  const rounds = ['Group Stage', 'Round of 16', 'Quarter Finals', 'Semi Finals', 'Final']
-  const competitions = [
-    { name: 'FIFA Club World Cup', isClubWorldCup: true, weight: 0.6 },
-    { name: 'UEFA Champions League', isClubWorldCup: false, weight: 0.2 },
-    { name: 'Premier League', isClubWorldCup: false, weight: 0.1 },
-    { name: 'La Liga', isClubWorldCup: false, weight: 0.05 },
-    { name: 'Bundesliga', isClubWorldCup: false, weight: 0.05 }
-  ]
-  
-  const matches = []
-  
-  for (let i = 0; i < 20; i++) {
-    const homeTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
-    let awayTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
-    while (awayTeam.id === homeTeam.id) {
-      awayTeam = mockTeams[Math.floor(Math.random() * mockTeams.length)]
-    }
-    
-    // Weight towards upcoming matches and Club World Cup
-    const isUpcoming = Math.random() < 0.7 // 70% chance of upcoming matches
-    const status = isUpcoming ? 'ns' : (Math.random() < 0.8 ? 'ft' : 'live')
-    const homeScore = status === 'ns' ? null : Math.floor(Math.random() * 4)
-    const awayScore = status === 'ns' ? null : Math.floor(Math.random() * 4)
-    
-    // Weight competition selection towards Club World Cup
-    const randomValue = Math.random()
-    let selectedCompetition = competitions[competitions.length - 1] // default
-    let cumulativeWeight = 0
-    for (const comp of competitions) {
-      cumulativeWeight += comp.weight
-      if (randomValue <= cumulativeWeight) {
-        selectedCompetition = comp
-        break
-      }
-    }
-    
-    // Create dates based on status
-    const baseDate = new Date()
-    let matchDate
-    if (status === 'ns') {
-      // Upcoming matches: 1 to 30 days in the future
-      const daysOffset = Math.floor(Math.random() * 30) + 1
-      matchDate = new Date(baseDate.getTime() + (daysOffset * 24 * 60 * 60 * 1000))
-    } else if (status === 'live') {
-      // Live matches: happening now (within last hour)
-      const minutesOffset = Math.floor(Math.random() * 60) - 30
-      matchDate = new Date(baseDate.getTime() + (minutesOffset * 60 * 1000))
-    } else {
-      // Recent matches: 1 to 7 days ago
-      const daysOffset = -(Math.floor(Math.random() * 7) + 1)
-      matchDate = new Date(baseDate.getTime() + (daysOffset * 24 * 60 * 60 * 1000))
-    }
-    
-    matches.push({
-      id: 1000000 + i,
-      homeTeam,
-      awayTeam,
-      score: {
-        home: homeScore,
-        away: awayScore
-      },
-      status,
-      statusLong: status === 'ft' ? 'Match Finished' : status === 'live' ? 'In Play' : 'Not Started',
-      date: matchDate.toISOString(),
-      venue: selectedCompetition.isClubWorldCup ? 'Mercedes-Benz Stadium' : 'Stadium',
-      round: rounds[Math.floor(Math.random() * rounds.length)],
-      league: selectedCompetition.name,
-      season: 2025,
-      isClubWorldCup: selectedCompetition.isClubWorldCup
-    })
-  }
-  
-  // Sort by priority: Club World Cup first, then by date (upcoming first for ns status)
-  matches.sort((a, b) => {
-    // Prioritize Club World Cup
-    if (a.isClubWorldCup && !b.isClubWorldCup) return -1
-    if (!a.isClubWorldCup && b.isClubWorldCup) return 1
-    
-    // For same competition type, sort by date appropriately
-    const dateA = new Date(a.date)
-    const dateB = new Date(b.date)
-    
-    // For upcoming matches, sort by earliest first
-    if (a.status === 'ns' && b.status === 'ns') {
-      return dateA - dateB
-    }
-    
-    // For non-upcoming, sort by most recent first
-    return dateB - dateA
-  })
-  
-  return matches
-}
+// Mock data function removed - we only use real API data now
 
 export const dynamic = 'force-dynamic'
 
@@ -310,7 +213,7 @@ export async function GET(request) {
     
     // Filter by status if requested
     let filteredMatches = allMatches
-    if (status) {
+    if (status && allMatches.length > 0) {
       const now = new Date()
       switch (status) {
         case 'recent':
@@ -319,7 +222,9 @@ export async function GET(request) {
           ).slice(0, limit)
           break
         case 'live':
-          filteredMatches = allMatches.filter(m => m.status === 'live')
+          filteredMatches = allMatches.filter(m => 
+            m.status === 'live' || m.status === '1h' || m.status === '2h' || m.status === 'ht'
+          )
           break
         case 'upcoming':
           filteredMatches = allMatches.filter(m => 
@@ -329,8 +234,10 @@ export async function GET(request) {
         default:
           filteredMatches = allMatches.slice(0, limit)
       }
-    } else {
+    } else if (allMatches.length > 0) {
       filteredMatches = allMatches.slice(0, limit)
+    } else {
+      filteredMatches = []
     }
     
     console.log('✅ Backend Successfully processed matches request:', {

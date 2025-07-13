@@ -87,14 +87,9 @@ export async function GET(request, { params }) {
       }
     }
 
-    // If no real data found, provide mock betting odds for demo
+    // Only use real betting odds from API
     if (!bettingOdds) {
-      bettingOdds = {
-        home: (1.5 + Math.random() * 2).toFixed(2),
-        draw: (2.8 + Math.random() * 1.5).toFixed(2), 
-        away: (1.8 + Math.random() * 2.5).toFixed(2),
-        bookmaker: 'Demo Odds'
-      }
+      bettingOdds = null
     }
 
     const enrichedMatch = {
@@ -123,18 +118,11 @@ export async function GET(request, { params }) {
       timestamp: new Date().toISOString()
     })
     
-    // Return mock data on error
+    // Return error response instead of mock data
     return NextResponse.json({
-      success: true,
-      match: {
-        odds: {
-          home: (1.5 + Math.random() * 2).toFixed(2),
-          draw: (2.8 + Math.random() * 1.5).toFixed(2), 
-          away: (1.8 + Math.random() * 2.5).toFixed(2),
-          bookmaker: 'Mock Odds'
-        }
-      },
+      success: false,
+      error: 'Failed to fetch match details',
       timestamp: new Date().toISOString()
-    })
+    }, { status: 500 })
   }
 }

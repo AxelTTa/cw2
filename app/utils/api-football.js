@@ -203,9 +203,9 @@ export const apiFootball = {
       }
     }
 
-    // If all API attempts fail, provide fallback mock data for Club World Cup 2025
-    console.log('🔄 API requests failed, using fallback Club World Cup 2025 data...')
-    return this.getClubWorldCup2025MockData()
+    // If all API attempts fail, return empty array instead of mock data
+    console.log('🔄 API requests failed, returning empty array')
+    return []
   },
 
   getClubWorldCup2025MockData() {
@@ -329,9 +329,9 @@ export const apiFootball = {
       }
     }
 
-    // If API fails, return mock upcoming matches
-    console.log('🔄 API failed, generating mock Club World Cup 2025 matches...')
-    return this.getClubWorldCup2025MockMatches()
+    // If API fails, return empty array instead of mock data
+    console.log('🔄 API failed, returning empty array')
+    return []
   },
 
   getClubWorldCup2025MockMatches() {

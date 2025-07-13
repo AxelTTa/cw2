@@ -32,25 +32,11 @@ export async function GET(request, { params }) {
   } catch (error) {
     console.error('❌ Backend Match Odds API Error:', error)
     
-    // Return mock odds data on error
+    // Return error response instead of mock data
     return NextResponse.json({
-      success: true,
-      response: [
-        {
-          bookmaker: { name: 'Demo Bookmaker' },
-          bets: [
-            {
-              name: 'Match Winner',
-              values: [
-                { value: 'Home', odd: (1.5 + Math.random() * 2).toFixed(2) },
-                { value: 'Draw', odd: (2.8 + Math.random() * 1.5).toFixed(2) },
-                { value: 'Away', odd: (1.8 + Math.random() * 2.5).toFixed(2) }
-              ]
-            }
-          ]
-        }
-      ],
+      success: false,
+      error: 'Failed to fetch match odds',
       timestamp: new Date().toISOString()
-    })
+    }, { status: 500 })
   }
 }
