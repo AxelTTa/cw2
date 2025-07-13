@@ -647,17 +647,23 @@ export default function PredictionGrid() {
 
         @media (max-width: 768px) {
           .hero-section {
-            padding: 40px 15px 30px !important;
+            padding: 30px 10px 20px !important;
+            overflow: hidden;
           }
           
           .hero-title {
-            font-size: 32px !important;
-            margin-bottom: 15px !important;
+            font-size: 22px !important;
+            margin-bottom: 10px !important;
+            line-height: 1.2;
+            word-wrap: break-word;
+            padding: 0 5px;
           }
           
           .hero-subtitle {
-            font-size: 16px !important;
-            margin-bottom: 25px !important;
+            font-size: 14px !important;
+            margin-bottom: 20px !important;
+            padding: 0 10px;
+            line-height: 1.3;
           }
           
           .user-stats {

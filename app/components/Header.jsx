@@ -455,17 +455,17 @@ export default function Header() {
           }
           
           header a {
-            font-size: 20px !important;
+            font-size: 18px !important;
           }
         }
         
         @media (max-width: 480px) {
           header {
-            padding: 10px 12px !important;
+            padding: 8px 10px !important;
           }
           
           header a {
-            font-size: 18px !important;
+            font-size: 16px !important;
           }
           
           .mobile-menu-btn {

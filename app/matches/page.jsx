@@ -574,7 +574,7 @@ export default function Matches() {
                 ) : (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                     gap: '24px'
                   }}>
                     {matchData.live.map(match => (
@@ -613,7 +613,7 @@ export default function Matches() {
                 ) : (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                     gap: '24px'
                   }}>
                     {matchData.upcoming.map(match => (
@@ -652,7 +652,7 @@ export default function Matches() {
                 ) : (
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                     gap: '24px'
                   }}>
                     {matchData.past.map(match => (
@@ -874,7 +874,117 @@ export default function Matches() {
 
         @media (max-width: 768px) {
           section h1 {
-            font-size: 36px !important;
+            font-size: 24px !important;
+            margin-bottom: 10px !important;
+            line-height: 1.2;
+            word-wrap: break-word;
+            padding: 0 10px;
+          }
+          
+          section p {
+            font-size: 14px !important;
+            margin-bottom: 20px !important;
+            padding: 0 10px;
+          }
+          
+          .tab-container {
+            padding: 0 5px !important;
+            margin-bottom: 15px !important;
+            overflow-x: auto;
+          }
+          
+          .tab-button {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+            margin-right: 5px !important;
+            white-space: nowrap;
+          }
+          
+          .match-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            padding: 0 5px !important;
+          }
+          
+          .match-card {
+            padding: 12px 8px !important;
+            margin: 0 !important;
+          }
+          
+          .team-info {
+            min-width: auto !important;
+            flex: 1 !important;
+          }
+          
+          .team-name {
+            font-size: 12px !important;
+            line-height: 1.2 !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          
+          .team-logo {
+            width: 30px !important;
+            height: 30px !important;
+          }
+          
+          .match-score {
+            font-size: 16px !important;
+            padding: 0 5px !important;
+          }
+          
+          .match-status {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+          }
+          
+          .match-details {
+            font-size: 10px !important;
+            flex-direction: column !important;
+            gap: 3px !important;
+          }
+          
+          .match-actions {
+            gap: 5px !important;
+            flex-direction: column !important;
+          }
+          
+          .action-button {
+            width: 100% !important;
+            padding: 6px 8px !important;
+            font-size: 10px !important;
+          }
+          
+          .stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            padding: 0 5px !important;
+          }
+          
+          .stats-card {
+            padding: 12px 8px !important;
+          }
+          
+          .chat-modal {
+            padding: 5px !important;
+          }
+          
+          .chat-modal-content {
+            width: 98% !important;
+            height: 95vh !important;
+            max-width: 98vw !important;
+          }
+          
+          .chat-header {
+            padding: 10px !important;
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          .chat-title {
+            font-size: 14px !important;
+            text-align: center !important;
+            word-wrap: break-word !important;
           }
           
           main h2 {
