@@ -279,18 +279,23 @@ export default function Header() {
         position: 'fixed',
         top: '70px',
         left: mobileMenuOpen ? '0' : '-100%',
-        width: '100%',
-        height: 'calc(100vh - 70px)',
+        width: '280px',
+        maxWidth: '85vw',
+        height: 'auto',
+        maxHeight: 'calc(100vh - 90px)',
         background: 'rgba(10, 10, 10, 0.98)',
         backdropFilter: 'blur(20px)',
-        padding: '20px',
+        padding: '15px',
         transition: 'left 0.3s ease',
         zIndex: 999,
         display: mobileMenuOpen ? 'flex' : 'none',
         flexDirection: 'column',
-        gap: '10px',
+        gap: '8px',
         visibility: mobileMenuOpen ? 'visible' : 'hidden',
-        opacity: mobileMenuOpen ? 1 : 0
+        opacity: mobileMenuOpen ? 1 : 0,
+        borderRadius: '0 0 12px 0',
+        border: '1px solid rgba(0, 255, 136, 0.2)',
+        overflowY: 'auto'
       }} className="mobile-nav">
         {navItems.map((item) => {
           const isActive = isActivePath(item)
@@ -302,14 +307,13 @@ export default function Header() {
               style={{
                 color: isActive ? '#00ff88' : '#999',
                 textDecoration: 'none',
-                fontSize: '18px',
+                fontSize: '16px',
                 fontWeight: isActive ? '600' : '500',
-                padding: '15px 20px',
-                borderRadius: '12px',
+                padding: '12px 16px',
+                borderRadius: '8px',
                 transition: 'all 0.3s ease',
                 background: isActive ? 'rgba(0, 255, 136, 0.1)' : 'transparent',
-                border: isActive ? '1px solid rgba(0, 255, 136, 0.3)' : '1px solid transparent',
-                borderBottom: '1px solid #333'
+                border: isActive ? '1px solid rgba(0, 255, 136, 0.3)' : '1px solid transparent'
               }}
             >
               {item.label}
@@ -319,46 +323,46 @@ export default function Header() {
         
         {/* Mobile User Actions */}
         <div style={{
-          marginTop: '20px',
-          padding: '20px',
+          marginTop: '15px',
+          padding: '15px 0',
           borderTop: '1px solid #333'
         }}>
           {userProfile ? (
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center',
-              gap: '15px'
+              alignItems: 'stretch',
+              gap: '12px'
             }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '15px'
+                gap: '12px'
               }}>
                 <div style={{
-                  width: '40px',
-                  height: '40px',
+                  width: '32px',
+                  height: '32px',
                   borderRadius: '50%',
                   backgroundColor: '#00ff88',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '16px',
+                  fontSize: '14px',
                   fontWeight: 'bold',
                   color: '#000'
                 }}>
                   {userProfile.username?.[0]?.toUpperCase() || userProfile.email?.[0]?.toUpperCase() || '?'}
                 </div>
-                <div>
+                <div style={{ flex: 1 }}>
                   <div style={{
-                    fontSize: '16px',
+                    fontSize: '14px',
                     fontWeight: 'bold',
                     color: '#ffffff'
                   }}>
                     {userProfile.display_name || userProfile.username || userProfile.email?.split('@')[0]}
                   </div>
                   <div style={{
-                    fontSize: '14px',
+                    fontSize: '12px',
                     color: '#888'
                   }}>
                     Level {userProfile.level || 1} • {userProfile.xp || 0} XP
@@ -374,9 +378,9 @@ export default function Header() {
                   backgroundColor: 'transparent',
                   border: '1px solid #ff4444',
                   color: '#ff4444',
-                  padding: '12px 24px',
-                  borderRadius: '8px',
-                  fontSize: '14px',
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   width: '100%'
@@ -392,10 +396,10 @@ export default function Header() {
               style={{
                 backgroundColor: '#00ff88',
                 color: '#000',
-                padding: '15px 20px',
-                borderRadius: '8px',
+                padding: '12px 16px',
+                borderRadius: '6px',
                 textDecoration: 'none',
-                fontSize: '16px',
+                fontSize: '14px',
                 fontWeight: 'bold',
                 transition: 'all 0.3s ease',
                 textAlign: 'center',
@@ -460,12 +464,14 @@ export default function Header() {
           
           /* Improved mobile menu spacing */
           .mobile-nav {
-            padding: 15px !important;
+            padding: 12px !important;
+            width: 270px !important;
+            maxWidth: 85vw !important;
           }
           
           .mobile-nav a {
-            padding: 12px 16px !important;
-            font-size: 16px !important;
+            padding: 10px 14px !important;
+            font-size: 15px !important;
           }
         }
         
@@ -486,10 +492,12 @@ export default function Header() {
           /* Better mobile menu for small screens */
           .mobile-nav {
             padding: 10px !important;
+            width: 250px !important;
+            maxWidth: 90vw !important;
           }
           
           .mobile-nav a {
-            padding: 10px 12px !important;
+            padding: 8px 12px !important;
             font-size: 14px !important;
           }
         }
@@ -506,6 +514,17 @@ export default function Header() {
           .mobile-menu-btn {
             padding: 5px 8px !important;
             font-size: 14px !important;
+          }
+          
+          .mobile-nav {
+            width: 220px !important;
+            maxWidth: 95vw !important;
+            padding: 8px !important;
+          }
+          
+          .mobile-nav a {
+            padding: 6px 10px !important;
+            font-size: 13px !important;
           }
         }
 

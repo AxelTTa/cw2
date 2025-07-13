@@ -1594,3 +1594,12 @@ TypeError: Cannot read properties of undefined (reading 'baseUrl')
 <w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
 <w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
 <w>  at resolve commonjs /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
+ ✓ Compiled in 192ms (291 modules)
+ ✓ Compiled in 56ms (291 modules)
+ ✓ Compiled in 39ms (291 modules)
+ ✓ Compiled in 44ms (291 modules)
+ ✓ Compiled in 52ms (291 modules)
+ ✓ Compiled in 47ms (291 modules)
+ ✓ Compiled in 46ms (291 modules)
+ ✓ Compiled in 60ms (291 modules)
+ ✓ Compiled in 35ms (291 modules)
