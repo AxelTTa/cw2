@@ -358,7 +358,7 @@ export default function Matches() {
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text'
         }}>
-          ⚽ Match Center
+          🏆 FIFA Club World Cup 2025
         </h1>
         <p style={{
           fontSize: '20px',
@@ -367,7 +367,7 @@ export default function Matches() {
           margin: '0 auto',
           lineHeight: '1.6'
         }}>
-          Live scores, upcoming fixtures, past results, and tournament statistics
+          Follow all 63 matches from the expanded 32-team tournament across the USA
         </p>
       </section>
 

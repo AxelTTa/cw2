@@ -3,19 +3,13 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-// Popular league IDs for fetching matches from multiple competitions
-const LEAGUE_IDS = {
-  CLUB_WORLD_CUP: 15,
-  CHAMPIONS_LEAGUE: 2,
-  PREMIER_LEAGUE: 39,
-  LA_LIGA: 140,
-  BUNDESLIGA: 78,
-  SERIE_A: 135,
-  LIGUE_1: 61,
-  UEFA_EUROPA: 3,
-  COPA_LIBERTADORES: 13,
-  AFC_CHAMPIONS: 1,
-  CAF_CHAMPIONS: 12
+// FIFA Club World Cup 2025 - League ID confirmed from API
+const FIFA_CLUB_WORLD_CUP_2025 = {
+  LEAGUE_ID: 15,
+  SEASON: 2025,
+  NAME: 'FIFA Club World Cup',
+  START_DATE: '2025-06-15',
+  END_DATE: '2025-07-13'
 }
 
 const logApiRequest = (endpoint, params) => {
@@ -59,136 +53,105 @@ const logApiResponse = (endpoint, response, data) => {
   }
 }
 
-async function fetchAllMatches() {
-  console.log('🏆 Backend Starting matches fetch from multiple competitions...')
+async function fetchClubWorldCupMatches() {
+  console.log('🏆 Backend Starting FIFA Club World Cup 2025 matches fetch...')
   
   try {
-    // Get real matches from multiple popular leagues - current season first
-    const currentYear = new Date().getFullYear()
-    const seasons = [currentYear, currentYear - 1]
+    const endpoint = `/fixtures`
+    const url = `${BASE_URL}${endpoint}?league=${FIFA_CLUB_WORLD_CUP_2025.LEAGUE_ID}&season=${FIFA_CLUB_WORLD_CUP_2025.SEASON}`
     
-    for (const season of seasons) {
-      console.log(`🎯 Backend Trying season ${season} for real matches`)
-      
-      // Use real popular leagues that actually have data
-      const allMatches = []
-      const leagueIds = [
-        LEAGUE_IDS.PREMIER_LEAGUE,    // Premier League
-        LEAGUE_IDS.CHAMPIONS_LEAGUE,  // Champions League
-        LEAGUE_IDS.LA_LIGA,          // La Liga
-        LEAGUE_IDS.BUNDESLIGA,       // Bundesliga
-        LEAGUE_IDS.SERIE_A,          // Serie A
-        LEAGUE_IDS.LIGUE_1,          // Ligue 1
-        LEAGUE_IDS.UEFA_EUROPA       // Europa League
-      ]
-      
-      for (const leagueId of leagueIds) {
-        const endpoint = `/fixtures`
-        // Get recent, live, and upcoming matches
-        const url = `${BASE_URL}${endpoint}?league=${leagueId}&season=${season}&last=10&next=10`
-        
-        logApiRequest(endpoint, { league: leagueId, season })
-        
-        try {
-          const response = await fetch(url, {
-            method: 'GET',
-            headers: {
-              'X-RapidAPI-Key': API_KEY,
-              'X-RapidAPI-Host': 'v3.football.api-sports.io'
-            }
-          })
-
-          const data = await response.json()
-          logApiResponse(endpoint, response, data)
-
-          if (response.ok && data.response && data.response.length > 0) {
-            console.log(`✅ Backend Found ${data.response.length} real matches for league ${leagueId} season ${season}`)
-            allMatches.push(...data.response)
-          } else {
-            console.warn(`⚠️ Backend No data for league ${leagueId} season ${season}`)
-          }
-          
-          // Small delay to avoid hitting rate limits
-          await new Promise(resolve => setTimeout(resolve, 100))
-        } catch (err) {
-          console.warn(`⚠️ Backend Failed to fetch from league ${leagueId}:`, err.message)
-        }
+    logApiRequest(endpoint, { 
+      league: FIFA_CLUB_WORLD_CUP_2025.LEAGUE_ID, 
+      season: FIFA_CLUB_WORLD_CUP_2025.SEASON,
+      tournament: FIFA_CLUB_WORLD_CUP_2025.NAME 
+    })
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-RapidAPI-Key': API_KEY,
+        'X-RapidAPI-Host': 'v3.football.api-sports.io'
       }
+    })
+
+    const data = await response.json()
+    logApiResponse(endpoint, response, data)
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status} - ${data.message || 'Unknown error'}`)
+    }
+
+    if (data.response && data.response.length > 0) {
+      console.log(`✅ Backend Found ${data.response.length} FIFA Club World Cup 2025 matches`)
       
-      if (allMatches.length > 0) {
-        console.log(`✅ Backend Found total ${allMatches.length} real matches for season ${season}`)
+      // Transform the matches data
+      const matches = data.response.map(match => ({
+        id: match.fixture.id,
+        homeTeam: {
+          id: match.teams.home.id,
+          name: match.teams.home.name,
+          logo: match.teams.home.logo
+        },
+        awayTeam: {
+          id: match.teams.away.id,
+          name: match.teams.away.name,
+          logo: match.teams.away.logo
+        },
+        score: {
+          home: match.goals.home,
+          away: match.goals.away
+        },
+        status: match.fixture.status.short.toLowerCase(),
+        statusLong: match.fixture.status.long,
+        date: match.fixture.date,
+        venue: match.fixture.venue?.name || 'Unknown Venue',
+        round: match.league.round,
+        league: match.league.name,
+        season: match.league.season,
+        referee: match.fixture.referee,
+        elapsed: match.fixture.status.elapsed,
+        isClubWorldCup: true // All matches are Club World Cup
+      }))
+      
+      // Sort by date - most recent first, then upcoming
+      matches.sort((a, b) => {
+        const dateA = new Date(a.date)
+        const dateB = new Date(b.date)
+        const now = new Date()
         
-        // Transform the matches data
-        const matches = allMatches.map(match => ({
-          id: match.fixture.id,
-          homeTeam: {
-            id: match.teams.home.id,
-            name: match.teams.home.name,
-            logo: match.teams.home.logo
-          },
-          awayTeam: {
-            id: match.teams.away.id,
-            name: match.teams.away.name,
-            logo: match.teams.away.logo
-          },
-          score: {
-            home: match.goals.home,
-            away: match.goals.away
-          },
-          status: match.fixture.status.short.toLowerCase(),
-          statusLong: match.fixture.status.long,
-          date: match.fixture.date,
-          venue: match.fixture.venue?.name || 'Unknown Venue',
-          round: match.league.round,
-          league: match.league.name,
-          season: match.league.season,
-          isClubWorldCup: false // These are real matches from major leagues
-        }))
+        // Prioritize live matches first
+        if (a.status === 'live' && b.status !== 'live') return -1
+        if (b.status === 'live' && a.status !== 'live') return 1
         
-        // Sort by date - most recent/upcoming first
-        matches.sort((a, b) => {
-          const dateA = new Date(a.date)
-          const dateB = new Date(b.date) 
-          const now = new Date()
-          
-          // Prioritize live matches first
-          if (a.status === 'live' && b.status !== 'live') return -1
-          if (b.status === 'live' && a.status !== 'live') return 1
-          
-          // Then upcoming matches
-          if (a.status === 'ns' && b.status !== 'ns') return -1
-          if (b.status === 'ns' && a.status !== 'ns') return 1
-          
-          // For same status, sort by date
-          return Math.abs(dateA - now) - Math.abs(dateB - now)
-        })
-        
-        console.log('📊 Backend Sample real matches:', matches.slice(0, 3).map(m => ({
-          id: m.id,
-          homeTeam: m.homeTeam.name,
-          awayTeam: m.awayTeam.name,
-          score: `${m.score.home}-${m.score.away}`,
-          status: m.status,
-          date: m.date,
-          league: m.league
-        })))
-        
-        return matches
-      }
+        // Then sort by date (closest to now first)
+        return Math.abs(dateA - now) - Math.abs(dateB - now)
+      })
+      
+      console.log('📊 Backend Sample FIFA Club World Cup matches:', matches.slice(0, 3).map(m => ({
+        id: m.id,
+        homeTeam: m.homeTeam.name,
+        awayTeam: m.awayTeam.name,
+        score: `${m.score.home}-${m.score.away}`,
+        status: m.status,
+        date: m.date,
+        round: m.round,
+        venue: m.venue
+      })))
+      
+      return matches
+    } else {
+      console.log('⚠️ Backend No FIFA Club World Cup matches found in API response')
+      return []
     }
     
-    // If no real matches found, return empty array instead of fake data
-    console.log('⚠️ Backend No real matches found, returning empty array')
-    return []
-    
   } catch (error) {
-    console.error('❌ Backend Error fetching real matches:', {
+    console.error('❌ Backend Error fetching FIFA Club World Cup matches:', {
       error: error.message,
       stack: error.stack,
       timestamp: new Date().toISOString()
     })
     
-    // Return empty array on error instead of fake data
+    // Return empty array on error - no fake data
     return []
   }
 }
@@ -209,7 +172,7 @@ export async function GET(request) {
     
     console.log('🔍 Backend Query parameters:', { limit, status })
     
-    const allMatches = await fetchAllMatches()
+    const allMatches = await fetchClubWorldCupMatches()
     
     // Filter by status if requested
     let filteredMatches = allMatches
@@ -223,7 +186,7 @@ export async function GET(request) {
           break
         case 'live':
           filteredMatches = allMatches.filter(m => 
-            m.status === 'live' || m.status === '1h' || m.status === '2h' || m.status === 'ht'
+            m.status === 'live' || m.status === '1h' || m.status === '2h' || m.status === 'ht' || m.status.includes('h')
           )
           break
         case 'upcoming':
