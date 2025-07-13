@@ -83,38 +83,37 @@ export default function PredictionGrid() {
           setUser(userObj)
           authenticatedUser = userObj
         } else {
-          console.log('❌ [PREDICTION-GRID] Stored profile has invalid ID, falling back to Supabase auth')
+          console.log('❌ [PREDICTION-GRID] Stored profile has invalid ID, falling back to Supabase auth');
           // Clear invalid data and fall through to Supabase auth
-          localStorage.removeItem('user_profile')
-          localStorage.removeItem('session_token')
-          localStorage.removeItem('access_token')
+          localStorage.removeItem('user_profile');
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('access_token');
         }
           
-          // Get fresh user balance from database only if we have a valid user
-          if (authenticatedUser) {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('fan_tokens, wallet_address')
-              .eq('id', userProfile.id)
-              .single()
+        // Get fresh user balance from database only if we have a valid user
+        if (authenticatedUser) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('fan_tokens, wallet_address')
+            .eq('id', userProfile.id)
+            .single();
+          
+          if (profileError) {
+            console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError);
+            // Fall back to stored balance
+            setUserBalance(parseFloat(userProfile.fan_tokens || 0));
+          } else {
+            console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile);
+            setUserBalance(parseFloat(profile.fan_tokens || 0));
             
-            if (profileError) {
-              console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError)
-              // Fall back to stored balance
-              setUserBalance(parseFloat(userProfile.fan_tokens || 0))
-            } else {
-              console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile)
-              setUserBalance(parseFloat(profile.fan_tokens || 0))
-              
-              if (profile.wallet_address) {
-                setWalletAddress(profile.wallet_address)
-                setWalletConnected(true)
-              }
+            if (profile.wallet_address) {
+              setWalletAddress(profile.wallet_address);
+              setWalletConnected(true);
             }
-            
-            console.log('✅ [PREDICTION-GRID] User authenticated via localStorage')
-            return authenticatedUser
           }
+          
+          console.log('✅ [PREDICTION-GRID] User authenticated via localStorage');
+          return authenticatedUser;
         }
       }
       
@@ -123,54 +122,54 @@ export default function PredictionGrid() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError);
-        throw sessionError
+        throw sessionError;
       }
 
       if (!session) {
-        console.log('❌ [PREDICTION-GRID] No active session found')
-        setUser(null)
-        setUserBalance(0)
-        return null
+        console.log('❌ [PREDICTION-GRID] No active session found');
+        setUser(null);
+        setUserBalance(0);
+        return null;
       }
       
       console.log('✅ [PREDICTION-GRID] Found Supabase session:', {
         userId: session.user.id,
         email: session.user.email
-      })
+      });
 
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('❌ [PREDICTION-GRID] Error getting user:', error)
-        throw error
+        console.error('❌ [PREDICTION-GRID] Error getting user:', error);
+        throw error;
       }
 
-      setUser(user)
-      authenticatedUser = user
+      setUser(user);
+      authenticatedUser = user;
 
       // Get user balance
-      console.log('📊 [PREDICTION-GRID] Fetching user profile...')
+      console.log('📊 [PREDICTION-GRID] Fetching user profile...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('fan_tokens, wallet_address')
         .eq('id', user.id)
-        .single()
+        .single();
 
       if (profileError) {
-        console.error('❌ [PREDICTION-GRID] Profile error:', profileError)
-        throw profileError
+        console.error('❌ [PREDICTION-GRID] Profile error:', profileError);
+        throw profileError;
       }
       
       console.log('📊 [PREDICTION-GRID] User profile loaded:', {
         fanTokens: profile.fan_tokens,
         hasWallet: !!profile.wallet_address
-      })
+      });
       
-      setUserBalance(parseFloat(profile.fan_tokens || 0))
+      setUserBalance(parseFloat(profile.fan_tokens || 0));
       
       if (profile.wallet_address) {
-        setWalletAddress(profile.wallet_address)
-        setWalletConnected(true)
-        console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...')
+        setWalletAddress(profile.wallet_address);
+        setWalletConnected(true);
+        console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...');
       }
 
       console.log('✅ [PREDICTION-GRID] User authenticated via Supabase');
