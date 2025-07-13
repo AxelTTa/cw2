@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '../components/Header'
 import { supabase } from '../utils/supabase'
-import { apiFootball } from '../utils/api-football'
 import { switchToChilizChain, getChzBalance, isValidChilizAddress } from '../utils/chiliz-token'
 
 export default function PredictionGrid() {
@@ -77,30 +76,50 @@ export default function PredictionGrid() {
 
   const loadMatches = async () => {
     try {
-      console.log('🔍 Loading Club World Cup matches...')
-      const clubWorldCupMatches = await apiFootball.fetchClubWorldCupMatches()
+      console.log('🔍 Loading matches...')
       
-      // If API returns empty, use mock data for demo
-      if (clubWorldCupMatches.length === 0) {
-        const mockMatches = apiFootball.getClubWorldCup2025MockMatches()
-        setMatches(mockMatches)
-      } else {
-        setMatches(clubWorldCupMatches)
-      }
+      // Fetch upcoming matches using the same API as matches page
+      const response = await fetch('/api/matches?status=upcoming&limit=20')
+      const data = await response.json()
+      
+      if (data.matches && data.matches.length > 0) {
+        // Convert API response to format expected by betting card
+        const formattedMatches = data.matches.map(match => ({
+          fixture: {
+            id: match.id,
+            date: match.date || match.match_date,
+            venue: {
+              name: match.venue || 'TBA'
+            }
+          },
+          teams: {
+            home: {
+              name: match.homeTeam?.name || match.home_team,
+              logo: match.homeTeam?.logo || match.home_team_logo,
+              country: match.homeTeam?.country || 'Unknown'
+            },
+            away: {
+              name: match.awayTeam?.name || match.away_team,
+              logo: match.awayTeam?.logo || match.away_team_logo,
+              country: match.awayTeam?.country || 'Unknown'
+            }
+          }
+        }))
+        
+        setMatches(formattedMatches)
 
-      // Load existing bets if user is logged in
-      if (user) {
-        const matchIds = clubWorldCupMatches.length > 0 
-          ? clubWorldCupMatches.map(m => m.fixture.id)
-          : [1001, 1002, 1003, 1004] // Mock IDs
-        await loadUserBets(matchIds)
+        // Load existing bets if user is logged in
+        if (user) {
+          const matchIds = formattedMatches.map(m => m.fixture.id)
+          await loadUserBets(matchIds)
+        }
+      } else {
+        setMatches([])
       }
 
     } catch (error) {
       console.error('Failed to load matches:', error)
-      // Use mock data as fallback
-      const mockMatches = apiFootball.getClubWorldCup2025MockMatches()
-      setMatches(mockMatches)
+      setMatches([])
     }
   }
 
