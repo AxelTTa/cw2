@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '../../utils/supabase'
+import { AuthService } from '../../../backend/services/authService.js'
 
 export async function GET(request) {
   try {
@@ -56,7 +57,6 @@ export async function GET(request) {
     }
 
     // Get replies for each comment and user votes
-    const userId = searchParams.get('user_id') // Optional user ID for vote tracking
     const commentsWithReplies = await Promise.all(
       (comments || []).map(async (comment) => {
         // Get replies recursively
@@ -118,33 +118,44 @@ export async function GET(request) {
       })
     )
 
-    // Get user votes if user ID is provided
+    // Get user votes if session token is provided
     let userVotes = {}
-    if (userId) {
-      const allCommentIds = []
-      const collectCommentIds = (comments) => {
-        comments.forEach(comment => {
-          allCommentIds.push(comment.id)
-          if (comment.replies) {
-            collectCommentIds(comment.replies)
+    const sessionToken = searchParams.get('session_token')
+    if (sessionToken) {
+      try {
+        const authResult = await AuthService.getUserBySessionToken(sessionToken)
+        if (authResult.success && authResult.data.profiles) {
+          const authenticatedUserId = authResult.data.profiles.id
+          
+          const allCommentIds = []
+          const collectCommentIds = (comments) => {
+            comments.forEach(comment => {
+              allCommentIds.push(comment.id)
+              if (comment.replies) {
+                collectCommentIds(comment.replies)
+              }
+            })
           }
-        })
-      }
-      collectCommentIds(commentsWithReplies)
+          collectCommentIds(commentsWithReplies)
 
-      if (allCommentIds.length > 0) {
-        const { data: votes } = await supabaseAdmin
-          .from('reactions')
-          .select('comment_id, reaction_type')
-          .eq('user_id', userId)
-          .in('comment_id', allCommentIds)
-          .in('reaction_type', ['like', 'dislike'])
+          if (allCommentIds.length > 0) {
+            const { data: votes } = await supabaseAdmin
+              .from('reactions')
+              .select('comment_id, reaction_type')
+              .eq('user_id', authenticatedUserId)
+              .in('comment_id', allCommentIds)
+              .in('reaction_type', ['like', 'dislike'])
 
-        if (votes) {
-          votes.forEach(vote => {
-            userVotes[vote.comment_id] = vote.reaction_type === 'like' ? 'upvote' : 'downvote'
-          })
+            if (votes) {
+              votes.forEach(vote => {
+                userVotes[vote.comment_id] = vote.reaction_type === 'like' ? 'upvote' : 'downvote'
+              })
+            }
+          }
         }
+      } catch (error) {
+        console.error('Error getting user votes:', error)
+        // Continue without user votes
       }
     }
 
@@ -166,12 +177,28 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
-    const body = await request.json()
+    console.log('📝 [COMMENTS API] Processing comment submission...')
     
-    console.log('📝 [COMMENTS API] Received comment submission:', {
+    // First, authenticate the user
+    const authResult = await AuthService.authenticateRequest(request)
+    if (!authResult.success) {
+      console.log('❌ [COMMENTS API] Authentication failed:', authResult.error)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Authentication required. Please sign in again.' 
+      }, { status: 401 })
+    }
+
+    const authenticatedUser = authResult.user
+    console.log('✅ [COMMENTS API] User authenticated:', {
+      userId: authenticatedUser.id,
+      email: authenticatedUser.email,
+      username: authenticatedUser.username
+    })
+    
+    const body = await request.json()
+    console.log('📝 [COMMENTS API] Request body:', {
       bodyKeys: Object.keys(body),
-      hasUserId: !!body.user_id,
-      userIdValue: body.user_id,
       hasContent: !!body.content,
       entityType: body.entity_type,
       entityId: body.entity_id
@@ -182,7 +209,6 @@ export async function POST(request) {
       entity_type = 'match',
       entity_id,
       match_id, // backwards compatibility
-      user_id, 
       is_meme = false, 
       meme_url = null, 
       meme_caption = null,
@@ -202,17 +228,8 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    if (!user_id) {
-      console.log('❌ [COMMENTS API] Missing user_id - Request details:', {
-        body: body,
-        user_id: user_id,
-        typeof_user_id: typeof user_id
-      })
-      return NextResponse.json({ 
-        success: false, 
-        error: 'User ID is required' 
-      }, { status: 400 })
-    }
+    // Use authenticated user's ID instead of trusting client
+    const user_id = authenticatedUser.id
 
     if (!finalEntityId) {
       return NextResponse.json({ 
@@ -335,8 +352,30 @@ export async function POST(request) {
 
 export async function PATCH(request) {
   try {
+    console.log('🔄 [COMMENTS API] Processing comment action...')
+    
+    // First, authenticate the user
+    const authResult = await AuthService.authenticateRequest(request)
+    if (!authResult.success) {
+      console.log('❌ [COMMENTS API] Authentication failed for PATCH:', authResult.error)
+      return NextResponse.json({ 
+        success: false, 
+        error: 'Authentication required. Please sign in again.' 
+      }, { status: 401 })
+    }
+
+    const authenticatedUser = authResult.user
+    const user_id = authenticatedUser.id
+    
     const body = await request.json()
-    const { comment_id, action, user_id, reaction_type } = body
+    const { comment_id, action, reaction_type } = body
+
+    console.log('🔄 [COMMENTS API] Action request:', {
+      userId: user_id,
+      commentId: comment_id,
+      action: action,
+      reactionType: reaction_type
+    })
 
     if (!comment_id || !action) {
       return NextResponse.json({ 
@@ -345,22 +384,16 @@ export async function PATCH(request) {
       }, { status: 400 })
     }
 
-    if (action === 'reaction' && (!user_id || !reaction_type)) {
+    if (action === 'reaction' && !reaction_type) {
       return NextResponse.json({ 
         success: false, 
-        error: 'User ID and reaction type are required for reactions' 
+        error: 'Reaction type is required for reactions' 
       }, { status: 400 })
     }
 
     let result = {}
     
     if (action === 'upvote' || action === 'downvote') {
-      if (!user_id) {
-        return NextResponse.json({ 
-          success: false, 
-          error: 'User ID is required for voting' 
-        }, { status: 400 })
-      }
 
       // Use a database transaction to prevent race conditions
       const { data: voteResult, error: voteError } = await supabaseAdmin.rpc('handle_comment_vote', {
