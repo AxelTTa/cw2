@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { supabase } from '../utils/supabase'
 import GoogleAuth from './GoogleAuth'
 import MemeSelector from './MemeSelector'
 import CommentCard from './CommentCard'
@@ -40,6 +41,16 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
       return
+    }
+    
+    // Fallback to Supabase auth (for existing users)
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        setUser(user)
+      }
+    } catch (error) {
+      console.error('Error getting user from Supabase:', error)
     }
   }
 
@@ -238,6 +249,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       })
 
       const data = await response.json()
+      
       if (data.success) {
         setNewComment('')
         setReplyTo(null)
@@ -381,6 +393,14 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleAuthError = (error) => {
     console.error('Auth error:', error)
     setError('Authentication failed')
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('user_profile')
+    localStorage.removeItem('access_token')
+    localStorage.removeItem('session_token')
+    setUser(null)
+    setError(null)
   }
 
   const formatTime = (timestamp) => {

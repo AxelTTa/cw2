@@ -576,12 +576,16 @@ export default function DailyLeaderboard() {
         /* Mobile Responsive */
         @media (max-width: 768px) {
           .hero-section {
-            padding: 40px 15px 30px !important;
+            padding: 30px 10px 20px !important;
+            overflow: hidden;
           }
           
           .hero-title {
-            font-size: 32px !important;
-            margin-bottom: 15px !important;
+            font-size: 22px !important;
+            margin-bottom: 10px !important;
+            line-height: 1.2;
+            word-wrap: break-word;
+            padding: 0 5px;
           }
           
           .date-selector {
@@ -660,7 +664,9 @@ export default function DailyLeaderboard() {
           }
           
           .section-title {
-            font-size: 24px !important;
+            font-size: 20px !important;
+            padding: 0 10px;
+            word-wrap: break-word;
           }
           
           .reward-emoji {
