@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import UniversalComments from '../../components/UniversalComments'
 import Header from '../../components/Header'
+import { useAutoXPRefresh } from '../../hooks/useAutoXPRefresh'
 
 export default function TeamDetail() {
   const params = useParams()
@@ -12,6 +13,9 @@ export default function TeamDetail() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [isMobile, setIsMobile] = useState(false)
+  
+  // Enable auto XP refresh for team detail page
+  useAutoXPRefresh()
 
   useEffect(() => {
     const checkMobile = () => {

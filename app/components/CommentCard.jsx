@@ -33,6 +33,13 @@ export default function CommentCard({
         await onDownvote(comment.id, isRemoving)
       }
       
+      // Trigger XP refresh event when someone likes a comment
+      if (voteType === 'upvote' && !isRemoving) {
+        window.dispatchEvent(new CustomEvent('commentLiked', { 
+          detail: { commentId: comment.id, userId: comment.user_id } 
+        }))
+      }
+      
       // Don't update local state here - let it be updated by the parent component
       // after the API call completes and data is refreshed
       

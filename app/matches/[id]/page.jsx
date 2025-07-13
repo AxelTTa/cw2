@@ -7,6 +7,7 @@ import GoogleAuth from '../../components/GoogleAuth'
 import UniversalComments from '../../components/UniversalComments'
 import CommentForm from '../../components/CommentForm'
 import { supabase } from '../../utils/supabase'
+import { useAutoXPRefresh } from '../../hooks/useAutoXPRefresh'
 
 export default function MatchDetail() {
   const params = useParams()
@@ -18,6 +19,9 @@ export default function MatchDetail() {
   const [isMobile, setIsMobile] = useState(false)
   const [sortBy, setSortBy] = useState('newest')
   const [replyTo, setReplyTo] = useState(null)
+  
+  // Enable auto XP refresh for match detail page
+  useAutoXPRefresh()
   const [commentsLoading, setCommentsLoading] = useState(false)
 
   useEffect(() => {

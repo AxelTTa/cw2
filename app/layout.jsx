@@ -12,6 +12,8 @@ export function generateViewport() {
   }
 }
 
+import { XPProvider } from './contexts/XPContext'
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -22,7 +24,11 @@ export default function RootLayout({ children }) {
         margin: 0,
         padding: 0,
         overflowX: 'hidden'
-      }}>{children}</body>
+      }}>
+        <XPProvider>
+          {children}
+        </XPProvider>
+      </body>
     </html>
   )
 }
