@@ -257,13 +257,13 @@ export default function PredictionGrid() {
       <Header />
 
       {/* Hero Section */}
-      <section style={{
+      <section className="hero-section" style={{
         background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
         padding: '60px 20px',
         textAlign: 'center',
         borderBottom: '2px solid #333'
       }}>
-        <h1 style={{
+        <h1 className="hero-title" style={{
           fontSize: '48px',
           fontWeight: '800',
           marginBottom: '20px',
@@ -274,7 +274,7 @@ export default function PredictionGrid() {
         }}>
           🏆 Club World Cup 2025 Betting
         </h1>
-        <p style={{
+        <p className="hero-subtitle" style={{
           fontSize: '20px',
           color: '#cccccc',
           maxWidth: '600px',
@@ -535,7 +535,7 @@ export default function PredictionGrid() {
               ) : (
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
                   gap: '24px'
                 }}>
                   {matches.map((match) => (
@@ -646,6 +646,80 @@ export default function PredictionGrid() {
         }
 
         @media (max-width: 768px) {
+          .hero-section {
+            padding: 40px 15px 30px !important;
+          }
+          
+          .hero-title {
+            font-size: 32px !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .hero-subtitle {
+            font-size: 16px !important;
+            margin-bottom: 25px !important;
+          }
+          
+          .user-stats {
+            flex-direction: column !important;
+            gap: 10px !important;
+            align-items: center !important;
+          }
+          
+          .wallet-card {
+            max-width: 100% !important;
+            padding: 20px 15px !important;
+          }
+          
+          .wallet-connect-btn {
+            width: 100% !important;
+            padding: 15px 20px !important;
+          }
+          
+          .matches-header {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: center !important;
+          }
+          
+          .matches-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .match-card {
+            padding: 20px 15px !important;
+          }
+          
+          .match-teams {
+            gap: 10px !important;
+          }
+          
+          .team-info {
+            min-width: auto !important;
+            text-align: center !important;
+          }
+          
+          .team-logo {
+            width: 40px !important;
+            height: 40px !important;
+          }
+          
+          .betting-options {
+            flex-direction: column !important;
+            gap: 10px !important;
+          }
+          
+          .bet-button {
+            width: 100% !important;
+            padding: 12px 15px !important;
+            font-size: 14px !important;
+          }
+          
+          .bet-input {
+            width: 100% !important;
+          }
+          
           section h2 {
             font-size: 24px !important;
           }
@@ -658,6 +732,34 @@ export default function PredictionGrid() {
           
           section > div:first-child button {
             align-self: center !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .hero-title {
+            font-size: 28px !important;
+          }
+          
+          .hero-subtitle {
+            font-size: 14px !important;
+          }
+          
+          .wallet-card {
+            padding: 15px 10px !important;
+          }
+          
+          .match-card {
+            padding: 15px 10px !important;
+          }
+          
+          .team-logo {
+            width: 35px !important;
+            height: 35px !important;
+          }
+          
+          .bet-button {
+            padding: 10px 12px !important;
+            font-size: 13px !important;
           }
         }
       `}</style>

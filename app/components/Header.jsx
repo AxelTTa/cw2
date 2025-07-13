@@ -449,6 +449,29 @@ export default function Header() {
           .desktop-user-actions {
             display: none !important;
           }
+          
+          header {
+            padding: 12px 15px !important;
+          }
+          
+          header a {
+            font-size: 20px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          header {
+            padding: 10px 12px !important;
+          }
+          
+          header a {
+            font-size: 18px !important;
+          }
+          
+          .mobile-menu-btn {
+            padding: 6px 10px !important;
+            font-size: 16px !important;
+          }
         }
 
         @media (min-width: 769px) {
