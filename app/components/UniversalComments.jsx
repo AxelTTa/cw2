@@ -37,20 +37,43 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const getCurrentUser = async () => {
     // Check localStorage for user data
     const userData = localStorage.getItem('user_profile')
+    console.log('👤 [UNIVERSAL COMMENTS] Getting current user:', {
+      hasLocalStorageData: !!userData,
+      userDataLength: userData?.length || 0
+    })
+    
     if (userData) {
-      const parsedUser = JSON.parse(userData)
-      setUser(parsedUser)
-      return
+      try {
+        const parsedUser = JSON.parse(userData)
+        console.log('👤 [UNIVERSAL COMMENTS] Parsed user from localStorage:', {
+          hasId: !!parsedUser.id,
+          id: parsedUser.id,
+          email: parsedUser.email,
+          userKeys: Object.keys(parsedUser)
+        })
+        setUser(parsedUser)
+        return
+      } catch (error) {
+        console.error('❌ [UNIVERSAL COMMENTS] Error parsing user data from localStorage:', error)
+        localStorage.removeItem('user_profile') // Clear corrupted data
+      }
     }
     
     // Fallback to Supabase auth (for existing users)
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (user) {
+        console.log('👤 [UNIVERSAL COMMENTS] Got user from Supabase:', {
+          hasId: !!user.id,
+          id: user.id,
+          email: user.email
+        })
         setUser(user)
+      } else {
+        console.log('👤 [UNIVERSAL COMMENTS] No user found in Supabase')
       }
     } catch (error) {
-      console.error('Error getting user from Supabase:', error)
+      console.error('❌ [UNIVERSAL COMMENTS] Error getting user from Supabase:', error)
     }
   }
 
@@ -68,8 +91,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       url.searchParams.set('entity_id', entityId)
       url.searchParams.set('sort_by', sortBy)
       url.searchParams.set('limit', '100')
-      if (user?.id) {
-        url.searchParams.set('user_id', user.id)
+      const userId = user?.id || user?.sub || user?.uid
+      if (userId) {
+        url.searchParams.set('user_id', userId)
       }
 
       const response = await fetch(url)
@@ -185,6 +209,11 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     e.preventDefault()
     if (!user || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif)) return
 
+    if (!user.id) {
+      setError('User authentication issue. Please sign out and sign in again.')
+      return
+    }
+
     if (!entityId) {
       setError('Entity ID is missing. Please refresh the page and try again.')
       return
@@ -198,14 +227,29 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         uploadedFileUrl = await uploadFile(selectedFile)
       }
 
+      // Ensure we have a valid user ID
+      const userId = user.id || user.sub || user.uid
+      if (!userId) {
+        setError('Invalid user session. Please sign out and sign in again.')
+        return
+      }
+
       const commentData = {
-        user_id: user.id,
+        user_id: userId,
         entity_type: entityType,
         entity_id: entityId,
         parent_id: replyTo,
         content: newComment.trim(),
         comment_type: commentType
       }
+
+      console.log('📝 [UNIVERSAL COMMENTS] Submitting comment data:', {
+        user: user,
+        userId: userId,
+        commentData: commentData,
+        hasUser: !!user,
+        userKeys: user ? Object.keys(user) : []
+      })
 
       // Add meme data if selected
       if (selectedMeme) {
@@ -274,6 +318,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleUpvote = async (commentId, isRemoving = false) => {
     if (!user) return
     
+    const userId = user.id || user.sub || user.uid
+    if (!userId) return
+    
     try {
       const response = await fetch('/api/comments', {
         method: 'PATCH',
@@ -283,7 +330,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         body: JSON.stringify({
           comment_id: commentId,
           action: 'upvote',
-          user_id: user.id
+          user_id: userId
         })
       })
 
@@ -299,6 +346,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleDownvote = async (commentId, isRemoving = false) => {
     if (!user) return
     
+    const userId = user.id || user.sub || user.uid
+    if (!userId) return
+    
     try {
       const response = await fetch('/api/comments', {
         method: 'PATCH',
@@ -308,7 +358,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         body: JSON.stringify({
           comment_id: commentId,
           action: 'downvote',
-          user_id: user.id
+          user_id: userId
         })
       })
 
@@ -329,9 +379,16 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       return
     }
 
+    // Ensure we have a valid user ID
+    const userId = user.id || user.sub || user.uid
+    if (!userId) {
+      setError('Invalid user session. Please sign out and sign in again.')
+      return
+    }
+
     try {
       const commentData = {
-        user_id: user.id,
+        user_id: userId,
         entity_type: entityType,
         entity_id: entityId,
         parent_id: parentId,
@@ -362,6 +419,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleReaction = async (commentId, reactionType) => {
     if (!user) return
 
+    const userId = user.id || user.sub || user.uid
+    if (!userId) return
+
     try {
       const response = await fetch('/api/comments', {
         method: 'PATCH',
@@ -371,7 +431,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         body: JSON.stringify({
           comment_id: commentId,
           action: 'reaction',
-          user_id: user.id,
+          user_id: userId,
           reaction_type: reactionType
         })
       })

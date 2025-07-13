@@ -167,6 +167,16 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const body = await request.json()
+    
+    console.log('📝 [COMMENTS API] Received comment submission:', {
+      bodyKeys: Object.keys(body),
+      hasUserId: !!body.user_id,
+      userIdValue: body.user_id,
+      hasContent: !!body.content,
+      entityType: body.entity_type,
+      entityId: body.entity_id
+    })
+    
     const { 
       content, 
       entity_type = 'match',
@@ -185,6 +195,7 @@ export async function POST(request) {
     const finalEntityId = entity_id || match_id
 
     if (!content && !is_meme && !image_url) {
+      console.log('❌ [COMMENTS API] Missing content')
       return NextResponse.json({ 
         success: false, 
         error: 'Content, meme, or image is required' 
@@ -192,6 +203,11 @@ export async function POST(request) {
     }
 
     if (!user_id) {
+      console.log('❌ [COMMENTS API] Missing user_id - Request details:', {
+        body: body,
+        user_id: user_id,
+        typeof_user_id: typeof user_id
+      })
       return NextResponse.json({ 
         success: false, 
         error: 'User ID is required' 
