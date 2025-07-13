@@ -16,6 +16,53 @@ export async function GET(request, { params }) {
       }, { status: 400 })
     }
 
+    // Validate authentication
+    const sessionToken = request.headers.get('X-Session-Token') || request.headers.get('x-session-token')
+    const authHeader = request.headers.get('Authorization')
+    
+    if (!sessionToken && !authHeader) {
+      console.log('❌ Backend: No authentication headers found')
+      return NextResponse.json({
+        success: false,
+        error: 'Authentication required'
+      }, { status: 401 })
+    }
+
+    // Verify session token if provided
+    if (sessionToken) {
+      const { data: session, error: sessionError } = await supabaseAdmin
+        .from('oauth_sessions')
+        .select('user_id, token_expires_at')
+        .eq('session_token', sessionToken)
+        .single()
+
+      if (sessionError || !session) {
+        console.log('❌ Backend: Invalid session token')
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid session token'
+        }, { status: 401 })
+      }
+
+      // Check if token is expired
+      if (new Date(session.token_expires_at) < new Date()) {
+        console.log('❌ Backend: Session token expired')
+        return NextResponse.json({
+          success: false,
+          error: 'Session token expired'
+        }, { status: 401 })
+      }
+
+      // Verify user ID matches session
+      if (session.user_id !== userId) {
+        console.log('❌ Backend: User ID mismatch')
+        return NextResponse.json({
+          success: false,
+          error: 'Access denied'
+        }, { status: 403 })
+      }
+    }
+
     console.log('🔍 Backend: Getting dashboard data for user:', userId)
     
     // Use the SQL function to get dashboard data

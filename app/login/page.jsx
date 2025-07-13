@@ -26,11 +26,17 @@ export default function LoginPage() {
   useEffect(() => {
     setIsVisible(true)
     
-    // Check if user is already logged in
-    const userData = localStorage.getItem('user_profile')
-    if (userData) {
-      setUser(JSON.parse(userData))
+    // Check if user is already logged in using unified auth
+    const checkAuth = async () => {
+      const unifiedAuth = (await import('../utils/unified-auth')).default
+      const authResult = await unifiedAuth.init()
+      
+      if (authResult.success) {
+        setUser(authResult.user)
+      }
     }
+    
+    checkAuth()
   }, [])
 
   const handleAuthSuccess = (userData) => {
@@ -49,8 +55,9 @@ export default function LoginPage() {
     alert('Login failed: ' + error)
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('user_profile')
+  const handleLogout = async () => {
+    const unifiedAuth = (await import('../utils/unified-auth')).default
+    await unifiedAuth.logout()
     setUser(null)
     router.push('/')
   }

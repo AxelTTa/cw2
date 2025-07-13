@@ -9,8 +9,9 @@ export const getCurrentUser = async () => {
   try {
     // First check localStorage for user data
     const userData = localStorage.getItem('user_profile')
+    const sessionToken = localStorage.getItem('session_token')
     
-    if (userData) {
+    if (userData && sessionToken) {
       try {
         const parsedUser = JSON.parse(userData)
         
@@ -21,37 +22,35 @@ export const getCurrentUser = async () => {
             email: parsedUser.email,
             username: parsedUser.username
           })
-          return parsedUser
+          
+          // Validate session token is still valid
+          try {
+            const response = await fetch('/api/dashboard/' + parsedUser.id, {
+              method: 'HEAD', // Just check headers, don't need full response
+              headers: getAuthHeaders()
+            })
+            
+            if (response.ok) {
+              return parsedUser
+            } else {
+              console.warn('⚠️ [AUTH HELPER] Session token invalid, clearing data')
+              clearAuthData()
+            }
+          } catch (validationError) {
+            console.warn('⚠️ [AUTH HELPER] Session validation failed, clearing data')
+            clearAuthData()
+          }
         } else {
           console.warn('⚠️ [AUTH HELPER] User data missing ID, clearing localStorage')
-          localStorage.removeItem('user_profile')
+          clearAuthData()
         }
       } catch (error) {
         console.error('❌ [AUTH HELPER] Error parsing user data from localStorage:', error)
-        localStorage.removeItem('user_profile') // Clear corrupted data
+        clearAuthData() // Clear corrupted data
       }
     }
     
-    // Fallback to Supabase auth
-    const { data: { user }, error } = await supabase.auth.getUser()
-    
-    if (error) {
-      console.error('❌ [AUTH HELPER] Supabase auth error:', error)
-      return null
-    }
-    
-    if (user && user.id) {
-      console.log('✅ [AUTH HELPER] Valid user from Supabase:', {
-        id: user.id,
-        email: user.email
-      })
-      
-      // Save valid user to localStorage for future use
-      localStorage.setItem('user_profile', JSON.stringify(user))
-      return user
-    }
-    
-    console.log('❌ [AUTH HELPER] No valid user found')
+    console.log('❌ [AUTH HELPER] No valid authenticated user found')
     return null
     
   } catch (error) {
@@ -92,11 +91,14 @@ export const validateUser = (user) => {
  */
 export const getAuthHeaders = () => {
   const sessionToken = getSessionToken()
+  const accessToken = localStorage.getItem('access_token')
+  
   if (!sessionToken) return {}
   
   return {
     'Authorization': `Bearer ${sessionToken}`,
-    'x-session-token': sessionToken,
+    'X-Session-Token': sessionToken,
+    'X-Access-Token': accessToken || '',
     'Content-Type': 'application/json'
   }
 }

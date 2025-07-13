@@ -37,47 +37,30 @@ function AuthCallbackContent() {
 
         setStatus('exchanging')
 
-        // Exchange code for tokens
-        const response = await fetch('/api/exchange-google-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ code })
-        })
+        // Exchange code for tokens using unified auth
+        const unifiedAuth = (await import('../../utils/unified-auth')).default
+        const authResult = await unifiedAuth.authenticateWithGoogle(code)
 
-        if (!response.ok) {
-          throw new Error('Token exchange failed')
-        }
-
-        const data = await response.json()
-
-        if (!data.success) {
-          throw new Error(data.error || 'Unknown error occurred')
+        if (!authResult.success) {
+          throw new Error(authResult.error || 'Authentication failed')
         }
 
         setStatus('success')
-
-        // Store user data in localStorage for quick access
-        localStorage.setItem('user_profile', JSON.stringify(data.user))
-        localStorage.setItem('access_token', data.tokens.access_token)
-        localStorage.setItem('session_token', data.session_token)
 
         // Check if this is a popup callback
         if (window.opener) {
           // Send success message to parent window
           window.opener.postMessage({
             type: 'GOOGLE_AUTH_SUCCESS',
-            user: data.user,
-            tokens: data.tokens
+            user: authResult.user
           }, window.location.origin)
           
           // Mark success in localStorage for parent to check
-          localStorage.setItem('google_auth_success', JSON.stringify(data.user))
+          localStorage.setItem('google_auth_success', JSON.stringify(authResult.user))
           
           window.close()
         } else {
-          // Redirect to community page
+          // Redirect to rewards page
           setTimeout(() => {
             router.push('/rewards')
           }, 1500)
