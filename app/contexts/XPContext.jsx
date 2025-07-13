@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect } from 'react'
+import { getCurrentUser } from '../utils/auth-helpers'
 
 const XPContext = createContext()
 
@@ -54,7 +55,20 @@ export const XPProvider = ({ children }) => {
     if (!userId) return
 
     try {
-      const response = await fetch(`/api/dashboard/${userId}`)
+      const currentUser = await getCurrentUser()
+      const sessionToken = currentUser?.sessionToken
+
+      if (!sessionToken) {
+        console.warn('No session token found for XP refresh.')
+        setIsLoading(false)
+        return
+      }
+
+      const response = await fetch(`/api/dashboard/${userId}`, {
+        headers: {
+          'X-Session-Token': sessionToken,
+        },
+      })
       if (response.ok) {
         const result = await response.json()
         if (result.success && result.data) {

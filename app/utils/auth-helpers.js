@@ -31,7 +31,7 @@ export const getCurrentUser = async () => {
             })
             
             if (response.ok) {
-              return parsedUser
+              return { ...parsedUser, sessionToken }
             } else {
               console.warn('⚠️ [AUTH HELPER] Session token invalid, clearing data')
               clearAuthData()
