@@ -119,8 +119,8 @@ export default function PredictionGrid() {
       }
       
       // Fall back to Supabase auth session check
-      console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...')
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
         console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError)
         throw sessionError
@@ -173,14 +173,14 @@ export default function PredictionGrid() {
         console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...')
       }
 
-      console.log('✅ [PREDICTION-GRID] User authenticated via Supabase')
-      return authenticatedUser
+      console.log('✅ [PREDICTION-GRID] User authenticated via Supabase');
+      return authenticatedUser;
 
     } catch (error) {
-      console.error('❌ [PREDICTION-GRID] Auth error:', error)
-      setUser(null)
-      setUserBalance(0)
-      return null
+      console.error('❌ [PREDICTION-GRID] Auth error:', error);
+      setUser(null);
+      setUserBalance(0);
+      return null;
     }
   }
 
