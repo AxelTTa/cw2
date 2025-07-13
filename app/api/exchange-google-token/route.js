@@ -117,11 +117,17 @@ export async function POST(request) {
 
     if (profileError && profileError.code === 'PGRST116') {
       // User doesn't exist, create new profile
-      // Let the database generate the UUID automatically
+      // Generate a safe username using the database function
+      const { data: usernameResult } = await supabaseAdmin.rpc('generate_safe_username', {
+        base_email: googleProfile.email
+      })
+      
+      const safeUsername = usernameResult || googleProfile.email.split('@')[0]
+      
       const newProfile = {
         google_id: googleProfile.id,
         email: googleProfile.email,
-        username: googleProfile.email.split('@')[0],
+        username: safeUsername,
         display_name: googleProfile.name,
         avatar_url: googleProfile.picture,
         google_access_token: tokens.access_token,
@@ -148,22 +154,46 @@ export async function POST(request) {
         console.error('❌ [EXCHANGE-TOKEN] Profile creation error:', {
           error: createError.message,
           code: createError.code,
-          details: createError.details
+          details: createError.details,
+          newProfile: newProfile
         })
         
-        return NextResponse.json({ 
-          success: false, 
-          error: 'Failed to create user profile' 
-        }, { status: 500 })
-      }
-      
-      console.log('✅ [EXCHANGE-TOKEN] New profile created:', {
-        id: createdProfile.id,
-        email: createdProfile.email,
-        fanTokens: createdProfile.fan_tokens
-      })
+        // If it's a duplicate key error, try to find the existing profile
+        if (createError.code === '23505') { // Unique constraint violation
+          console.log('🔍 [EXCHANGE-TOKEN] Duplicate key error, searching for existing profile...')
+          
+          // Try to find existing profile by google_id or email
+          const { data: existingProfile, error: findError } = await supabaseAdmin
+            .from('profiles')
+            .select('*')
+            .or(`google_id.eq.${googleProfile.id},email.eq.${googleProfile.email}`)
+            .single()
+            
+          if (existingProfile && !findError) {
+            console.log('✅ [EXCHANGE-TOKEN] Found existing profile, updating it...')
+            userProfile = existingProfile
+          } else {
+            return NextResponse.json({ 
+              success: false, 
+              error: 'Failed to create user profile - duplicate data' 
+            }, { status: 500 })
+          }
+        } else {
+          return NextResponse.json({ 
+            success: false, 
+            error: 'Failed to create user profile' 
+          }, { status: 500 })
+        }
+      } else {
+        console.log('✅ [EXCHANGE-TOKEN] New profile created:', {
+          id: createdProfile.id,
+          email: createdProfile.email,
+          username: createdProfile.username,
+          fanTokens: createdProfile.fan_tokens
+        })
 
-      userProfile = createdProfile
+        userProfile = createdProfile
+      }
     } else {
       // User exists, update tokens and profile data
       console.log('🔄 [EXCHANGE-TOKEN] Updating existing user profile...')
