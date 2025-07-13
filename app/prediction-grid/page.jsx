@@ -83,104 +83,103 @@ export default function PredictionGrid() {
           setUser(userObj)
           authenticatedUser = userObj
         } else {
-          console.log('❌ [PREDICTION-GRID] Stored profile has invalid ID, falling back to Supabase auth')
+          console.log('❌ [PREDICTION-GRID] Stored profile has invalid ID, falling back to Supabase auth');
           // Clear invalid data and fall through to Supabase auth
-          localStorage.removeItem('user_profile')
-          localStorage.removeItem('session_token')
-          localStorage.removeItem('access_token')
+          localStorage.removeItem('user_profile');
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('access_token');
         }
           
-          // Get fresh user balance from database only if we have a valid user
-          if (authenticatedUser) {
-            const { data: profile, error: profileError } = await supabase
-              .from('profiles')
-              .select('fan_tokens, wallet_address')
-              .eq('id', userProfile.id)
-              .single()
+        // Get fresh user balance from database only if we have a valid user
+        if (authenticatedUser) {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('fan_tokens, wallet_address')
+            .eq('id', userProfile.id)
+            .single();
+          
+          if (profileError) {
+            console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError);
+            // Fall back to stored balance
+            setUserBalance(parseFloat(userProfile.fan_tokens || 0));
+          } else {
+            console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile);
+            setUserBalance(parseFloat(profile.fan_tokens || 0));
             
-            if (profileError) {
-              console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError)
-              // Fall back to stored balance
-              setUserBalance(parseFloat(userProfile.fan_tokens || 0))
-            } else {
-              console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile)
-              setUserBalance(parseFloat(profile.fan_tokens || 0))
-              
-              if (profile.wallet_address) {
-                setWalletAddress(profile.wallet_address)
-                setWalletConnected(true)
-              }
+            if (profile.wallet_address) {
+              setWalletAddress(profile.wallet_address);
+              setWalletConnected(true);
             }
-            
-            console.log('✅ [PREDICTION-GRID] User authenticated via localStorage')
-            return authenticatedUser
           }
+          
+          console.log('✅ [PREDICTION-GRID] User authenticated via localStorage');
+          return authenticatedUser;
         }
       }
       
       // Fall back to Supabase auth session check
-      console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...')
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      console.log('🔍 [PREDICTION-GRID] Checking Supabase auth session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       if (sessionError) {
-        console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError)
-        throw sessionError
+        console.error('❌ [PREDICTION-GRID] Supabase session error:', sessionError);
+        throw sessionError;
       }
 
       if (!session) {
-        console.log('❌ [PREDICTION-GRID] No active session found')
-        setUser(null)
-        setUserBalance(0)
-        return null
+        console.log('❌ [PREDICTION-GRID] No active session found');
+        setUser(null);
+        setUserBalance(0);
+        return null;
       }
       
       console.log('✅ [PREDICTION-GRID] Found Supabase session:', {
         userId: session.user.id,
         email: session.user.email
-      })
+      });
 
-      const { data: { user }, error } = await supabase.auth.getUser()
+      const { data: { user }, error } = await supabase.auth.getUser();
       if (error) {
-        console.error('❌ [PREDICTION-GRID] Error getting user:', error)
-        throw error
+        console.error('❌ [PREDICTION-GRID] Error getting user:', error);
+        throw error;
       }
 
-      setUser(user)
-      authenticatedUser = user
+      setUser(user);
+      authenticatedUser = user;
 
       // Get user balance
-      console.log('📊 [PREDICTION-GRID] Fetching user profile...')
+      console.log('📊 [PREDICTION-GRID] Fetching user profile...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('fan_tokens, wallet_address')
         .eq('id', user.id)
-        .single()
+        .single();
 
       if (profileError) {
-        console.error('❌ [PREDICTION-GRID] Profile error:', profileError)
-        throw profileError
+        console.error('❌ [PREDICTION-GRID] Profile error:', profileError);
+        throw profileError;
       }
       
       console.log('📊 [PREDICTION-GRID] User profile loaded:', {
         fanTokens: profile.fan_tokens,
         hasWallet: !!profile.wallet_address
-      })
+      });
       
-      setUserBalance(parseFloat(profile.fan_tokens || 0))
+      setUserBalance(parseFloat(profile.fan_tokens || 0));
       
       if (profile.wallet_address) {
-        setWalletAddress(profile.wallet_address)
-        setWalletConnected(true)
-        console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...')
+        setWalletAddress(profile.wallet_address);
+        setWalletConnected(true);
+        console.log('🔗 [PREDICTION-GRID] Wallet connected:', profile.wallet_address.slice(0, 6) + '...');
       }
 
-      console.log('✅ [PREDICTION-GRID] User authenticated via Supabase')
-      return authenticatedUser
+      console.log('✅ [PREDICTION-GRID] User authenticated via Supabase');
+      return authenticatedUser;
 
     } catch (error) {
-      console.error('❌ [PREDICTION-GRID] Auth error:', error)
-      setUser(null)
-      setUserBalance(0)
-      return null
+      console.error('❌ [PREDICTION-GRID] Auth error:', error);
+      setUser(null);
+      setUserBalance(0);
+      return null;
     }
   }
 
@@ -916,24 +915,42 @@ export default function PredictionGrid() {
           }
           
           .hero-title {
-            font-size: 22px !important;
-            margin-bottom: 10px !important;
+            font-size: 28px !important;
+            margin-bottom: 15px !important;
             line-height: 1.2;
             word-wrap: break-word;
             padding: 0 5px;
           }
           
           .hero-subtitle {
-            font-size: 14px !important;
+            font-size: 16px !important;
             margin-bottom: 20px !important;
             padding: 0 10px;
-            line-height: 1.3;
+            line-height: 1.4;
           }
           
-          .user-stats {
-            flex-direction: column !important;
-            gap: 10px !important;
-            align-items: center !important;
+          main {
+            padding: 30px 15px !important;
+          }
+          
+          .user-balance-display {
+            margin-bottom: 15px !important;
+            padding: 10px 20px !important;
+            font-size: 16px !important;
+          }
+          
+          .login-button {
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .wallet-section {
+            margin-bottom: 40px !important;
+          }
+          
+          .wallet-section h2 {
+            font-size: 24px !important;
+            margin-bottom: 20px !important;
           }
           
           .wallet-card {
@@ -941,32 +958,90 @@ export default function PredictionGrid() {
             padding: 20px 15px !important;
           }
           
-          .wallet-connect-btn {
+          .wallet-connected-info {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 15px !important;
+          }
+          
+          .wallet-connect-btn,
+          .wallet-disconnect-btn {
             width: 100% !important;
-            padding: 15px 20px !important;
+            padding: 12px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .matches-section h2 {
+            font-size: 24px !important;
+            margin-bottom: 20px !important;
           }
           
           .matches-header {
             flex-direction: column !important;
             gap: 15px !important;
             align-items: center !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .refresh-button {
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .no-matches-card {
+            padding: 40px 20px !important;
+          }
+          
+          .no-matches-card h3 {
+            font-size: 20px !important;
+            margin-bottom: 10px !important;
+          }
+          
+          .no-matches-card p {
+            margin-bottom: 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .try-again-button {
+            padding: 10px 20px !important;
+            font-size: 14px !important;
           }
           
           .matches-grid {
             grid-template-columns: 1fr !important;
-            gap: 15px !important;
+            gap: 20px !important;
           }
           
           .match-card {
             padding: 20px 15px !important;
           }
           
-          .match-teams {
+          .match-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
             gap: 10px !important;
+            margin-bottom: 15px !important;
           }
           
-          .team-info {
-            min-width: auto !important;
+          .match-date-badge {
+            align-self: flex-start !important;
+          }
+          
+          .match-venue {
+            font-size: 12px !important;
+          }
+          
+          .match-teams {
+            flex-direction: column !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .team-home,
+          .team-away {
+            flex: none !important;
+            align-items: center !important;
+            justify-content: center !important;
             text-align: center !important;
           }
           
@@ -975,50 +1050,169 @@ export default function PredictionGrid() {
             height: 40px !important;
           }
           
-          .betting-options {
-            flex-direction: column !important;
-            gap: 10px !important;
-          }
-          
-          .bet-button {
-            width: 100% !important;
-            padding: 12px 15px !important;
+          .team-name {
             font-size: 14px !important;
           }
           
-          .bet-input {
-            width: 100% !important;
+          .team-country {
+            font-size: 12px !important;
           }
           
-          section h2 {
-            font-size: 24px !important;
+          .match-vs {
+            margin: 0 !important;
+            font-size: 18px !important;
+            order: 1 !important;
           }
           
-          section > div:first-child {
+          .existing-bet-card {
+            margin-bottom: 15px !important;
+            padding: 12px !important;
+          }
+          
+          .existing-bet-info {
             flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+          }
+          
+          .bet-interface {
+            gap: 12px !important;
+          }
+          
+          .bet-amount-label {
+            font-size: 13px !important;
+          }
+          
+          .bet-amount-input {
+            padding: 10px !important;
+            font-size: 14px !important;
+          }
+          
+          .team-selection-grid {
+            grid-template-columns: 1fr !important;
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+          }
+          
+          .team-select-button {
+            padding: 12px !important;
+            font-size: 13px !important;
+          }
+          
+          .place-bet-button {
+            padding: 12px !important;
+            font-size: 14px !important;
+          }
+          
+          .login-required-card,
+          .bet-placed-card {
+            padding: 20px 15px !important;
+          }
+          
+          .login-required-card p {
+            margin-bottom: 12px !important;
+            font-size: 14px !important;
+          }
+          
+          .login-to-bet-button {
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .test-section h2 {
+            font-size: 24px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .test-buttons-grid {
+            grid-template-columns: 1fr !important;
             gap: 15px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .test-button {
+            padding: 12px !important;
+            font-size: 14px !important;
+          }
+          
+          .test-results-card {
+            padding: 20px 15px !important;
+          }
+          
+          .test-results-card h3 {
+            margin-bottom: 15px !important;
+            font-size: 16px !important;
+          }
+          
+          .test-result-item {
+            padding: 12px !important;
+          }
+          
+          .test-result-header {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 8px !important;
+            margin-bottom: 6px !important;
+          }
+          
+          .test-result-details {
+            flex-direction: column !important;
+            gap: 8px !important;
             align-items: flex-start !important;
           }
           
-          section > div:first-child button {
-            align-self: center !important;
+          .test-result-badge {
+            align-self: flex-start !important;
+          }
+          
+          .how-it-works-section h2 {
+            font-size: 24px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .how-it-works-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .how-it-works-card {
+            padding: 20px 15px !important;
+          }
+          
+          .how-it-works-card h3 {
+            font-size: 16px !important;
+            margin-bottom: 10px !important;
+          }
+          
+          .how-it-works-icon {
+            font-size: 40px !important;
+            margin-bottom: 12px !important;
+          }
+          
+          .how-it-works-description {
+            font-size: 14px !important;
+            line-height: 1.4 !important;
           }
         }
         
         @media (max-width: 480px) {
           .hero-title {
-            font-size: 28px !important;
+            font-size: 24px !important;
           }
           
           .hero-subtitle {
             font-size: 14px !important;
           }
           
-          .wallet-card {
-            padding: 15px 10px !important;
+          main {
+            padding: 20px 10px !important;
           }
           
-          .match-card {
+          .wallet-card,
+          .match-card,
+          .no-matches-card,
+          .test-results-card,
+          .how-it-works-card {
             padding: 15px 10px !important;
           }
           
@@ -1027,9 +1221,149 @@ export default function PredictionGrid() {
             height: 35px !important;
           }
           
-          .bet-button {
-            padding: 10px 12px !important;
+          .team-name {
             font-size: 13px !important;
+          }
+          
+          .team-country {
+            font-size: 11px !important;
+          }
+          
+          .match-vs {
+            font-size: 16px !important;
+          }
+          
+          .bet-amount-input {
+            padding: 8px !important;
+            font-size: 13px !important;
+          }
+          
+          .team-select-button {
+            padding: 10px !important;
+            font-size: 12px !important;
+          }
+          
+          .place-bet-button,
+          .login-to-bet-button,
+          .refresh-button,
+          .try-again-button,
+          .test-button {
+            padding: 10px 15px !important;
+            font-size: 13px !important;
+          }
+          
+          .wallet-section h2,
+          .matches-section h2,
+          .test-section h2,
+          .how-it-works-section h2 {
+            font-size: 20px !important;
+          }
+          
+          .how-it-works-icon {
+            font-size: 32px !important;
+          }
+          
+          .how-it-works-card h3 {
+            font-size: 14px !important;
+          }
+          
+          .how-it-works-description {
+            font-size: 13px !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .hero-title {
+            font-size: 22px !important;
+          }
+          
+          .hero-subtitle {
+            font-size: 13px !important;
+          }
+          
+          main {
+            padding: 15px 5px !important;
+          }
+          
+          .user-balance-display {
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+          }
+          
+          .wallet-card,
+          .match-card,
+          .no-matches-card,
+          .test-results-card,
+          .how-it-works-card {
+            padding: 12px 8px !important;
+          }
+          
+          .team-logo {
+            width: 30px !important;
+            height: 30px !important;
+          }
+          
+          .team-name {
+            font-size: 12px !important;
+          }
+          
+          .team-country {
+            font-size: 10px !important;
+          }
+          
+          .match-date-badge {
+            padding: 3px 8px !important;
+            font-size: 10px !important;
+          }
+          
+          .match-venue {
+            font-size: 11px !important;
+          }
+          
+          .bet-amount-input {
+            padding: 6px !important;
+            font-size: 12px !important;
+          }
+          
+          .team-select-button {
+            padding: 8px !important;
+            font-size: 11px !important;
+          }
+          
+          .place-bet-button,
+          .login-to-bet-button,
+          .refresh-button,
+          .try-again-button,
+          .test-button {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+          
+          .wallet-section h2,
+          .matches-section h2,
+          .test-section h2,
+          .how-it-works-section h2 {
+            font-size: 18px !important;
+          }
+          
+          .how-it-works-icon {
+            font-size: 28px !important;
+          }
+          
+          .how-it-works-card h3 {
+            font-size: 13px !important;
+          }
+          
+          .how-it-works-description {
+            font-size: 12px !important;
+          }
+          
+          .test-results-card h3 {
+            font-size: 14px !important;
+          }
+          
+          .no-matches-card h3 {
+            font-size: 18px !important;
           }
         }
       `}</style>

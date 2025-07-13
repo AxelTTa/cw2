@@ -570,6 +570,19 @@ export default function Overview() {
         }
 
         @media (max-width: 768px) {
+          /* Hero section mobile fixes */
+          section h1 {
+            font-size: 32px !important;
+            padding: 0 10px !important;
+            line-height: 1.2 !important;
+          }
+          
+          section p {
+            font-size: 16px !important;
+            padding: 0 10px !important;
+          }
+          
+          /* Section headers mobile fixes */
           section h2 {
             font-size: 24px !important;
           }
@@ -582,6 +595,68 @@ export default function Overview() {
           
           section > div:first-child a {
             align-self: center !important;
+            width: auto !important;
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          /* Grid improvements for mobile */
+          main {
+            padding: 20px 10px !important;
+          }
+          
+          /* Cards mobile optimization */
+          div[style*="gridTemplateColumns"] {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          
+          /* Competition cards */
+          div[style*="padding: 24px"] {
+            padding: 16px !important;
+          }
+          
+          /* Team and player cards mobile */
+          div[style*="display: flex"][style*="alignItems: center"] img {
+            width: 40px !important;
+            height: 40px !important;
+          }
+          
+          /* Text sizing for mobile */
+          h3 {
+            font-size: 16px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          section h1 {
+            font-size: 28px !important;
+          }
+          
+          section p {
+            font-size: 14px !important;
+          }
+          
+          section h2 {
+            font-size: 20px !important;
+          }
+          
+          main {
+            padding: 15px 8px !important;
+          }
+          
+          /* Further card optimization */
+          div[style*="padding: 16px"] {
+            padding: 12px !important;
+          }
+          
+          div[style*="display: flex"][style*="alignItems: center"] img {
+            width: 36px !important;
+            height: 36px !important;
+          }
+          
+          h3 {
+            font-size: 14px !important;
           }
         }
       `}</style>

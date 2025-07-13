@@ -886,130 +886,186 @@ export default function Matches() {
         }
 
         @media (max-width: 768px) {
+          /* Hero section mobile fixes */
           section h1 {
-            font-size: 24px !important;
-            margin-bottom: 10px !important;
-            line-height: 1.2;
-            word-wrap: break-word;
-            padding: 0 10px;
+            font-size: 28px !important;
+            margin-bottom: 15px !important;
+            line-height: 1.2 !important;
+            word-wrap: break-word !important;
+            padding: 0 10px !important;
           }
           
           section p {
-            font-size: 14px !important;
-            margin-bottom: 20px !important;
-            padding: 0 10px;
-          }
-          
-          .tab-container {
-            padding: 0 5px !important;
-            margin-bottom: 15px !important;
-            overflow-x: auto;
-          }
-          
-          .tab-button {
-            padding: 8px 12px !important;
-            font-size: 12px !important;
-            margin-right: 5px !important;
-            white-space: nowrap;
-          }
-          
-          .match-grid {
-            grid-template-columns: 1fr !important;
-            gap: 10px !important;
-            padding: 0 5px !important;
-          }
-          
-          .match-card {
-            padding: 12px 8px !important;
-            margin: 0 !important;
-          }
-          
-          .team-info {
-            min-width: auto !important;
-            flex: 1 !important;
-          }
-          
-          .team-name {
-            font-size: 12px !important;
-            line-height: 1.2 !important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-          }
-          
-          .team-logo {
-            width: 30px !important;
-            height: 30px !important;
-          }
-          
-          .match-score {
             font-size: 16px !important;
-            padding: 0 5px !important;
+            margin-bottom: 20px !important;
+            padding: 0 10px !important;
           }
           
-          .match-status {
-            font-size: 10px !important;
-            padding: 3px 6px !important;
-          }
-          
-          .match-details {
-            font-size: 10px !important;
-            flex-direction: column !important;
-            gap: 3px !important;
-          }
-          
-          .match-actions {
-            gap: 5px !important;
-            flex-direction: column !important;
-          }
-          
-          .action-button {
-            width: 100% !important;
-            padding: 6px 8px !important;
-            font-size: 10px !important;
-          }
-          
-          .stats-grid {
-            grid-template-columns: 1fr !important;
-            gap: 10px !important;
-            padding: 0 5px !important;
-          }
-          
-          .stats-card {
-            padding: 12px 8px !important;
-          }
-          
-          .chat-modal {
-            padding: 5px !important;
-          }
-          
-          .chat-modal-content {
-            width: 98% !important;
-            height: 95vh !important;
-            max-width: 98vw !important;
-          }
-          
-          .chat-header {
-            padding: 10px !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-          }
-          
-          .chat-title {
-            font-size: 14px !important;
-            text-align: center !important;
-            word-wrap: break-word !important;
+          /* Main content mobile optimization */
+          main {
+            padding: 20px 10px !important;
           }
           
           main h2 {
             font-size: 24px !important;
           }
           
-          main > div:first-child {
-            flex-direction: column !important;
+          /* Tab navigation mobile fixes */
+          div[style*="flexWrap: 'wrap'"] {
+            gap: 4px !important;
+            padding: 6px !important;
           }
           
-          main > div:first-child button {
-            min-width: 100% !important;
+          div[style*="flexWrap: 'wrap'"] button {
+            padding: 10px 16px !important;
+            font-size: 14px !important;
+            min-width: auto !important;
+            flex: 1 !important;
+          }
+          
+          /* Match cards grid mobile */
+          div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'"] {
+            grid-template-columns: 1fr !important;
+            gap: 16px !important;
+          }
+          
+          /* Match card internal mobile styles */
+          div[style*="padding: 20px"] {
+            padding: 16px !important;
+          }
+          
+          /* Team logos mobile */
+          img[style*="width: 36px"] {
+            width: 30px !important;
+            height: 30px !important;
+          }
+          
+          /* Team names mobile */
+          span[style*="fontSize: 16px"] {
+            font-size: 14px !important;
+          }
+          
+          /* Match score mobile */
+          div[style*="fontSize: 24px"] {
+            font-size: 20px !important;
+            margin: 0 10px !important;
+          }
+          
+          /* Match status badges mobile */
+          div[style*="fontSize: 12px"][style*="fontWeight: 'bold'"][style*="padding: '4px 8px'"] {
+            font-size: 10px !important;
+            padding: 3px 6px !important;
+          }
+          
+          /* Match actions mobile */
+          div[style*="display: 'flex'"][style*="gap: '8px'"] {
+            flex-direction: column !important;
+            gap: 6px !important;
+          }
+          
+          div[style*="display: 'flex'"][style*="gap: '8px'"] button {
+            width: 100% !important;
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+          
+          /* Stats cards mobile */
+          div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))'"] {
+            grid-template-columns: repeat(2, 1fr) !important;
+            gap: 16px !important;
+          }
+          
+          /* Stats card content mobile */
+          div[style*="fontSize: 36px"] {
+            font-size: 28px !important;
+          }
+          
+          div[style*="fontSize: 16px"][style*="fontWeight: 'bold'"][style*="color: '#ffffff'"] {
+            font-size: 14px !important;
+          }
+          
+          /* Chat modal mobile */
+          div[style*="padding: 20px"][style*="position: 'fixed'"] {
+            padding: 10px !important;
+          }
+          
+          div[style*="width: 100%"][style*="maxWidth: '900px'"] {
+            max-width: 95vw !important;
+            height: 90vh !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          /* Further mobile optimization */
+          section h1 {
+            font-size: 24px !important;
+            padding: 0 8px !important;
+          }
+          
+          section p {
+            font-size: 14px !important;
+            padding: 0 8px !important;
+          }
+          
+          main {
+            padding: 15px 8px !important;
+          }
+          
+          main h2 {
+            font-size: 20px !important;
+          }
+          
+          /* Tab buttons even smaller */
+          div[style*="flexWrap: 'wrap'"] button {
+            padding: 8px 12px !important;
+            font-size: 12px !important;
+          }
+          
+          /* Match cards further optimization */
+          div[style*="padding: 16px"] {
+            padding: 12px !important;
+          }
+          
+          img[style*="width: 30px"] {
+            width: 28px !important;
+            height: 28px !important;
+          }
+          
+          span[style*="fontSize: 14px"] {
+            font-size: 12px !important;
+          }
+          
+          div[style*="fontSize: 20px"] {
+            font-size: 18px !important;
+            margin: 0 8px !important;
+          }
+          
+          /* Stats grid single column on small screens */
+          div[style*="gridTemplateColumns: repeat(2, 1fr)"] {
+            grid-template-columns: 1fr !important;
+          }
+          
+          div[style*="fontSize: 28px"] {
+            font-size: 24px !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          section h1 {
+            font-size: 20px !important;
+          }
+          
+          section p {
+            font-size: 12px !important;
+          }
+          
+          main h2 {
+            font-size: 18px !important;
+          }
+          
+          div[style*="flexWrap: 'wrap'"] button {
+            padding: 6px 8px !important;
+            font-size: 11px !important;
           }
         }
       `}</style>

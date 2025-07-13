@@ -457,11 +457,21 @@ export default function Header() {
           header a {
             font-size: 18px !important;
           }
+          
+          /* Improved mobile menu spacing */
+          .mobile-nav {
+            padding: 15px !important;
+          }
+          
+          .mobile-nav a {
+            padding: 12px 16px !important;
+            font-size: 16px !important;
+          }
         }
         
         @media (max-width: 480px) {
           header {
-            padding: 8px 10px !important;
+            padding: 10px 12px !important;
           }
           
           header a {
@@ -471,6 +481,31 @@ export default function Header() {
           .mobile-menu-btn {
             padding: 6px 10px !important;
             font-size: 16px !important;
+          }
+          
+          /* Better mobile menu for small screens */
+          .mobile-nav {
+            padding: 10px !important;
+          }
+          
+          .mobile-nav a {
+            padding: 10px 12px !important;
+            font-size: 14px !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          header {
+            padding: 8px 10px !important;
+          }
+          
+          header a {
+            font-size: 14px !important;
+          }
+          
+          .mobile-menu-btn {
+            padding: 5px 8px !important;
+            font-size: 14px !important;
           }
         }
 

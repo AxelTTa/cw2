@@ -1559,3 +1559,38 @@ TypeError: Cannot read properties of undefined (reading 'baseUrl')
  ✓ Compiled in 59ms (202 modules)
  ✓ Compiled in 93ms (202 modules)
  ✓ Compiled in 65ms (202 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 758ms (615 modules)
+ GET / 200 in 872ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, lstat '/Users/judeowona/cw2/.next/server/app/api'
+<w> [webpack.cache.PackFileCacheStrategy/webpack.FileSystemInfo] Resolving '../../../../.next/server/app/api/players/route' in /Users/judeowona/cw2/node_modules/next/dist/server for build dependencies doesn't lead to expected result '/Users/judeowona/cw2/.next/server/app/api/players/route.js', but to 'Error: Can't resolve '../../../../.next/server/app/api/players/route' in '/Users/judeowona/cw2/node_modules/next/dist/server'' instead. Resolving dependencies are ignored for this path.
+<w>  at resolve commonjs file ../../../../.next/server/app/api/players/route (expected /Users/judeowona/cw2/.next/server/app/api/players/route.js)
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/server/require.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/server/require.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/server/load-components.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/server/load-components.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/utils.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/utils.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack/plugins/flight-client-entry-plugin.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack/plugins/flight-client-entry-plugin.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack-config.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack-config.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-swc-loader.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/compiled/loader-runner/LoaderRunner.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/compiled/webpack/bundle5.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/compiled/webpack/webpack.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack/plugins/define-env-plugin.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/swc/index.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/swc/index.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/analysis/parse-module.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/analysis/parse-module.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/analysis/get-page-static-info.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/analysis/get-page-static-info.js
+<w>  at file dependencies /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
+<w>  at file /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
+<w>  at resolve commonjs /Users/judeowona/cw2/node_modules/next/dist/build/webpack/loaders/next-flight-client-module-loader.js
