@@ -260,6 +260,22 @@ CREATE TABLE IF NOT EXISTS reward_claims (
 -- PREDICTIONS AND BETTING SYSTEM
 -- ===================================================
 
+-- Match betting table (simple match betting system)
+CREATE TABLE IF NOT EXISTS match_bets (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL,
+    match_id integer NOT NULL,
+    team_bet character varying NOT NULL,
+    amount numeric NOT NULL,
+    status character varying DEFAULT 'active'::character varying,
+    result character varying,
+    actual_return numeric DEFAULT 0,
+    created_at timestamp with time zone DEFAULT now(),
+    settled_at timestamp with time zone,
+    CONSTRAINT match_bets_pkey PRIMARY KEY (id),
+    CONSTRAINT match_bets_user_id_fkey FOREIGN KEY (user_id) REFERENCES profiles(id)
+);
+
 -- Prediction templates
 CREATE TABLE IF NOT EXISTS prediction_templates (
     id uuid NOT NULL DEFAULT gen_random_uuid(),
@@ -518,6 +534,11 @@ CREATE INDEX IF NOT EXISTS idx_wallet_connections_user_id ON wallet_connections(
 CREATE INDEX IF NOT EXISTS idx_wallet_connections_address ON wallet_connections(wallet_address);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_user_id ON token_transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_hash ON token_transactions(transaction_hash) WHERE transaction_hash IS NOT NULL;
+
+-- Match betting indexes
+CREATE INDEX IF NOT EXISTS idx_match_bets_user_id ON match_bets(user_id);
+CREATE INDEX IF NOT EXISTS idx_match_bets_match_id ON match_bets(match_id);
+CREATE INDEX IF NOT EXISTS idx_match_bets_status ON match_bets(status);
 
 -- ===================================================
 -- ATOMIC VOTING FUNCTION TO PREVENT DUPLICATE VOTES

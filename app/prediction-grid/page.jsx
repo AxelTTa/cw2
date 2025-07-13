@@ -69,41 +69,53 @@ export default function PredictionGrid() {
           fanTokens: userProfile.fan_tokens
         })
         
-        const userObj = {
-          id: userProfile.id,
-          email: userProfile.email,
-          user_metadata: {
-            display_name: userProfile.display_name,
-            avatar_url: userProfile.avatar_url
+        // Validate that user profile has required fields and is not undefined
+        if (userProfile.id && userProfile.id !== 'undefined' && userProfile.id !== undefined) {
+          const userObj = {
+            id: userProfile.id,
+            email: userProfile.email,
+            user_metadata: {
+              display_name: userProfile.display_name,
+              avatar_url: userProfile.avatar_url
+            }
           }
-        }
-        
-        setUser(userObj)
-        authenticatedUser = userObj
-        
-        // Get fresh user balance from database
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('fan_tokens, wallet_address')
-          .eq('id', userProfile.id)
-          .single()
-        
-        if (profileError) {
-          console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError)
-          // Fall back to stored balance
-          setUserBalance(parseFloat(userProfile.fan_tokens || 0))
-        } else {
-          console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile)
-          setUserBalance(parseFloat(profile.fan_tokens || 0))
           
-          if (profile.wallet_address) {
-            setWalletAddress(profile.wallet_address)
-            setWalletConnected(true)
+          setUser(userObj)
+          authenticatedUser = userObj
+        } else {
+          console.log('❌ [PREDICTION-GRID] Stored profile has invalid ID, falling back to Supabase auth')
+          // Clear invalid data and fall through to Supabase auth
+          localStorage.removeItem('user_profile')
+          localStorage.removeItem('session_token')
+          localStorage.removeItem('access_token')
+        }
+          
+          // Get fresh user balance from database only if we have a valid user
+          if (authenticatedUser) {
+            const { data: profile, error: profileError } = await supabase
+              .from('profiles')
+              .select('fan_tokens, wallet_address')
+              .eq('id', userProfile.id)
+              .single()
+            
+            if (profileError) {
+              console.error('❌ [PREDICTION-GRID] Error fetching profile:', profileError)
+              // Fall back to stored balance
+              setUserBalance(parseFloat(userProfile.fan_tokens || 0))
+            } else {
+              console.log('📊 [PREDICTION-GRID] Fresh profile data:', profile)
+              setUserBalance(parseFloat(profile.fan_tokens || 0))
+              
+              if (profile.wallet_address) {
+                setWalletAddress(profile.wallet_address)
+                setWalletConnected(true)
+              }
+            }
+            
+            console.log('✅ [PREDICTION-GRID] User authenticated via localStorage')
+            return authenticatedUser
           }
         }
-        
-        console.log('✅ [PREDICTION-GRID] User authenticated via localStorage')
-        return authenticatedUser
       }
       
       // Fall back to Supabase auth session check
