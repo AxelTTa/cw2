@@ -38,28 +38,15 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     // Check localStorage for user data
     const userData = localStorage.getItem('user_profile')
     if (userData) {
-      try {
-        const parsedUser = JSON.parse(userData)
-        // Debug: console.log('UniversalComments - User from localStorage:', parsedUser)
-        
-        // Ensure the user has an id field
-        if (parsedUser && parsedUser.id) {
-          setUser(parsedUser)
-          return
-        } else {
-          console.warn('UniversalComments - User data missing id field:', parsedUser)
-        }
-      } catch (error) {
-        console.error('UniversalComments - Error parsing user data from localStorage:', error)
-        localStorage.removeItem('user_profile') // Clear corrupted data
-      }
+      const parsedUser = JSON.parse(userData)
+      setUser(parsedUser)
+      return
     }
     
     // Fallback to Supabase auth (for existing users)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user && user.id) {
-        // Debug: console.log('UniversalComments - User from Supabase:', user)
+      if (user) {
         setUser(user)
       }
     } catch (error) {
@@ -196,31 +183,12 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
 
   const handleSubmitComment = async (e) => {
     e.preventDefault()
-    
-    // Enhanced user validation with debugging
-    if (!user) {
-      setError('Please log in to post comments.')
-      console.warn('UniversalComments - No user found when trying to submit comment')
-      return
-    }
-    
-    if (!user.id) {
-      setError('User authentication error. Please log out and log back in.')
-      console.error('UniversalComments - User object missing id field:', user)
-      return
-    }
-    
-    if (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif) {
-      setError('Please enter a comment or select content to post.')
-      return
-    }
+    if (!user || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif)) return
 
     if (!entityId) {
       setError('Entity ID is missing. Please refresh the page and try again.')
       return
     }
-    
-    // Debug: console.log('UniversalComments - Submitting comment with user:', { id: user.id, username: user.username || user.email })
 
     try {
       let uploadedFileUrl = null
@@ -272,8 +240,6 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         }
       }
 
-      // Debug: console.log('UniversalComments - Sending comment data:', commentData)
-      
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
@@ -283,7 +249,6 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       })
 
       const data = await response.json()
-      // Debug: console.log('UniversalComments - API response:', data)
       
       if (data.success) {
         setNewComment('')
@@ -297,11 +262,8 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         setGifSearchTerm('')
         setGifs([])
         await loadComments()
-        setError(null) // Clear any previous errors
       } else {
-        const errorMessage = data.error || 'Failed to post comment'
-        setError(errorMessage)
-        console.error('UniversalComments - API error:', errorMessage)
+        setError(data.error || 'Failed to post comment')
       }
     } catch (error) {
       console.error('Error submitting comment:', error)
@@ -499,44 +461,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
             <option value="oldest">Oldest</option>
             <option value="popular">Most Popular</option>
           </select>
-          {/* Auth Status Indicator */}
-          {user ? (
-            <div style={{
-              backgroundColor: '#0a5d2e',
-              border: '1px solid #00ff88',
-              borderRadius: '6px',
-              padding: '8px 12px',
-              fontSize: '14px',
-              color: '#00ff88',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
-              <span>
-                ✅ Logged in as: {user.display_name || user.username || user.email}
-                {!user.id && (
-                  <span style={{ color: '#ff6b6b', marginLeft: '8px' }}>
-                    ⚠️ Missing user ID - please log out and log back in
-                  </span>
-                )}
-              </span>
-              <button
-                onClick={handleLogout}
-                style={{
-                  backgroundColor: '#444',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  padding: '4px 8px',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  marginLeft: '12px'
-                }}
-              >
-                Logout
-              </button>
-            </div>
-          ) : (
+          {!user && (
             <GoogleAuth 
               onAuthSuccess={handleAuthSuccess}
               onAuthError={handleAuthError}
