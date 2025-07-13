@@ -329,14 +329,7 @@ export default function PredictionGrid() {
         throw new Error('User not authenticated')
       }
       
-      if (amount > userBalance) {
-        console.error('❌ [PREDICTION-GRID] Cannot place bet - insufficient balance:', {
-          requestedAmount: amount,
-          currentBalance: userBalance,
-          deficit: amount - userBalance
-        })
-        throw new Error('Insufficient balance')
-      }
+      // Allow betting any amount, even more than current balance
       
       if (amount <= 0) {
         console.error('❌ [PREDICTION-GRID] Cannot place bet - invalid amount:', amount)
@@ -808,6 +801,11 @@ export default function PredictionGrid() {
               )}
             </section>
 
+            {/* Test Section */}
+            {user && (
+              <TestSection user={user} />
+            )}
+
             {/* How It Works Section */}
             <section>
               <h2 style={{
@@ -1027,6 +1025,241 @@ export default function PredictionGrid() {
   )
 }
 
+// Test Section Component
+function TestSection({ user }) {
+  const [testResults, setTestResults] = useState([])
+  const [testing, setTesting] = useState(false)
+
+  const addResult = (test, result, details) => {
+    setTestResults(prev => [...prev, {
+      id: Date.now(),
+      test,
+      result,
+      details,
+      time: new Date().toLocaleTimeString()
+    }])
+  }
+
+  const testExtremeAmounts = async () => {
+    setTesting(true)
+    
+    const testCases = [
+      { amount: 1000000, label: "1M CHZ" },
+      { amount: 50000000, label: "50M CHZ" },
+      { amount: 999999999, label: "999M CHZ" },
+      { amount: 0.00001, label: "0.00001 CHZ" },
+      { amount: 123.456789, label: "123.456789 CHZ" }
+    ]
+
+    for (const testCase of testCases) {
+      try {
+        const { data, error } = await supabase
+          .from('match_bets')
+          .insert({
+            user_id: user.id,
+            match_id: 999999,
+            team_bet: 'Test Team',
+            amount: testCase.amount,
+            status: 'test'
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        addResult(`Bet ${testCase.label}`, 'PASS', `Stored as: ${data.amount}`)
+        
+        // Clean up immediately
+        await supabase.from('match_bets').delete().eq('id', data.id)
+      } catch (error) {
+        addResult(`Bet ${testCase.label}`, 'FAIL', error.message)
+      }
+    }
+    
+    setTesting(false)
+  }
+
+  const testBetWithdrawBalance = async () => {
+    setTesting(true)
+    
+    try {
+      // Get current balance
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('fan_tokens')
+        .eq('id', user.id)
+        .single()
+      
+      const currentBalance = profile?.fan_tokens || 0
+      const testAmount = currentBalance + 10000 // Bet more than balance
+      
+      const { data, error } = await supabase
+        .from('match_bets')
+        .insert({
+          user_id: user.id,
+          match_id: 999998,
+          team_bet: 'Over-Balance Team',
+          amount: testAmount,
+          status: 'test'
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+      
+      addResult('Over-Balance Bet', 'PASS', `Bet ${testAmount} CHZ when balance was ${currentBalance} CHZ`)
+      
+      // Test balance update (should go negative)
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ fan_tokens: currentBalance - testAmount })
+        .eq('id', user.id)
+      
+      if (updateError) throw updateError
+      
+      addResult('Negative Balance', 'PASS', `Balance can go negative: ${currentBalance - testAmount} CHZ`)
+      
+      // Restore balance and clean up
+      await supabase.from('profiles').update({ fan_tokens: currentBalance }).eq('id', user.id)
+      await supabase.from('match_bets').delete().eq('id', data.id)
+      
+    } catch (error) {
+      addResult('Over-Balance Test', 'FAIL', error.message)
+    }
+    
+    setTesting(false)
+  }
+
+  const runAllTests = async () => {
+    setTestResults([])
+    await testExtremeAmounts()
+    await testBetWithdrawBalance()
+  }
+
+  return (
+    <section>
+      <h2 style={{
+        fontSize: '32px',
+        fontWeight: 'bold',
+        color: '#ff6b35',
+        margin: '0 0 30px 0',
+        textAlign: 'center'
+      }}>
+        🧪 Betting System Tests
+      </h2>
+      
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+        gap: '24px',
+        marginBottom: '30px'
+      }}>
+        <button
+          onClick={testExtremeAmounts}
+          disabled={testing}
+          style={{
+            backgroundColor: '#00ff88',
+            color: '#000',
+            padding: '16px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: testing ? 'not-allowed' : 'pointer'
+          }}
+        >
+          🚀 Test Extreme Amounts
+        </button>
+
+        <button
+          onClick={testBetWithdrawBalance}
+          disabled={testing}
+          style={{
+            backgroundColor: '#0099ff',
+            color: '#000',
+            padding: '16px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: testing ? 'not-allowed' : 'pointer'
+          }}
+        >
+          💰 Test Over-Balance Betting
+        </button>
+
+        <button
+          onClick={runAllTests}
+          disabled={testing}
+          style={{
+            backgroundColor: '#ff6b35',
+            color: '#000',
+            padding: '16px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: testing ? 'not-allowed' : 'pointer'
+          }}
+        >
+          🎯 Run All Tests
+        </button>
+      </div>
+
+      {testResults.length > 0 && (
+        <div style={{
+          backgroundColor: '#111',
+          border: '2px solid #333',
+          borderRadius: '12px',
+          padding: '24px'
+        }}>
+          <h3 style={{ color: '#0099ff', marginBottom: '20px' }}>Test Results</h3>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {testResults.map((result) => (
+              <div
+                key={result.id}
+                style={{
+                  backgroundColor: '#222',
+                  border: `2px solid ${result.result === 'PASS' ? '#00ff88' : '#ef4444'}`,
+                  borderRadius: '8px',
+                  padding: '16px'
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <strong style={{ color: '#fff' }}>{result.test}</strong>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <span style={{
+                      backgroundColor: result.result === 'PASS' ? '#00ff88' : '#ef4444',
+                      color: result.result === 'PASS' ? '#000' : '#fff',
+                      padding: '4px 12px',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 'bold'
+                    }}>
+                      {result.result}
+                    </span>
+                    <span style={{ color: '#888', fontSize: '14px' }}>
+                      {result.time}
+                    </span>
+                  </div>
+                </div>
+                <p style={{ color: '#ccc', fontSize: '14px', margin: 0 }}>
+                  {result.details}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
 // Match Betting Card Component
 function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, formatDate, getCountryFlag }) {
   const [selectedTeam, setSelectedTeam] = useState('')
@@ -1058,20 +1291,18 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
       hasSelectedTeam: !!selectedTeam,
       hasUser: !!user,
       isNotPlacing: !isPlacing,
-      canAfford: betAmount <= userBalance,
       noExistingBet: !existingBet,
       betAmountValid: betAmount > 0
     }
     
     console.log('🔍 [MATCH-CARD] Bet validation results:', validationResults)
     
-    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) {
+    if (!selectedTeam || !user || isPlacing) {
       console.log('❌ [MATCH-CARD] Cannot place bet - validation failed:', {
         failureReasons: {
           noTeamSelected: !selectedTeam,
           noUser: !user,
-          alreadyPlacing: isPlacing,
-          insufficientFunds: betAmount > userBalance
+          alreadyPlacing: isPlacing
         },
         validationResults
       })
@@ -1107,7 +1338,7 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
     }
   }
 
-  const canBet = user && userBalance >= betAmount && !existingBet
+  const canBet = user && !existingBet
   
   console.log('🎮 [MATCH-CARD] Match card render state:', {
     matchId: match.fixture.id,
@@ -1299,7 +1530,6 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
             <input
               type="number"
               min="1"
-              max={userBalance}
               value={betAmount}
               onChange={(e) => setBetAmount(Number(e.target.value))}
               style={{
@@ -1311,6 +1541,7 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
                 color: '#ffffff',
                 fontSize: '16px'
               }}
+              placeholder="Enter any amount"
             />
           </div>
 
@@ -1361,17 +1592,17 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
           {/* Place Bet Button */}
           <button
             onClick={handlePlaceBet}
-            disabled={!selectedTeam || isPlacing || betAmount > userBalance}
+            disabled={!selectedTeam || isPlacing || betAmount <= 0}
             style={{
               width: '100%',
               padding: '16px',
-              backgroundColor: selectedTeam && !isPlacing && betAmount <= userBalance ? '#00ff88' : '#444',
-              color: selectedTeam && !isPlacing && betAmount <= userBalance ? '#000' : '#888',
+              backgroundColor: selectedTeam && !isPlacing && betAmount > 0 ? '#00ff88' : '#444',
+              color: selectedTeam && !isPlacing && betAmount > 0 ? '#000' : '#888',
               border: 'none',
               borderRadius: '8px',
               fontSize: '16px',
               fontWeight: 'bold',
-              cursor: selectedTeam && !isPlacing && betAmount <= userBalance ? 'pointer' : 'not-allowed',
+              cursor: selectedTeam && !isPlacing && betAmount > 0 ? 'pointer' : 'not-allowed',
               transition: 'all 0.3s ease'
             }}
           >
@@ -1409,21 +1640,6 @@ function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, f
           >
             Login to Bet
           </button>
-        </div>
-      ) : userBalance < betAmount ? (
-        <div style={{
-          textAlign: 'center',
-          padding: '24px',
-          backgroundColor: '#2d1b1b',
-          border: '1px solid #664444',
-          borderRadius: '8px'
-        }}>
-          <p style={{ color: '#ff6b6b', marginBottom: '8px' }}>
-            ⚠️ Insufficient CHZ balance
-          </p>
-          <p style={{ color: '#888', fontSize: '14px' }}>
-            You have {userBalance} CHZ, need {betAmount} CHZ
-          </p>
         </div>
       ) : (
         <div style={{

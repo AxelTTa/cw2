@@ -204,7 +204,8 @@ export default function Matches() {
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          flex: 1
+          flex: 1,
+          minWidth: 0
         }}>
           <img 
             src={match.homeTeam?.logo || match.home_team_logo} 
@@ -213,13 +214,18 @@ export default function Matches() {
               width: '36px',
               height: '36px',
               objectFit: 'contain',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              flexShrink: 0
             }}
           />
           <span style={{
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#ffffff'
+            color: '#ffffff',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0
           }}>
             {match.homeTeam?.name || match.home_team}
           </span>
@@ -252,12 +258,18 @@ export default function Matches() {
           alignItems: 'center',
           gap: '12px',
           flex: 1,
-          justifyContent: 'flex-end'
+          justifyContent: 'flex-end',
+          minWidth: 0
         }}>
           <span style={{
             fontSize: '16px',
             fontWeight: 'bold',
-            color: '#ffffff'
+            color: '#ffffff',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+            textAlign: 'right'
           }}>
             {match.awayTeam?.name || match.away_team}
           </span>
@@ -268,7 +280,8 @@ export default function Matches() {
               width: '36px',
               height: '36px',
               objectFit: 'contain',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              flexShrink: 0
             }}
           />
         </div>
