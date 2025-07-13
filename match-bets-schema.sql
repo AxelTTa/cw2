@@ -15,14 +15,14 @@ CREATE TABLE IF NOT EXISTS match_bets (
     settled_at TIMESTAMP WITH TIME ZONE,
     
     -- Constraints
-    UNIQUE(user_id, match_id), -- One bet per user per match
-    
-    -- Indexes for performance
-    INDEX idx_match_bets_user_id (user_id),
-    INDEX idx_match_bets_match_id (match_id),
-    INDEX idx_match_bets_status (status),
-    INDEX idx_match_bets_created_at (created_at)
+    UNIQUE(user_id, match_id) -- One bet per user per match
 );
+
+-- Create indexes for performance
+CREATE INDEX idx_match_bets_user_id ON match_bets(user_id);
+CREATE INDEX idx_match_bets_match_id ON match_bets(match_id);
+CREATE INDEX idx_match_bets_status ON match_bets(status);
+CREATE INDEX idx_match_bets_created_at ON match_bets(created_at);
 
 -- RLS Policies
 ALTER TABLE match_bets ENABLE ROW LEVEL SECURITY;
