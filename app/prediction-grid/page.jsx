@@ -7,310 +7,6 @@ import { supabase } from '../utils/supabase'
 import { apiFootball } from '../utils/api-football'
 import { switchToChilizChain, getChzBalance, isValidChilizAddress } from '../utils/chiliz-token'
 
-// Simple UI Components with homepage color scheme
-const Button = ({ children, onClick, variant = 'default', disabled = false, className = '' }) => {
-  const variants = {
-    default: 'bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white',
-    secondary: 'bg-gray-800 hover:bg-gray-700 text-white border border-gray-600',
-    success: 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white',
-    chz: 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white'
-  }
-  
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none ${variants[variant]} ${className}`}
-    >
-      {children}
-    </button>
-  )
-}
-
-const Card = ({ children, className = '' }) => {
-  return (
-    <div className={`bg-gray-900/80 backdrop-blur-lg border border-gray-700 rounded-xl p-6 ${className}`}>
-      {children}
-    </div>
-  )
-}
-
-const Badge = ({ children, variant = 'default' }) => {
-  const variants = {
-    default: 'bg-blue-600 text-white',
-    upcoming: 'bg-yellow-600 text-white',
-    live: 'bg-red-600 text-white animate-pulse'
-  }
-  
-  return (
-    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${variants[variant]}`}>
-      {children}
-    </span>
-  )
-}
-
-// Simple Betting Card for Win/Loss
-const BettingCard = ({ match, onPlaceBet, userBalance, user, existingBet }) => {
-  const [selectedTeam, setSelectedTeam] = useState('')
-  const [isPlacing, setIsPlacing] = useState(false)
-  const [betAmount, setBetAmount] = useState(10)
-
-  const handlePlaceBet = async () => {
-    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) return
-    
-    setIsPlacing(true)
-    try {
-      await onPlaceBet(match.fixture.id, selectedTeam, betAmount)
-      setSelectedTeam('')
-    } catch (error) {
-      console.error('Failed to place bet:', error)
-    } finally {
-      setIsPlacing(false)
-    }
-  }
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
-  const canBet = user && userBalance >= betAmount && !existingBet
-
-  return (
-    <Card className="relative overflow-hidden">
-      {/* Match Header */}
-      <div className="flex justify-between items-center mb-4">
-        <Badge variant="upcoming">📅 {formatDate(match.fixture.date)}</Badge>
-        <div className="text-sm text-gray-400">
-          {match.fixture.venue?.name}, {match.fixture.venue?.city}
-        </div>
-      </div>
-
-      {/* Teams */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <img 
-            src={match.teams.home.logo} 
-            alt={match.teams.home.name}
-            className="w-12 h-12 rounded-full"
-            onError={(e) => e.target.src = '/default-team-logo.png'}
-          />
-          <div>
-            <h3 className="font-bold text-white">{match.teams.home.name}</h3>
-            <p className="text-sm text-gray-400">{match.teams.home.country}</p>
-          </div>
-        </div>
-        
-        <div className="text-2xl font-bold text-gray-400">VS</div>
-        
-        <div className="flex items-center space-x-3">
-          <div className="text-right">
-            <h3 className="font-bold text-white">{match.teams.away.name}</h3>
-            <p className="text-sm text-gray-400">{match.teams.away.country}</p>
-          </div>
-          <img 
-            src={match.teams.away.logo} 
-            alt={match.teams.away.name}
-            className="w-12 h-12 rounded-full"
-            onError={(e) => e.target.src = '/default-team-logo.png'}
-          />
-        </div>
-      </div>
-
-      {/* Existing Bet Display */}
-      {existingBet && (
-        <div className="mb-4 p-4 bg-blue-900/30 border border-blue-600/50 rounded-lg">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-blue-300 font-semibold">Your Bet: {existingBet.team_bet}</p>
-              <p className="text-sm text-gray-400">Amount: {existingBet.amount} CHZ</p>
-            </div>
-            <Badge variant="default">PLACED</Badge>
-          </div>
-        </div>
-      )}
-
-      {/* Betting Interface */}
-      {canBet ? (
-        <div className="space-y-4">
-          {/* Bet Amount */}
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
-              Bet Amount (CHZ)
-            </label>
-            <input
-              type="number"
-              min="1"
-              max={userBalance}
-              value={betAmount}
-              onChange={(e) => setBetAmount(Number(e.target.value))}
-              className="w-full p-3 bg-gray-800 border border-gray-600 rounded-lg text-white focus:border-blue-500 focus:outline-none"
-            />
-          </div>
-
-          {/* Team Selection */}
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant={selectedTeam === match.teams.home.name ? 'chz' : 'secondary'}
-              onClick={() => setSelectedTeam(match.teams.home.name)}
-              className="p-4"
-            >
-              <div className="text-center">
-                <div className="font-semibold">{match.teams.home.name}</div>
-                <div className="text-sm opacity-75">Win</div>
-              </div>
-            </Button>
-            
-            <Button
-              variant={selectedTeam === match.teams.away.name ? 'chz' : 'secondary'}
-              onClick={() => setSelectedTeam(match.teams.away.name)}
-              className="p-4"
-            >
-              <div className="text-center">
-                <div className="font-semibold">{match.teams.away.name}</div>
-                <div className="text-sm opacity-75">Win</div>
-              </div>
-            </Button>
-          </div>
-
-          {/* Place Bet Button */}
-          <Button
-            variant="success"
-            onClick={handlePlaceBet}
-            disabled={!selectedTeam || isPlacing || betAmount > userBalance}
-            className="w-full"
-          >
-            {isPlacing ? (
-              '🔄 Placing Bet...'
-            ) : selectedTeam ? (
-              `🎯 Bet ${betAmount} CHZ on ${selectedTeam}`
-            ) : (
-              'Select a team to bet'
-            )}
-          </Button>
-        </div>
-      ) : !user ? (
-        <div className="text-center p-6 bg-gray-800/50 rounded-lg">
-          <p className="text-gray-400 mb-4">🔐 Login required to place bets</p>
-          <Button variant="chz" onClick={() => window.location.href = '/login'}>
-            Login to Bet
-          </Button>
-        </div>
-      ) : userBalance < betAmount ? (
-        <div className="text-center p-6 bg-red-900/30 border border-red-600/50 rounded-lg">
-          <p className="text-red-300">⚠️ Insufficient CHZ balance</p>
-          <p className="text-sm text-gray-400">You have {userBalance} CHZ, need {betAmount} CHZ</p>
-        </div>
-      ) : (
-        <div className="text-center p-6 bg-gray-800/50 rounded-lg">
-          <p className="text-gray-400">✅ Bet already placed for this match</p>
-        </div>
-      )}
-    </Card>
-  )
-}
-
-// Wallet Connection Component
-const WalletConnector = ({ user, onWalletConnect }) => {
-  const [walletAddress, setWalletAddress] = useState('')
-  const [walletBalance, setWalletBalance] = useState(0)
-  const [connecting, setConnecting] = useState(false)
-
-  const connectWallet = async () => {
-    try {
-      setConnecting(true)
-      
-      if (!window.ethereum) {
-        alert('❌ MetaMask not found. Please install MetaMask to connect your Chiliz wallet.')
-        return
-      }
-
-      // Switch to Chiliz Chain
-      await switchToChilizChain()
-      
-      // Request account access
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
-      const address = accounts[0]
-      
-      // Get CHZ balance
-      const balance = await getChzBalance(address)
-      
-      setWalletAddress(address)
-      setWalletBalance(parseFloat(balance))
-      
-      // Save wallet address to user profile
-      if (user) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ wallet_address: address })
-          .eq('id', user.id)
-
-        if (error) {
-          console.error('Failed to save wallet address:', error)
-        }
-      }
-      
-      onWalletConnect(address, balance)
-      
-    } catch (error) {
-      console.error('Failed to connect wallet:', error)
-      alert('❌ Failed to connect wallet: ' + error.message)
-    } finally {
-      setConnecting(false)
-    }
-  }
-
-  const disconnectWallet = () => {
-    setWalletAddress('')
-    setWalletBalance(0)
-    onWalletConnect('', 0)
-  }
-
-  if (walletAddress) {
-    return (
-      <Card className="mb-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h3 className="text-lg font-semibold text-white mb-2">🔗 Chiliz Wallet Connected</h3>
-            <p className="text-sm text-gray-400">
-              {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-            </p>
-            <p className="text-green-400 font-semibold">
-              💰 {walletBalance.toFixed(4)} CHZ on-chain
-            </p>
-          </div>
-          <Button variant="secondary" onClick={disconnectWallet}>
-            Disconnect
-          </Button>
-        </div>
-      </Card>
-    )
-  }
-
-  return (
-    <Card className="mb-6">
-      <div className="text-center">
-        <h3 className="text-lg font-semibold text-white mb-2">🔗 Connect Chiliz Wallet</h3>
-        <p className="text-gray-400 mb-4">
-          Connect your MetaMask wallet to Chiliz Chain for enhanced betting rewards
-        </p>
-        <Button 
-          variant="chz" 
-          onClick={connectWallet}
-          disabled={connecting}
-        >
-          {connecting ? '🔄 Connecting...' : '🦊 Connect MetaMask'}
-        </Button>
-      </div>
-    </Card>
-  )
-}
-
 export default function PredictionGrid() {
   const [user, setUser] = useState(null)
   const [matches, setMatches] = useState([])
@@ -321,10 +17,12 @@ export default function PredictionGrid() {
   const [walletConnected, setWalletConnected] = useState(false)
   const [walletAddress, setWalletAddress] = useState('')
   const [walletBalance, setWalletBalance] = useState(0)
+  const [isVisible, setIsVisible] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
     initializeApp()
+    setIsVisible(true)
   }, [])
 
   const initializeApp = async () => {
@@ -358,12 +56,17 @@ export default function PredictionGrid() {
       // Get user balance
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('fan_tokens')
+        .select('fan_tokens, wallet_address')
         .eq('id', user.id)
         .single()
 
       if (profileError) throw profileError
       setUserBalance(parseFloat(profile.fan_tokens || 0))
+      
+      if (profile.wallet_address) {
+        setWalletAddress(profile.wallet_address)
+        setWalletConnected(true)
+      }
 
     } catch (error) {
       console.error('Auth error:', error)
@@ -377,17 +80,27 @@ export default function PredictionGrid() {
       console.log('🔍 Loading Club World Cup matches...')
       const clubWorldCupMatches = await apiFootball.fetchClubWorldCupMatches()
       
-      console.log('✅ Loaded matches:', clubWorldCupMatches.length)
-      setMatches(clubWorldCupMatches)
+      // If API returns empty, use mock data for demo
+      if (clubWorldCupMatches.length === 0) {
+        const mockMatches = apiFootball.getClubWorldCup2025MockMatches()
+        setMatches(mockMatches)
+      } else {
+        setMatches(clubWorldCupMatches)
+      }
 
       // Load existing bets if user is logged in
       if (user) {
-        await loadUserBets(clubWorldCupMatches.map(m => m.fixture.id))
+        const matchIds = clubWorldCupMatches.length > 0 
+          ? clubWorldCupMatches.map(m => m.fixture.id)
+          : [1001, 1002, 1003, 1004] // Mock IDs
+        await loadUserBets(matchIds)
       }
 
     } catch (error) {
       console.error('Failed to load matches:', error)
-      setError('Failed to load matches: ' + error.message)
+      // Use mock data as fallback
+      const mockMatches = apiFootball.getClubWorldCup2025MockMatches()
+      setMatches(mockMatches)
     }
   }
 
@@ -443,12 +156,7 @@ export default function PredictionGrid() {
       await checkUser()
       await loadUserBets([matchId])
 
-      // Show enhanced message if wallet is connected
-      const successMessage = walletConnected 
-        ? `✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}. Rewards will be distributed to your connected Chiliz wallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-        : `✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}`
-
-      alert(successMessage)
+      alert(`✅ Bet placed successfully! You bet ${amount} CHZ on ${teamBet}`)
 
     } catch (error) {
       console.error('Failed to place bet:', error)
@@ -457,153 +165,822 @@ export default function PredictionGrid() {
     }
   }
 
-  const handleWalletConnect = (address, balance) => {
-    setWalletConnected(!!address)
-    setWalletAddress(address)
-    setWalletBalance(parseFloat(balance))
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        alert('❌ MetaMask not found. Please install MetaMask to connect your Chiliz wallet.')
+        return
+      }
+
+      // Switch to Chiliz Chain
+      await switchToChilizChain()
+      
+      // Request account access
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' })
+      const address = accounts[0]
+      
+      // Get CHZ balance
+      const balance = await getChzBalance(address)
+      
+      setWalletAddress(address)
+      setWalletBalance(parseFloat(balance))
+      setWalletConnected(true)
+      
+      // Save wallet address to user profile
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ wallet_address: address })
+          .eq('id', user.id)
+
+        if (error) {
+          console.error('Failed to save wallet address:', error)
+        }
+      }
+      
+    } catch (error) {
+      console.error('Failed to connect wallet:', error)
+      alert('❌ Failed to connect wallet: ' + error.message)
+    }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <Header />
-        <div className="container mx-auto px-6 py-20">
-          <div className="text-center">
-            <div className="text-6xl mb-6">⚽</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Loading Club World Cup...</h2>
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          </div>
-        </div>
-      </div>
-    )
+  const formatDate = (dateString) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
-        <Header />
-        <div className="container mx-auto px-6 py-20">
-          <div className="text-center">
-            <div className="text-6xl mb-6">❌</div>
-            <h2 className="text-2xl font-bold text-white mb-4">Error Loading Matches</h2>
-            <p className="text-red-400 mb-8">{error}</p>
-            <Button onClick={() => window.location.reload()}>
-              Try Again
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
+  const getCountryFlag = (country) => {
+    const flagMap = {
+      'Spain': '🇪🇸',
+      'Brazil': '🇧🇷',
+      'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'Saudi Arabia': '🇸🇦',
+      'Germany': '🇩🇪',
+      'Mexico': '🇲🇽',
+      'France': '🇫🇷',
+      'Morocco': '🇲🇦'
+    }
+    return flagMap[country] || '🌍'
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-900">
+    <div style={{
+      backgroundColor: '#0a0a0a',
+      color: '#ffffff',
+      minHeight: '100vh',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+    }}>
       <Header />
-      
+
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-cyan-600/20"></div>
-        <div className="container mx-auto px-6 py-20 relative z-10">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-6xl font-bold text-white mb-6">
-              🏆 <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Club World Cup 2025
-              </span>
-            </h1>
-            <p className="text-xl text-gray-300 mb-8">
-              Bet CHZ on your favorite teams to win upcoming matches
-            </p>
-            
-            {user ? (
-              <div className="inline-flex items-center bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg px-6 py-3">
-                <span className="text-green-400 font-semibold text-lg">
-                  💰 {userBalance.toFixed(2)} CHZ Available
-                </span>
-              </div>
-            ) : (
-              <Button variant="chz" onClick={() => router.push('/login')}>
-                🔐 Login to Start Betting
-              </Button>
-            )}
+      <section style={{
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%)',
+        padding: '60px 20px',
+        textAlign: 'center',
+        borderBottom: '2px solid #333'
+      }}>
+        <h1 style={{
+          fontSize: '48px',
+          fontWeight: '800',
+          marginBottom: '20px',
+          background: 'linear-gradient(45deg, #00ff88, #0099ff, #ff6b35)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text'
+        }}>
+          🏆 Club World Cup 2025 Betting
+        </h1>
+        <p style={{
+          fontSize: '20px',
+          color: '#cccccc',
+          maxWidth: '600px',
+          margin: '0 auto 30px',
+          lineHeight: '1.6'
+        }}>
+          Bet CHZ on your favorite teams to win upcoming matches
+        </p>
+        
+        {user ? (
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            backgroundColor: '#00ff88',
+            color: '#000',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            marginBottom: '20px'
+          }}>
+            💰 {userBalance.toFixed(2)} CHZ Available
           </div>
+        ) : (
+          <button
+            onClick={() => router.push('/login')}
+            style={{
+              backgroundColor: '#0099ff',
+              color: '#000',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            🔐 Login to Start Betting
+          </button>
+        )}
+      </section>
+
+      {/* Main Content */}
+      <main style={{ padding: '40px 20px', maxWidth: '1400px', margin: '0 auto' }}>
+        {loading && (
+          <div style={{
+            textAlign: 'center',
+            padding: '80px 20px'
+          }}>
+            <div style={{
+              fontSize: '64px',
+              marginBottom: '25px',
+              animation: 'bounce 1.5s infinite'
+            }}>⚽</div>
+            <div style={{
+              fontSize: '24px',
+              color: '#00ff88',
+              fontWeight: 'bold'
+            }}>Loading Club World Cup matches...</div>
+          </div>
+        )}
+
+        {error && (
+          <div style={{
+            backgroundColor: '#2d1b1b',
+            border: '1px solid #664444',
+            borderRadius: '8px',
+            padding: '20px',
+            color: '#ff6b6b',
+            textAlign: 'center',
+            marginBottom: '30px'
+          }}>
+            {error}
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div style={{ display: 'grid', gap: '50px' }}>
+            
+            {/* Wallet Connection Section */}
+            {user && (
+              <section>
+                <h2 style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: '#ff6b35',
+                  margin: '0 0 30px 0'
+                }}>
+                  🔗 Chiliz Wallet
+                </h2>
+                
+                {walletConnected ? (
+                  <div style={{
+                    backgroundColor: '#111',
+                    border: '2px solid #00ff88',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    maxWidth: '500px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center'
+                    }}>
+                      <div>
+                        <h3 style={{
+                          fontSize: '18px',
+                          fontWeight: 'bold',
+                          color: '#00ff88',
+                          marginBottom: '8px'
+                        }}>
+                          ✅ Wallet Connected
+                        </h3>
+                        <p style={{
+                          color: '#888',
+                          fontSize: '14px',
+                          marginBottom: '4px'
+                        }}>
+                          {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+                        </p>
+                        <p style={{
+                          color: '#00ff88',
+                          fontWeight: 'bold'
+                        }}>
+                          💰 {walletBalance.toFixed(4)} CHZ on-chain
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => setWalletConnected(false)}
+                        style={{
+                          backgroundColor: 'transparent',
+                          border: '1px solid #666',
+                          color: '#666',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    backgroundColor: '#111',
+                    border: '2px solid #333',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    textAlign: 'center',
+                    maxWidth: '500px'
+                  }}>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: '#ffffff',
+                      marginBottom: '12px'
+                    }}>
+                      Connect Your MetaMask Wallet
+                    </h3>
+                    <p style={{
+                      color: '#888',
+                      marginBottom: '20px'
+                    }}>
+                      Connect to Chiliz Chain for enhanced betting rewards
+                    </p>
+                    <button
+                      onClick={connectWallet}
+                      style={{
+                        backgroundColor: '#ff6b35',
+                        color: '#000',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        border: 'none',
+                        fontSize: '16px',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      🦊 Connect MetaMask
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
+
+            {/* Matches Section */}
+            <section>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '30px'
+              }}>
+                <h2 style={{
+                  fontSize: '32px',
+                  fontWeight: 'bold',
+                  color: '#0099ff',
+                  margin: 0
+                }}>
+                  ⚽ Upcoming Matches
+                </h2>
+                <button
+                  onClick={loadMatches}
+                  style={{
+                    backgroundColor: '#0099ff',
+                    color: '#000',
+                    padding: '12px 24px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease'
+                  }}
+                >
+                  🔄 Refresh Matches
+                </button>
+              </div>
+
+              {matches.length === 0 ? (
+                <div style={{
+                  backgroundColor: '#111',
+                  border: '2px solid #333',
+                  borderRadius: '12px',
+                  padding: '60px',
+                  textAlign: 'center'
+                }}>
+                  <div style={{ fontSize: '64px', marginBottom: '20px' }}>🏟️</div>
+                  <h3 style={{
+                    fontSize: '24px',
+                    fontWeight: 'bold',
+                    color: '#ffffff',
+                    marginBottom: '12px'
+                  }}>
+                    No Upcoming Matches
+                  </h3>
+                  <p style={{ color: '#888', marginBottom: '30px' }}>
+                    No Club World Cup matches found. Check back soon!
+                  </p>
+                  <button
+                    onClick={loadMatches}
+                    style={{
+                      backgroundColor: '#00ff88',
+                      color: '#000',
+                      padding: '12px 24px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      fontSize: '16px',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔄 Try Again
+                  </button>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
+                  gap: '24px'
+                }}>
+                  {matches.map((match) => (
+                    <MatchBettingCard
+                      key={match.fixture.id}
+                      match={match}
+                      user={user}
+                      userBalance={userBalance}
+                      existingBet={userBets[match.fixture.id]}
+                      onPlaceBet={placeBet}
+                      formatDate={formatDate}
+                      getCountryFlag={getCountryFlag}
+                    />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* How It Works Section */}
+            <section>
+              <h2 style={{
+                fontSize: '32px',
+                fontWeight: 'bold',
+                color: '#00ff88',
+                margin: '0 0 30px 0',
+                textAlign: 'center'
+              }}>
+                🎯 How Betting Works
+              </h2>
+              
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                gap: '24px'
+              }}>
+                {[
+                  {
+                    icon: '💰',
+                    title: 'Simple Win/Loss',
+                    description: 'Choose which team will win the match and bet your CHZ',
+                    color: '#00ff88'
+                  },
+                  {
+                    icon: '⚡',
+                    title: 'CHZ Rewards',
+                    description: 'Win CHZ tokens based on match outcomes and betting pools',
+                    color: '#0099ff'
+                  },
+                  {
+                    icon: '🏆',
+                    title: 'Club World Cup',
+                    description: 'Bet on the biggest club tournament featuring top teams worldwide',
+                    color: '#ff6b35'
+                  }
+                ].map((item, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      backgroundColor: '#111',
+                      border: '2px solid #333',
+                      borderRadius: '12px',
+                      padding: '24px',
+                      textAlign: 'center',
+                      transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = item.color
+                      e.currentTarget.style.transform = 'translateY(-4px)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = '#333'
+                      e.currentTarget.style.transform = 'translateY(0)'
+                    }}
+                  >
+                    <div style={{ fontSize: '48px', marginBottom: '16px' }}>
+                      {item.icon}
+                    </div>
+                    <h3 style={{
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: item.color,
+                      marginBottom: '12px'
+                    }}>
+                      {item.title}
+                    </h3>
+                    <p style={{ color: '#888', lineHeight: '1.6' }}>
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          </div>
+        )}
+      </main>
+
+      <style jsx>{`
+        @keyframes bounce {
+          0%, 20%, 50%, 80%, 100% {
+            transform: translateY(0);
+          }
+          40% {
+            transform: translateY(-20px);
+          }
+          60% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @media (max-width: 768px) {
+          section h2 {
+            font-size: 24px !important;
+          }
+          
+          section > div:first-child {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: flex-start !important;
+          }
+          
+          section > div:first-child button {
+            align-self: center !important;
+          }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// Match Betting Card Component
+function MatchBettingCard({ match, user, userBalance, existingBet, onPlaceBet, formatDate, getCountryFlag }) {
+  const [selectedTeam, setSelectedTeam] = useState('')
+  const [betAmount, setBetAmount] = useState(10)
+  const [isPlacing, setIsPlacing] = useState(false)
+
+  const handlePlaceBet = async () => {
+    if (!selectedTeam || !user || isPlacing || betAmount > userBalance) return
+    
+    setIsPlacing(true)
+    try {
+      await onPlaceBet(match.fixture.id, selectedTeam, betAmount)
+      setSelectedTeam('')
+    } catch (error) {
+      console.error('Failed to place bet:', error)
+    } finally {
+      setIsPlacing(false)
+    }
+  }
+
+  const canBet = user && userBalance >= betAmount && !existingBet
+
+  return (
+    <div style={{
+      backgroundColor: '#111',
+      border: '2px solid #333',
+      borderRadius: '12px',
+      padding: '24px',
+      transition: 'all 0.3s ease'
+    }}>
+      {/* Match Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '20px'
+      }}>
+        <span style={{
+          backgroundColor: '#0099ff',
+          color: '#000',
+          padding: '4px 12px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          fontWeight: 'bold'
+        }}>
+          📅 {formatDate(match.fixture.date)}
+        </span>
+        <span style={{ color: '#888', fontSize: '14px' }}>
+          {match.fixture.venue?.name}
+        </span>
+      </div>
+
+      {/* Teams */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '24px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+          <img 
+            src={match.teams.home.logo} 
+            alt={match.teams.home.name}
+            style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '8px',
+              marginRight: '12px',
+              objectFit: 'contain'
+            }}
+            onError={(e) => e.target.style.display = 'none'}
+          />
+          <div>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              marginBottom: '4px'
+            }}>
+              {match.teams.home.name}
+            </h3>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              color: '#888',
+              fontSize: '14px'
+            }}>
+              <span style={{ marginRight: '6px' }}>
+                {getCountryFlag(match.teams.home.country)}
+              </span>
+              {match.teams.home.country}
+            </div>
+          </div>
+        </div>
+        
+        <div style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: '#666',
+          margin: '0 20px'
+        }}>
+          VS
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+          <div style={{ textAlign: 'right', marginRight: '12px' }}>
+            <h3 style={{
+              fontSize: '16px',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              marginBottom: '4px'
+            }}>
+              {match.teams.away.name}
+            </h3>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-end',
+              color: '#888',
+              fontSize: '14px'
+            }}>
+              {match.teams.away.country}
+              <span style={{ marginLeft: '6px' }}>
+                {getCountryFlag(match.teams.away.country)}
+              </span>
+            </div>
+          </div>
+          <img 
+            src={match.teams.away.logo} 
+            alt={match.teams.away.name}
+            style={{
+              width: '50px',
+              height: '50px',
+              borderRadius: '8px',
+              objectFit: 'contain'
+            }}
+            onError={(e) => e.target.style.display = 'none'}
+          />
         </div>
       </div>
 
-      {/* Wallet Connector */}
-      {user && (
-        <div className="container mx-auto px-6 py-6">
-          <WalletConnector 
-            user={user} 
-            onWalletConnect={handleWalletConnect}
-          />
+      {/* Existing Bet Display */}
+      {existingBet && (
+        <div style={{
+          backgroundColor: '#0099ff20',
+          border: '1px solid #0099ff',
+          borderRadius: '8px',
+          padding: '16px',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <div>
+              <p style={{
+                color: '#0099ff',
+                fontWeight: 'bold',
+                marginBottom: '4px'
+              }}>
+                Your Bet: {existingBet.team_bet}
+              </p>
+              <p style={{ color: '#888', fontSize: '14px' }}>
+                Amount: {existingBet.amount} CHZ
+              </p>
+            </div>
+            <span style={{
+              backgroundColor: '#0099ff',
+              color: '#000',
+              padding: '4px 12px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontWeight: 'bold'
+            }}>
+              PLACED
+            </span>
+          </div>
         </div>
       )}
 
-      {/* Matches Grid */}
-      <div className="container mx-auto px-6 py-12">
-        {matches.length === 0 ? (
-          <Card className="text-center py-12">
-            <div className="text-6xl mb-6">🏟️</div>
-            <h3 className="text-2xl font-bold text-white mb-4">No Upcoming Matches</h3>
-            <p className="text-gray-400 mb-8">
-              No Club World Cup matches found. The tournament will begin soon!
-            </p>
-            <Button onClick={loadMatches}>
-              🔄 Refresh Matches
-            </Button>
-          </Card>
-        ) : (
-          <>
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-white mb-4">
-                📅 Upcoming Matches
-              </h2>
-              <p className="text-gray-400">
-                {matches.length} matches available for betting
-              </p>
-            </div>
-            
-            <div className="grid gap-8 md:grid-cols-1 lg:grid-cols-2">
-              {matches.map((match) => (
-                <BettingCard
-                  key={match.fixture.id}
-                  match={match}
-                  onPlaceBet={placeBet}
-                  userBalance={userBalance}
-                  user={user}
-                  existingBet={userBets[match.fixture.id]}
-                />
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Footer Info */}
-      <div className="container mx-auto px-6 py-12">
-        <Card className="text-center">
-          <h3 className="text-xl font-bold text-white mb-4">
-            🎯 How Betting Works
-          </h3>
-          <div className="grid md:grid-cols-3 gap-6 text-gray-300">
-            <div>
-              <div className="text-3xl mb-2">💰</div>
-              <h4 className="font-semibold mb-2">Simple Win/Loss</h4>
-              <p className="text-sm">Choose which team will win the match and bet your CHZ</p>
-            </div>
-            <div>
-              <div className="text-3xl mb-2">⚡</div>
-              <h4 className="font-semibold mb-2">CHZ Rewards</h4>
-              <p className="text-sm">Win CHZ tokens based on match outcomes and odds</p>
-            </div>
-            <div>
-              <div className="text-3xl mb-2">🏆</div>
-              <h4 className="font-semibold mb-2">Club World Cup</h4>
-              <p className="text-sm">Bet on the biggest club tournament featuring top teams worldwide</p>
-            </div>
+      {/* Betting Interface */}
+      {canBet ? (
+        <div>
+          {/* Bet Amount */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              color: '#888',
+              fontSize: '14px',
+              marginBottom: '8px'
+            }}>
+              Bet Amount (CHZ)
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={userBalance}
+              value={betAmount}
+              onChange={(e) => setBetAmount(Number(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#222',
+                border: '1px solid #444',
+                borderRadius: '6px',
+                color: '#ffffff',
+                fontSize: '16px'
+              }}
+            />
           </div>
-        </Card>
-      </div>
+
+          {/* Team Selection */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '12px',
+            marginBottom: '16px'
+          }}>
+            <button
+              onClick={() => setSelectedTeam(match.teams.home.name)}
+              style={{
+                padding: '16px',
+                backgroundColor: selectedTeam === match.teams.home.name ? '#00ff88' : 'transparent',
+                color: selectedTeam === match.teams.home.name ? '#000' : '#ffffff',
+                border: `2px solid ${selectedTeam === match.teams.home.name ? '#00ff88' : '#444'}`,
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {match.teams.home.name} Win
+            </button>
+            
+            <button
+              onClick={() => setSelectedTeam(match.teams.away.name)}
+              style={{
+                padding: '16px',
+                backgroundColor: selectedTeam === match.teams.away.name ? '#00ff88' : 'transparent',
+                color: selectedTeam === match.teams.away.name ? '#000' : '#ffffff',
+                border: `2px solid ${selectedTeam === match.teams.away.name ? '#00ff88' : '#444'}`,
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {match.teams.away.name} Win
+            </button>
+          </div>
+
+          {/* Place Bet Button */}
+          <button
+            onClick={handlePlaceBet}
+            disabled={!selectedTeam || isPlacing || betAmount > userBalance}
+            style={{
+              width: '100%',
+              padding: '16px',
+              backgroundColor: selectedTeam && !isPlacing && betAmount <= userBalance ? '#00ff88' : '#444',
+              color: selectedTeam && !isPlacing && betAmount <= userBalance ? '#000' : '#888',
+              border: 'none',
+              borderRadius: '8px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: selectedTeam && !isPlacing && betAmount <= userBalance ? 'pointer' : 'not-allowed',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isPlacing ? (
+              '🔄 Placing Bet...'
+            ) : selectedTeam ? (
+              `🎯 Bet ${betAmount} CHZ on ${selectedTeam}`
+            ) : (
+              'Select a team to bet'
+            )}
+          </button>
+        </div>
+      ) : !user ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '24px',
+          backgroundColor: '#222',
+          borderRadius: '8px'
+        }}>
+          <p style={{ color: '#888', marginBottom: '16px' }}>
+            🔐 Login required to place bets
+          </p>
+          <button
+            onClick={() => window.location.href = '/login'}
+            style={{
+              backgroundColor: '#0099ff',
+              color: '#000',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              border: 'none',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Login to Bet
+          </button>
+        </div>
+      ) : userBalance < betAmount ? (
+        <div style={{
+          textAlign: 'center',
+          padding: '24px',
+          backgroundColor: '#2d1b1b',
+          border: '1px solid #664444',
+          borderRadius: '8px'
+        }}>
+          <p style={{ color: '#ff6b6b', marginBottom: '8px' }}>
+            ⚠️ Insufficient CHZ balance
+          </p>
+          <p style={{ color: '#888', fontSize: '14px' }}>
+            You have {userBalance} CHZ, need {betAmount} CHZ
+          </p>
+        </div>
+      ) : (
+        <div style={{
+          textAlign: 'center',
+          padding: '24px',
+          backgroundColor: '#222',
+          borderRadius: '8px'
+        }}>
+          <p style={{ color: '#888' }}>
+            ✅ Bet already placed for this match
+          </p>
+        </div>
+      )}
     </div>
   )
 }
