@@ -91,9 +91,10 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       url.searchParams.set('entity_id', entityId)
       url.searchParams.set('sort_by', sortBy)
       url.searchParams.set('limit', '100')
-      const userId = user?.id || user?.sub || user?.uid
-      if (userId) {
-        url.searchParams.set('user_id', userId)
+      // Add session token for user-specific data like votes
+      const sessionToken = localStorage.getItem('session_token')
+      if (sessionToken) {
+        url.searchParams.set('session_token', sessionToken)
       }
 
       const response = await fetch(url)
@@ -227,15 +228,7 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         uploadedFileUrl = await uploadFile(selectedFile)
       }
 
-      // Ensure we have a valid user ID
-      const userId = user.id || user.sub || user.uid
-      if (!userId) {
-        setError('Invalid user session. Please sign out and sign in again.')
-        return
-      }
-
       const commentData = {
-        user_id: userId,
         entity_type: entityType,
         entity_id: entityId,
         parent_id: replyTo,
@@ -244,11 +237,9 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       }
 
       console.log('📝 [UNIVERSAL COMMENTS] Submitting comment data:', {
-        user: user,
-        userId: userId,
         commentData: commentData,
         hasUser: !!user,
-        userKeys: user ? Object.keys(user) : []
+        userEmail: user?.email
       })
 
       // Add meme data if selected
@@ -284,10 +275,18 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         }
       }
 
+      // Get session token for authentication
+      const sessionToken = localStorage.getItem('session_token')
+      if (!sessionToken) {
+        setError('Session expired. Please sign in again.')
+        return
+      }
+
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify(commentData)
       })
@@ -318,19 +317,22 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleUpvote = async (commentId, isRemoving = false) => {
     if (!user) return
     
-    const userId = user.id || user.sub || user.uid
-    if (!userId) return
-    
     try {
+      const sessionToken = localStorage.getItem('session_token')
+      if (!sessionToken) {
+        setError('Session expired. Please sign in again.')
+        return
+      }
+
       const response = await fetch('/api/comments', {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify({
           comment_id: commentId,
-          action: 'upvote',
-          user_id: userId
+          action: 'upvote'
         })
       })
 
@@ -346,19 +348,22 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleDownvote = async (commentId, isRemoving = false) => {
     if (!user) return
     
-    const userId = user.id || user.sub || user.uid
-    if (!userId) return
-    
     try {
+      const sessionToken = localStorage.getItem('session_token')
+      if (!sessionToken) {
+        setError('Session expired. Please sign in again.')
+        return
+      }
+
       const response = await fetch('/api/comments', {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify({
           comment_id: commentId,
-          action: 'downvote',
-          user_id: userId
+          action: 'downvote'
         })
       })
 
@@ -379,16 +384,8 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
       return
     }
 
-    // Ensure we have a valid user ID
-    const userId = user.id || user.sub || user.uid
-    if (!userId) {
-      setError('Invalid user session. Please sign out and sign in again.')
-      return
-    }
-
     try {
       const commentData = {
-        user_id: userId,
         entity_type: entityType,
         entity_id: entityId,
         parent_id: parentId,
@@ -396,10 +393,18 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
         comment_type: 'text'
       }
 
+      // Get session token for authentication
+      const sessionToken = localStorage.getItem('session_token')
+      if (!sessionToken) {
+        setError('Session expired. Please sign in again.')
+        return
+      }
+
       const response = await fetch('/api/comments', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify(commentData)
       })
@@ -419,19 +424,22 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
   const handleReaction = async (commentId, reactionType) => {
     if (!user) return
 
-    const userId = user.id || user.sub || user.uid
-    if (!userId) return
-
     try {
+      const sessionToken = localStorage.getItem('session_token')
+      if (!sessionToken) {
+        setError('Session expired. Please sign in again.')
+        return
+      }
+
       const response = await fetch('/api/comments', {
         method: 'PATCH',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify({
           comment_id: commentId,
           action: 'reaction',
-          user_id: userId,
           reaction_type: reactionType
         })
       })

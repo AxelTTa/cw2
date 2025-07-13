@@ -236,4 +236,40 @@ export class AuthService {
     localStorage.removeItem('token_expires_at')
     localStorage.removeItem('oauth_state')
   }
+
+  // Server-side authentication helper
+  static async authenticateRequest(request) {
+    try {
+      // Try to get session token from different sources
+      const authHeader = request.headers.get('authorization')
+      const sessionToken = authHeader?.replace('Bearer ', '') || 
+                          request.headers.get('x-session-token') ||
+                          request.cookies?.get('session_token')?.value
+
+      if (!sessionToken) {
+        return { success: false, error: 'No session token provided' }
+      }
+
+      // Validate session
+      const sessionResult = await this.validateSession(sessionToken)
+      if (!sessionResult.success || !sessionResult.valid) {
+        return { success: false, error: 'Invalid or expired session' }
+      }
+
+      // Get user data
+      const userResult = await this.getUserBySessionToken(sessionToken)
+      if (!userResult.success) {
+        return { success: false, error: 'Failed to get user data' }
+      }
+
+      return { 
+        success: true, 
+        user: userResult.data.profiles,
+        session: userResult.data
+      }
+    } catch (error) {
+      console.error('Error authenticating request:', error)
+      return { success: false, error: 'Authentication failed' }
+    }
+  }
 }
