@@ -51,8 +51,15 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
           email: parsedUser.email,
           userKeys: Object.keys(parsedUser)
         })
-        setUser(parsedUser)
-        return
+        
+        // VALIDATION: Ensure user has required ID field
+        if (parsedUser && parsedUser.id) {
+          setUser(parsedUser)
+          return
+        } else {
+          console.warn('⚠️ [UNIVERSAL COMMENTS] User data missing ID, clearing localStorage')
+          localStorage.removeItem('user_profile')
+        }
       } catch (error) {
         console.error('❌ [UNIVERSAL COMMENTS] Error parsing user data from localStorage:', error)
         localStorage.removeItem('user_profile') // Clear corrupted data
@@ -62,18 +69,23 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     // Fallback to Supabase auth (for existing users)
     try {
       const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
+      if (user && user.id) {
         console.log('👤 [UNIVERSAL COMMENTS] Got user from Supabase:', {
           hasId: !!user.id,
           id: user.id,
           email: user.email
         })
         setUser(user)
+        
+        // Save valid user to localStorage for future use
+        localStorage.setItem('user_profile', JSON.stringify(user))
       } else {
-        console.log('👤 [UNIVERSAL COMMENTS] No user found in Supabase')
+        console.log('👤 [UNIVERSAL COMMENTS] No valid user found')
+        setUser(null)
       }
     } catch (error) {
       console.error('❌ [UNIVERSAL COMMENTS] Error getting user from Supabase:', error)
+      setUser(null)
     }
   }
 
@@ -211,7 +223,10 @@ export default function UniversalComments({ entityType, entityId, entityName }) 
     if (!user || (!newComment.trim() && !selectedMeme && !imageUrl && !selectedFile && !selectedGif)) return
 
     if (!user.id) {
-      setError('User authentication issue. Please sign out and sign in again.')
+      console.error('❌ [UNIVERSAL COMMENTS] User missing ID:', user)
+      setError('Authentication error: User ID missing. Please refresh the page and try again.')
+      // Try to get user again
+      getCurrentUser()
       return
     }
 

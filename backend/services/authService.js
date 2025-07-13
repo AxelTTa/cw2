@@ -218,13 +218,23 @@ export class AuthService {
         return null
       }
 
+      const user = JSON.parse(userProfile)
+      
+      // VALIDATION: Ensure user has required ID field
+      if (!user || !user.id) {
+        console.warn('⚠️ [AUTH SERVICE] User data missing ID, clearing storage')
+        this.clearUserData()
+        return null
+      }
+
       return {
-        user: JSON.parse(userProfile),
+        user: user,
         access_token: accessToken,
         session_token: sessionToken
       }
     } catch (error) {
       console.error('Error getting user from storage:', error)
+      this.clearUserData() // Clear corrupted data
       return null
     }
   }
