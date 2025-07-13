@@ -97,6 +97,11 @@ export default function CommentForm({ onSubmit, placeholder = "Share your though
 
       await onSubmit(commentData)
       
+      // Trigger XP refresh event
+      window.dispatchEvent(new CustomEvent('commentPosted', { 
+        detail: { commentData } 
+      }))
+      
       // Reset form
       setContent('')
       setSelectedMeme(null)
