@@ -3,9 +3,8 @@ import { NextResponse } from 'next/server'
 const API_KEY = 'e4af61c0e46b03a5ce54e502c32aa0a5'
 const BASE_URL = 'https://v3.football.api-sports.io'
 
-// Focus on Champions League and Club World Cup - the most elite competitions
+// Focus only on Club World Cup for minimal API calls
 const ELITE_COMPETITION_LEAGUE_IDS = [
-  2,    // UEFA Champions League
   15,   // FIFA Club World Cup
 ]
 
@@ -77,7 +76,7 @@ const logApiError = (endpoint, error) => {
 // Remove major teams fetching - only use actual competition participants
 
 async function fetchEliteCompetitionTeams() {
-  console.log('🔍 Backend Starting teams fetch for Champions League + Club World Cup only...')
+  console.log('🔍 Backend Starting teams fetch for Club World Cup only...')
   const allTeams = []
   const teamIdsSeen = new Set() // To avoid duplicates across leagues
   
@@ -307,18 +306,97 @@ async function fetchPlayerStatistics(playerId, leagueId, season = 2025) {
   }
 }
 
+async function fetchPSGPlayers() {
+  console.log('🔍 Backend Starting PSG players fetch...')
+  
+  // PSG team ID is 85
+  const PSG_TEAM_ID = 85
+  const allPlayers = []
+  
+  try {
+    const players = await fetchPlayersForTeam(PSG_TEAM_ID)
+    console.log(`📋 Found ${players.length} PSG players`)
+    
+    for (const player of players) {
+      const stats = await fetchPlayerStatistics(player.id, 15, 2025) // Club World Cup stats
+      
+      let relevantStat = null
+      let playerDetails = null
+      
+      if (stats.length > 0) {
+        relevantStat = stats.find(s => s.goals?.total > 0) ||
+                      stats.find(s => s.games?.appearences > 0) ||
+                      stats.find(s => s.goals?.assists > 0) ||
+                      stats[0]
+                      
+        playerDetails = stats[0]?.player
+      }
+      
+      allPlayers.push({
+        player: {
+          id: player.id,
+          name: player.name,
+          photo: player.photo,
+          age: player.age,
+          nationality: playerDetails?.birth?.country || playerDetails?.nationality || 'France',
+          position: player.position,
+          height: playerDetails?.height || player.height,
+          weight: playerDetails?.weight || player.weight
+        },
+        team: {
+          id: PSG_TEAM_ID,
+          name: 'Paris Saint Germain',
+          logo: 'https://media.api-sports.io/football/teams/85.png'
+        },
+        league: {
+          id: 15,
+          name: 'FIFA Club World Cup'
+        },
+        statistics: relevantStat ? {
+          games: relevantStat.games?.appearences || 0,
+          goals: relevantStat.goals?.total || 0,
+          assists: relevantStat.goals?.assists || 0,
+          minutes: relevantStat.games?.minutes || 0,
+          rating: relevantStat.games?.rating || null,
+          yellow_cards: relevantStat.cards?.yellow || 0,
+          red_cards: relevantStat.cards?.red || 0,
+          league: relevantStat.league?.name || 'Club World Cup',
+          season: relevantStat.league?.season || '2025'
+        } : {
+          games: 0,
+          goals: 0,
+          assists: 0,
+          minutes: 0,
+          rating: null,
+          yellow_cards: 0,
+          red_cards: 0,
+          league: 'Club World Cup',
+          season: '2025'
+        }
+      })
+    }
+    
+    console.log(`✅ Backend Successfully fetched ${allPlayers.length} PSG players`)
+    return allPlayers
+    
+  } catch (error) {
+    console.error('❌ Backend Error fetching PSG players:', error.message)
+    return []
+  }
+}
+
 async function fetchEliteCompetitionPlayers(limit = null) {
-  console.log('🔍 Backend Starting Champions League + Club World Cup players fetch...')
+  console.log('🔍 Backend Starting Club World Cup players fetch...')
   console.log(`🎯 Backend Player limit requested: ${limit || 'No limit'}`)
   
-  // First, get all teams from Champions League and Club World Cup
+  // First, get all teams from Club World Cup only
   const teams = await fetchEliteCompetitionTeams()
   console.log(`📋 Backend Found ${teams.length} teams, now fetching players...`)
   
   const allPlayers = []
   
   // Process all teams sequentially with rate limiting to avoid API issues
-  console.log(`🎯 Backend Processing ${teams.length} Champions League + Club World Cup teams`)
+  console.log(`🎯 Backend Processing ${teams.length} Club World Cup teams`)
   
   const playerPromises = []
   
@@ -442,10 +520,17 @@ export async function GET(request) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : null
     const offset = searchParams.get('offset') ? parseInt(searchParams.get('offset')) : 0
     const sort = searchParams.get('sort') || null
+    const team = searchParams.get('team') || null
     
-    console.log('🔍 Backend Query parameters:', { limit, offset, sort })
+    console.log('🔍 Backend Query parameters:', { limit, offset, sort, team })
     
-    const players = await fetchEliteCompetitionPlayers()
+    let players
+    if (team === 'psg') {
+      // Return only PSG players
+      players = await fetchPSGPlayers()
+    } else {
+      players = await fetchEliteCompetitionPlayers()
+    }
     
     // Apply sorting if requested
     let sortedPlayers = players
