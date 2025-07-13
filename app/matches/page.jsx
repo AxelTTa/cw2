@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Header from '../components/Header'
+import LiveChat from '../components/LiveChat'
 
 export default function Matches() {
   const [activeTab, setActiveTab] = useState('live')
@@ -13,9 +14,12 @@ export default function Matches() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [currentUser, setCurrentUser] = useState(null)
+  const [selectedMatchForChat, setSelectedMatchForChat] = useState(null)
 
   useEffect(() => {
     fetchAllMatchData()
+    getCurrentUser()
     // Auto-refresh every 30 seconds for live matches
     const interval = setInterval(() => {
       if (activeTab === 'live') {
@@ -24,6 +28,13 @@ export default function Matches() {
     }, 30000)
     return () => clearInterval(interval)
   }, [])
+
+  const getCurrentUser = () => {
+    const userData = localStorage.getItem('user_profile')
+    if (userData) {
+      setCurrentUser(JSON.parse(userData))
+    }
+  }
 
   const fetchAllMatchData = async () => {
     try {
@@ -119,14 +130,13 @@ export default function Matches() {
     })
   }
 
-  const MatchCard = ({ match, showLiveIndicator = false }) => (
+  const MatchCard = ({ match, showLiveIndicator = false, isUpcoming = false }) => (
     <div
       style={{
         backgroundColor: '#111',
         border: showLiveIndicator && match.status !== 'ns' && match.status !== 'ft' ? '2px solid #00ff88' : '2px solid #333',
         borderRadius: '12px',
         padding: '20px',
-        cursor: 'pointer',
         transition: 'all 0.3s ease',
         position: 'relative'
       }}
@@ -138,7 +148,6 @@ export default function Matches() {
         e.currentTarget.style.transform = 'translateY(0)'
         e.currentTarget.style.borderColor = showLiveIndicator && match.status !== 'ns' && match.status !== 'ft' ? '#00ff88' : '#333'
       }}
-      onClick={() => window.location.href = `/matches/${match.id}`}
     >
       {/* Live indicator */}
       {showLiveIndicator && match.status !== 'ns' && match.status !== 'ft' && (
@@ -265,7 +274,7 @@ export default function Matches() {
         </div>
       </div>
 
-      {/* Match details */}
+      {/* Match details and actions */}
       <div style={{
         borderTop: '1px solid #333',
         paddingTop: '12px',
@@ -275,8 +284,63 @@ export default function Matches() {
         fontSize: '12px',
         color: '#888'
       }}>
-        <span>{match.round || match.league || 'Club World Cup'}</span>
-        <span>{match.venue || 'TBA'}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+          <span>{match.round || match.league || 'Club World Cup'}</span>
+          <span>{match.venue || 'TBA'}</span>
+        </div>
+        
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {/* Chat button for upcoming matches */}
+          {isUpcoming && match.status === 'ns' && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedMatchForChat(match)
+              }}
+              style={{
+                backgroundColor: '#0099ff',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'background-color 0.2s'
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = '#0088cc'}
+              onMouseLeave={(e) => e.target.style.backgroundColor = '#0099ff'}
+            >
+              💬 Chat
+            </button>
+          )}
+          
+          {/* View match button */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              window.location.href = `/matches/${match.id}`
+            }}
+            style={{
+              backgroundColor: '#333',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#555'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#333'}
+          >
+            View Details
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -553,7 +617,7 @@ export default function Matches() {
                     gap: '24px'
                   }}>
                     {matchData.upcoming.map(match => (
-                      <MatchCard key={match.id} match={match} />
+                      <MatchCard key={match.id} match={match} isUpcoming={true} />
                     ))}
                   </div>
                 )}
@@ -702,6 +766,92 @@ export default function Matches() {
           </>
         )}
       </main>
+
+      {/* Chat Modal */}
+      {selectedMatchForChat && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: '#0a0a0a',
+            borderRadius: '12px',
+            border: '2px solid #333',
+            width: '100%',
+            maxWidth: '900px',
+            height: '80vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {/* Chat Modal Header */}
+            <div style={{
+              padding: '20px',
+              borderBottom: '1px solid #333',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <h2 style={{
+                  fontSize: '20px',
+                  fontWeight: 'bold',
+                  color: '#00ff88',
+                  margin: '0 0 8px 0'
+                }}>
+                  Live Chat: {selectedMatchForChat.homeTeam?.name || selectedMatchForChat.home_team} vs {selectedMatchForChat.awayTeam?.name || selectedMatchForChat.away_team}
+                </h2>
+                <div style={{
+                  fontSize: '14px',
+                  color: '#888'
+                }}>
+                  {formatDate(selectedMatchForChat.date || selectedMatchForChat.match_date)} • {selectedMatchForChat.venue || 'TBA'}
+                </div>
+              </div>
+              
+              <button
+                onClick={() => setSelectedMatchForChat(null)}
+                style={{
+                  backgroundColor: '#444',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  fontSize: '14px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#666'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#444'}
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Chat Content */}
+            <div style={{
+              flex: 1,
+              padding: '20px',
+              overflow: 'hidden'
+            }}>
+              <LiveChat 
+                matchId={selectedMatchForChat.id || selectedMatchForChat.external_id} 
+                currentUser={currentUser}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes bounce {
