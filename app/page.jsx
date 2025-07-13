@@ -375,28 +375,67 @@ export default function Home() {
         /* Mobile Responsive */
         @media (max-width: 768px) {
           .crypto-bg {
-            padding: 60px 20px 80px !important;
+            padding: 40px 15px 60px !important;
           }
           .hero-title {
-            font-size: 48px !important;
+            font-size: 32px !important;
             line-height: 1.2 !important;
+            margin-bottom: 20px !important;
           }
           .hero-subtitle {
-            font-size: 20px !important;
+            font-size: 18px !important;
+            margin-bottom: 30px !important;
           }
           .feature-grid {
             grid-template-columns: 1fr !important;
-            gap: 24px !important;
+            gap: 20px !important;
           }
           .feature-icon-3d {
-            font-size: 60px !important;
+            font-size: 50px !important;
           }
           .btn-crypto {
-            padding: 16px 28px !important;
-            font-size: 16px !important;
+            padding: 14px 24px !important;
+            font-size: 14px !important;
+            width: 100% !important;
+            max-width: 280px !important;
           }
           .rank-card {
-            padding: 20px !important;
+            padding: 16px !important;
+            margin: 8px 0 !important;
+          }
+          .testimonial-card {
+            padding: 25px 20px !important;
+          }
+          .modal-content {
+            width: 95% !important;
+            max-width: 90vw !important;
+            padding: 25px 15px !important;
+            margin: 10px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .crypto-bg {
+            padding: 30px 10px 40px !important;
+          }
+          .hero-title {
+            font-size: 28px !important;
+          }
+          .hero-subtitle {
+            font-size: 16px !important;
+          }
+          .btn-crypto {
+            padding: 12px 20px !important;
+            font-size: 13px !important;
+          }
+          .feature-icon-3d {
+            font-size: 40px !important;
+          }
+          .glass-card {
+            padding: 25px 15px !important;
+          }
+          .rank-card {
+            padding: 12px !important;
           }
         }
       `}</style>
@@ -467,9 +506,10 @@ export default function Home() {
           <div style={{
             display: 'flex',
             justifyContent: 'center',
-            gap: '40px',
-            marginBottom: '50px',
-            flexWrap: 'wrap'
+            gap: '20px',
+            marginBottom: '40px',
+            flexWrap: 'wrap',
+            padding: '0 10px'
           }}>
             {[
               { label: 'Hackathon Demo', value: 'Live Now', icon: '🚀' },
@@ -536,8 +576,8 @@ export default function Home() {
 
         <div className="feature-grid" style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-          gap: '50px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '30px'
         }}>
           {/* Real-Time Stats */}
           <div className="glass-card" style={{
@@ -820,9 +860,9 @@ export default function Home() {
         
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(500px, 1fr))',
-          gap: '30px',
-          marginBottom: '50px'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '20px',
+          marginBottom: '40px'
         }}>
           {testimonials.map((testimonial, index) => (
             <div key={index} 

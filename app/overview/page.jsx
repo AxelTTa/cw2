@@ -23,24 +23,16 @@ export default function Overview() {
       setLoading(true)
       setError(null)
 
-      // Fetch top 10 key players only
-      const playersResponse = await fetch('/api/players?limit=10')
+      // Fetch PSG players only
+      const playersResponse = await fetch('/api/players?team=psg&limit=10')
       const playersData = await playersResponse.json()
       
-      // Fetch top 10 teams only
-      const teamsResponse = await fetch('/api/teams?limit=10')
+      // Fetch specific teams only (Real Madrid, PSG, Chelsea, Bayern)
+      const teamsResponse = await fetch('/api/teams?filter=target')
       const teamsData = await teamsResponse.json()
 
-      // Key competitions only (reduce to most important ones)
+      // Only Club World Cup
       const competitions = [
-        {
-          id: 'champions-league-2024',
-          name: 'UEFA Champions League 2024/25',
-          logo: 'https://media.api-sports.io/football/leagues/2.png',
-          status: 'ongoing',
-          teams: 36,
-          currentStage: 'League Phase'
-        },
         {
           id: 'club-world-cup-2025',
           name: 'FIFA Club World Cup 2025',
@@ -52,9 +44,9 @@ export default function Overview() {
       ]
 
       setData({
-        topPlayers: playersData.players?.slice(0, 10) || [],
+        topPlayers: playersData.players || [],
         competitions: competitions,
-        topTeams: teamsData.teams?.slice(0, 10) || []
+        topTeams: teamsData.teams || []
       })
     } catch (err) {
       console.error('Error loading overview data:', err)

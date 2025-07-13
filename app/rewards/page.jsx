@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import GoogleAuth from '../components/GoogleAuth'
 import Header from '../components/Header'
 import { sendChzFromAdmin, formatChzAmount } from '../utils/chiliz-token'
+import { useXP } from '../contexts/XPContext'
+import { useAutoXPRefresh } from '../hooks/useAutoXPRefresh'
 
 export default function Rewards() {
   const router = useRouter()
@@ -17,6 +19,10 @@ export default function Rewards() {
   const [error, setError] = useState(null)
   const [walletAddress, setWalletAddress] = useState(null)
   const [claiming, setClaiming] = useState(null)
+  const { refreshXP, updateUserProfile } = useXP()
+  
+  // Enable auto XP refresh for the rewards page
+  useAutoXPRefresh()
 
   useEffect(() => {
     const userData = localStorage.getItem('user_profile')
@@ -62,18 +68,13 @@ export default function Rewards() {
         if (dashboardResult.success) {
           setDashboardData(dashboardResult.data)
           
-          // Update localStorage with fresh XP and level data
-          const updatedUser = {
-            ...JSON.parse(localStorage.getItem('user_profile')),
+          // Update user profile in context for real-time updates
+          updateUserProfile({
             xp: dashboardResult.data.xp,
-            level: dashboardResult.data.level
-          }
-          localStorage.setItem('user_profile', JSON.stringify(updatedUser))
-          
-          // Dispatch custom event to update header
-          window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
-            detail: updatedUser 
-          }))
+            level: dashboardResult.data.level,
+            total_xp_earned: dashboardResult.data.total_xp_earned,
+            global_rank: dashboardResult.data.global_rank
+          })
         } else {
           throw new Error(dashboardResult.error || 'Failed to load dashboard data')
         }
@@ -180,8 +181,11 @@ export default function Rewards() {
 
       alert(`🎉 Successfully claimed ${milestone.chz_reward} CHZ!\nTransaction: ${sendResult.transactionHash}`)
       
-      // Refresh milestones data
-      fetchDashboardData(user.id)
+      // Refresh data immediately for real-time updates
+      await Promise.all([
+        fetchDashboardData(user.id),
+        refreshXP(user.id)
+      ])
 
     } catch (error) {
       console.error('❌ Frontend: Error claiming milestone:', error)

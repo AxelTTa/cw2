@@ -3,26 +3,20 @@
 import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { supabase } from '../utils/supabase'
+import { useXP } from '../contexts/XPContext'
+import { useAutoXPRefresh } from '../hooks/useAutoXPRefresh'
 
 export default function Header() {
   const pathname = usePathname()
   const [user, setUser] = useState(null)
-  const [userProfile, setUserProfile] = useState(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { userProfile, refreshXP, clearUserProfile } = useXP()
+  
+  // Enable auto XP refresh for the header
+  useAutoXPRefresh()
 
   useEffect(() => {
     getCurrentUser()
-    
-    // Listen for user profile updates from other pages
-    const handleUserProfileUpdate = (event) => {
-      setUserProfile(event.detail)
-    }
-    
-    window.addEventListener('userProfileUpdated', handleUserProfileUpdate)
-    
-    return () => {
-      window.removeEventListener('userProfileUpdated', handleUserProfileUpdate)
-    }
   }, [])
 
   const getCurrentUser = async () => {
@@ -31,10 +25,9 @@ export default function Header() {
     if (userData) {
       const parsedUser = JSON.parse(userData)
       setUser(parsedUser)
-      setUserProfile(parsedUser)
       
-      // Check if XP data is stale and refresh if needed
-      await refreshXPDataIfNeeded(parsedUser)
+      // Refresh XP data periodically
+      await refreshXP(parsedUser.id)
       return
     }
     
@@ -42,74 +35,18 @@ export default function Header() {
     const { data: { user } } = await supabase.auth.getUser()
     if (user) {
       setUser(user)
-      setUserProfile(user)
     }
   }
 
-  const refreshXPDataIfNeeded = async (user) => {
-    if (!user?.id) return
-
-    const XP_CACHE_KEY = `xp_cache_${user.id}`
-    const CACHE_DURATION = 2 * 60 * 1000 // 2 minutes
-
-    try {
-      const cached = localStorage.getItem(XP_CACHE_KEY)
-      let shouldRefresh = true
-
-      if (cached) {
-        const { timestamp } = JSON.parse(cached)
-        shouldRefresh = Date.now() - timestamp > CACHE_DURATION
-      }
-
-      if (shouldRefresh) {
-        const response = await fetch(`/api/dashboard/${user.id}`)
-        if (response.ok) {
-          const result = await response.json()
-          if (result.success && result.data) {
-            // Update user profile with fresh XP data
-            const updatedUser = {
-              ...user,
-              xp: result.data.xp,
-              level: result.data.level
-            }
-            
-            // Update cache
-            localStorage.setItem(XP_CACHE_KEY, JSON.stringify({
-              data: result.data,
-              timestamp: Date.now()
-            }))
-            
-            // Update localStorage user profile
-            localStorage.setItem('user_profile', JSON.stringify(updatedUser))
-            
-            // Update state
-            setUserProfile(updatedUser)
-            
-            // Dispatch update event
-            window.dispatchEvent(new CustomEvent('userProfileUpdated', { 
-              detail: updatedUser 
-            }))
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to refresh XP data:', error)
-    }
-  }
 
   const signOut = async () => {
-    // Clear localStorage and XP cache
-    const userId = user?.id
-    localStorage.removeItem('user_profile')
-    if (userId) {
-      localStorage.removeItem(`xp_cache_${userId}`)
-    }
+    // Clear user data using context
+    clearUserProfile()
     
     // Also clear Supabase auth if applicable
     await supabase.auth.signOut()
     
     setUser(null)
-    setUserProfile(null)
   }
 
   const navItems = [
@@ -511,6 +448,29 @@ export default function Header() {
           
           .desktop-user-actions {
             display: none !important;
+          }
+          
+          header {
+            padding: 12px 15px !important;
+          }
+          
+          header a {
+            font-size: 20px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          header {
+            padding: 10px 12px !important;
+          }
+          
+          header a {
+            font-size: 18px !important;
+          }
+          
+          .mobile-menu-btn {
+            padding: 6px 10px !important;
+            font-size: 16px !important;
           }
         }
 
