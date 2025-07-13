@@ -319,11 +319,11 @@ export default function Rewards() {
       <Header />
 
       {/* Main Content */}
-      <main style={{ padding: '40px 20px' }}>
+      <main className="main-content" style={{ padding: '40px 20px' }}>
         <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
           
           {/* User Header */}
-          <div style={{
+          <div className="user-header" style={{
             backgroundColor: '#111',
             borderRadius: '16px',
             padding: '30px',
@@ -339,7 +339,7 @@ export default function Rewards() {
             }}>
               {dashboardData?.display_name || dashboardData?.username || 'Unknown User'}
             </h1>
-            <div style={{
+            <div className="user-stats" style={{
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
@@ -413,7 +413,7 @@ export default function Rewards() {
           </div>
 
           {/* Tab Navigation */}
-          <div style={{
+          <div className="tab-navigation" style={{
             display: 'flex',
             gap: '20px',
             marginBottom: '30px',
@@ -443,13 +443,13 @@ export default function Rewards() {
 
           {/* Tab Content */}
           {activeTab === 'overview' && dashboardData && (
-            <div style={{
+            <div className="overview-grid" style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
               gap: '20px'
             }}>
               {/* XP Stats */}
-              <div style={{
+              <div className="stat-card" style={{
                 backgroundColor: '#111',
                 borderRadius: '12px',
                 padding: '25px',
@@ -495,7 +495,7 @@ export default function Rewards() {
               </div>
 
               {/* Activity Stats */}
-              <div style={{
+              <div className="stat-card" style={{
                 backgroundColor: '#111',
                 borderRadius: '12px',
                 padding: '25px',
@@ -544,7 +544,7 @@ export default function Rewards() {
               </div>
 
               {/* Level Information */}
-              <div style={{
+              <div className="stat-card" style={{
                 backgroundColor: '#111',
                 borderRadius: '12px',
                 padding: '25px',
@@ -591,7 +591,7 @@ export default function Rewards() {
           {activeTab === 'milestones' && milestones && (
             <div style={{ display: 'grid', gap: '30px' }}>
               {/* Wallet Status Section */}
-              <div style={{
+              <div className="wallet-status-card" style={{
                 backgroundColor: '#111',
                 borderRadius: '12px',
                 padding: '25px',
@@ -656,7 +656,7 @@ export default function Rewards() {
               </div>
 
               {/* Milestone Stats */}
-              <div style={{
+              <div className="milestone-stats-grid" style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                 gap: '20px'
@@ -1160,6 +1160,393 @@ export default function Rewards() {
 
         </div>
       </main>
+
+      <style jsx>{`
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+          main {
+            padding: 20px 10px !important;
+          }
+          
+          .user-header {
+            padding: 20px 15px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .user-header h1 {
+            font-size: 24px !important;
+            margin-bottom: 8px !important;
+          }
+          
+          .user-stats {
+            flex-direction: column !important;
+            gap: 15px !important;
+            align-items: center !important;
+          }
+          
+          .user-stats > div {
+            flex-direction: column !important;
+            gap: 5px !important;
+            text-align: center !important;
+          }
+          
+          .level-progress-container {
+            max-width: 100% !important;
+            margin: 15px auto 0 !important;
+          }
+          
+          .tab-navigation {
+            flex-wrap: wrap !important;
+            gap: 10px !important;
+            justify-content: center !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .tab-navigation button {
+            padding: 8px 16px !important;
+            font-size: 14px !important;
+            min-width: 80px !important;
+          }
+          
+          .overview-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .stat-card {
+            padding: 20px 15px !important;
+          }
+          
+          .stat-card h2 {
+            font-size: 18px !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .wallet-status-card {
+            padding: 20px 15px !important;
+          }
+          
+          .wallet-status-card h2 {
+            font-size: 18px !important;
+          }
+          
+          .wallet-connected,
+          .wallet-not-connected {
+            padding: 12px !important;
+          }
+          
+          .go-to-leaderboard-link {
+            padding: 8px 16px !important;
+            font-size: 13px !important;
+          }
+          
+          .milestone-stats-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+          }
+          
+          .milestone-stat-card {
+            padding: 15px !important;
+          }
+          
+          .milestone-stat-card > div:first-child {
+            font-size: 24px !important;
+          }
+          
+          .milestone-category {
+            padding: 20px 15px !important;
+          }
+          
+          .milestone-category h3 {
+            font-size: 16px !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .milestone-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 15px !important;
+            padding: 15px !important;
+          }
+          
+          .milestone-item-content {
+            width: 100% !important;
+          }
+          
+          .milestone-title-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+          }
+          
+          .milestone-title {
+            font-size: 14px !important;
+          }
+          
+          .milestone-chz-badge {
+            align-self: flex-start !important;
+          }
+          
+          .milestone-progress-row {
+            flex-direction: column !important;
+            gap: 10px !important;
+            align-items: flex-start !important;
+          }
+          
+          .milestone-progress-bar {
+            width: 100% !important;
+            max-width: 200px !important;
+          }
+          
+          .milestone-action {
+            width: 100% !important;
+            margin-left: 0 !important;
+          }
+          
+          .milestone-action button {
+            width: 100% !important;
+            padding: 12px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .daily-rewards-section {
+            padding: 30px 15px !important;
+          }
+          
+          .daily-rewards-section h2 {
+            font-size: 28px !important;
+            margin-bottom: 30px !important;
+          }
+          
+          .daily-rewards-grid {
+            grid-template-columns: 1fr !important;
+            gap: 15px !important;
+            margin-bottom: 20px !important;
+          }
+          
+          .daily-reward-place {
+            text-align: center !important;
+          }
+          
+          .daily-reward-place > div:first-child {
+            font-size: 40px !important;
+          }
+          
+          .daily-reward-place > div:nth-child(2) {
+            font-size: 20px !important;
+          }
+          
+          .daily-reward-place > div:last-child {
+            font-size: 16px !important;
+          }
+          
+          .daily-rewards-description {
+            font-size: 14px !important;
+            padding: 0 10px !important;
+            margin-bottom: 15px !important;
+          }
+          
+          .leaderboard-link {
+            padding: 10px 20px !important;
+            font-size: 14px !important;
+          }
+          
+          .activity-card {
+            padding: 20px 15px !important;
+          }
+          
+          .activity-card h2 {
+            font-size: 18px !important;
+          }
+          
+          .activity-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            padding: 12px !important;
+          }
+          
+          .activity-item-content {
+            width: 100% !important;
+          }
+          
+          .activity-item-xp {
+            align-self: flex-end !important;
+          }
+          
+          .leaderboard-card {
+            padding: 20px 15px !important;
+          }
+          
+          .leaderboard-card h2 {
+            font-size: 18px !important;
+          }
+          
+          .leaderboard-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            padding: 12px !important;
+          }
+          
+          .leaderboard-item-main {
+            display: flex !important;
+            align-items: center !important;
+            gap: 12px !important;
+            width: 100% !important;
+          }
+          
+          .leaderboard-item-rank {
+            min-width: 30px !important;
+            font-size: 16px !important;
+          }
+          
+          .leaderboard-item-info {
+            flex: 1 !important;
+          }
+          
+          .leaderboard-item-info > div:first-child {
+            font-size: 16px !important;
+            margin-bottom: 4px !important;
+          }
+          
+          .leaderboard-item-info > div:last-child {
+            font-size: 11px !important;
+          }
+          
+          .leaderboard-item-xp {
+            align-self: flex-end !important;
+            font-size: 14px !important;
+          }
+          
+          .claims-card {
+            padding: 20px 15px !important;
+          }
+          
+          .claims-card h3 {
+            font-size: 16px !important;
+          }
+          
+          .claim-item {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 10px !important;
+            padding: 12px !important;
+          }
+          
+          .claim-item-content {
+            width: 100% !important;
+          }
+          
+          .claim-item-content > div:first-child {
+            font-size: 14px !important;
+            margin-bottom: 4px !important;
+          }
+          
+          .claim-item-content > div:last-child {
+            font-size: 11px !important;
+          }
+          
+          .claim-item-reward {
+            align-self: flex-end !important;
+          }
+          
+          .claim-item-reward > div:first-child {
+            font-size: 14px !important;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          main {
+            padding: 15px 5px !important;
+          }
+          
+          .user-header {
+            padding: 15px 10px !important;
+          }
+          
+          .user-header h1 {
+            font-size: 20px !important;
+          }
+          
+          .user-stats > div {
+            font-size: 14px !important;
+          }
+          
+          .tab-navigation {
+            gap: 5px !important;
+          }
+          
+          .tab-navigation button {
+            padding: 6px 12px !important;
+            font-size: 12px !important;
+            min-width: 70px !important;
+          }
+          
+          .stat-card,
+          .wallet-status-card,
+          .milestone-category,
+          .activity-card,
+          .leaderboard-card,
+          .claims-card {
+            padding: 15px 10px !important;
+          }
+          
+          .stat-card h2,
+          .activity-card h2,
+          .leaderboard-card h2 {
+            font-size: 16px !important;
+          }
+          
+          .milestone-item,
+          .activity-item,
+          .leaderboard-item,
+          .claim-item {
+            padding: 10px !important;
+          }
+          
+          .daily-rewards-section h2 {
+            font-size: 24px !important;
+          }
+          
+          .daily-reward-place > div:first-child {
+            font-size: 32px !important;
+          }
+          
+          .daily-reward-place > div:nth-child(2) {
+            font-size: 18px !important;
+          }
+          
+          .daily-reward-place > div:last-child {
+            font-size: 14px !important;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .user-header h1 {
+            font-size: 18px !important;
+          }
+          
+          .tab-navigation button {
+            font-size: 11px !important;
+            min-width: 60px !important;
+          }
+          
+          .stat-card h2,
+          .activity-card h2,
+          .leaderboard-card h2 {
+            font-size: 14px !important;
+          }
+          
+          .milestone-title {
+            font-size: 13px !important;
+          }
+          
+          .daily-rewards-section h2 {
+            font-size: 22px !important;
+          }
+        }
+      `}</style>
     </div>
   )
 }
